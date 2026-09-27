@@ -40,6 +40,8 @@ interface AppState {
   clearSelection: () => void;
 
   startTournament: () => void;
+  shuffleFixtures: () => void;      // regenerate fixtures with new player order
+  cancelTournament: () => void;     // discard current tournament, back to player-select
   confirmMatchScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastMatch: () => void;
   toggleCourtSide: (matchId: string) => void;
@@ -109,6 +111,46 @@ export const useStore = create<AppState>()(
           currentTournament: tournament,
           phase: "fixtures",
           selectedPlayerIds: [],
+          needsCoinFlip: false,
+          coinFlipWinnerId: null,
+        });
+      },
+
+      shuffleFixtures: () => {
+        const { currentTournament } = get();
+        if (!currentTournament) return;
+
+        // Fisher-Yates shuffle on the player order
+        const shuffled = [...currentTournament.playerIds];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+
+        const { matches, byes } = generateRoundRobin(shuffled);
+        set({
+          currentTournament: {
+            ...currentTournament,
+            playerIds: shuffled,
+            matches,
+            byes,
+            final: undefined,
+            finalistIds: undefined,
+          },
+          phase: "fixtures",
+          needsCoinFlip: false,
+        });
+      },
+
+      cancelTournament: () => {
+        const { currentTournament } = get();
+        if (!currentTournament) return;
+
+        // Restore the player selection so they can tweak and restart
+        set({
+          currentTournament: null,
+          phase: "player-select",
+          selectedPlayerIds: [...currentTournament.playerIds],
           needsCoinFlip: false,
           coinFlipWinnerId: null,
         });

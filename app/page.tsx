@@ -33,6 +33,8 @@ export default function PlayPage() {
     confirmFinalScore,
     closeTournament,
     startNextTournament,
+    shuffleFixtures,
+    cancelTournament,
   } = useStore();
 
   const [fixtureTab, setFixtureTab] = useState<FixtureTab>("fixtures");
@@ -40,6 +42,8 @@ export default function PlayPage() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [coinFlipVisible, setCoinFlipVisible] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showShuffleConfirm, setShowShuffleConfirm] = useState(false);
 
   const getPlayer = (id: string): Player =>
     players.find((p) => p.id === id) ?? { id, name: id, avatar: "custom" as AvatarType };
@@ -186,6 +190,56 @@ export default function PlayPage() {
       <div className="min-h-full flex flex-col">
         <ConfettiBurst active={showConfetti} onComplete={() => setShowConfetti(false)} />
 
+        {/* Cancel / Shuffle confirm dialogs */}
+        <AnimatePresence>
+          {showCancelConfirm && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/70 z-50" onClick={() => setShowCancelConfirm(false)} />
+              <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-50 bg-slate-900 border border-red-500/30 rounded-2xl p-6 text-center">
+                <div className="text-4xl mb-3">🚫</div>
+                <h3 className="text-white font-black text-xl mb-2">Cancel Tournament?</h3>
+                <p className="text-white/50 text-sm mb-6">
+                  {playedMatches.length > 0
+                    ? `${playedMatches.length} match${playedMatches.length !== 1 ? "es" : ""} will be lost. This cannot be undone.`
+                    : "This will discard the current fixtures and return to player select."}
+                </p>
+                <div className="flex gap-3">
+                  <button onClick={() => setShowCancelConfirm(false)}
+                    className="flex-1 py-3 rounded-xl bg-white/10 text-white/70 font-semibold">Keep Playing</button>
+                  <button onClick={() => { cancelTournament(); setShowCancelConfirm(false); }}
+                    className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold">Cancel</button>
+                </div>
+              </motion.div>
+            </>
+          )}
+          {showShuffleConfirm && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/70 z-50" onClick={() => setShowShuffleConfirm(false)} />
+              <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-50 bg-slate-900 border border-orange-500/30 rounded-2xl p-6 text-center">
+                <div className="text-4xl mb-3">🔀</div>
+                <h3 className="text-white font-black text-xl mb-2">Shuffle Fixtures?</h3>
+                <p className="text-white/50 text-sm mb-6">
+                  {playedMatches.length > 0
+                    ? `${playedMatches.length} match${playedMatches.length !== 1 ? "es" : ""} already played will be lost. Shuffle regenerates a new schedule with the same players.`
+                    : "Regenerate the match schedule in a new random order — same players, different fixtures."}
+                </p>
+                <div className="flex gap-3">
+                  <button onClick={() => setShowShuffleConfirm(false)}
+                    className="flex-1 py-3 rounded-xl bg-white/10 text-white/70 font-semibold">Keep Current</button>
+                  <button onClick={() => { shuffleFixtures(); setShowShuffleConfirm(false); }}
+                    className="flex-1 py-3 rounded-xl bg-orange-500 text-white font-bold">🔀 Shuffle</button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
         {/* Header */}
         <div className="sticky top-0 z-10 bg-slate-950/90 backdrop-blur border-b border-white/5 px-4 pt-4 pb-0">
           <div className="flex items-center justify-between mb-3">
@@ -196,6 +250,14 @@ export default function PlayPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {/* Shuffle fixtures */}
+              <button
+                onClick={() => setShowShuffleConfirm(true)}
+                className="text-xs bg-orange-500/15 text-orange-400 border border-orange-500/20 px-3 py-1.5 rounded-full hover:bg-orange-500/25 transition-colors"
+              >
+                🔀 Shuffle
+              </button>
+              {/* Undo last match */}
               {playedMatches.length > 0 && (
                 <button
                   onClick={undoLastMatch}
@@ -204,6 +266,13 @@ export default function PlayPage() {
                   ↩ Undo
                 </button>
               )}
+              {/* Cancel tournament */}
+              <button
+                onClick={() => setShowCancelConfirm(true)}
+                className="text-xs bg-red-500/15 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-full hover:bg-red-500/25 transition-colors"
+              >
+                ✕ Cancel
+              </button>
             </div>
           </div>
 
