@@ -2,6 +2,7 @@
 
 import { Tournament, TournamentRow, Match, Player } from "./types";
 import { pointsForFinal } from "./scoring";
+import { DEFAULT_CONFIG } from "./types";
 
 /**
  * Compute the live tournament table from round-robin matches.

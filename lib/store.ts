@@ -2,9 +2,9 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Player, Tournament, DayTable, Match, PlayPhase } from "./types";
+import { Player, Tournament, DayTable, Match, PlayPhase, TournamentConfig, DEFAULT_CONFIG } from "./types";
 import { generateRoundRobin } from "./fixtures";
-import { pointsForMatch, pointsForFinal, getMatchResult } from "./scoring";
+import { pointsForMatch, pointsForFinal } from "./scoring";
 import { computeDayPoints, isRoundRobinComplete, getFinalists } from "./ranking";
 
 // Fixed players (the 6 friends)
@@ -19,30 +19,38 @@ export const FIXED_PLAYERS: Player[] = [
 
 interface AppState {
   // Players
-  players: Player[];           // all players (fixed + custom)
-  selectedPlayerIds: string[]; // currently selected for next tournament
+  players: Player[];
+  selectedPlayerIds: string[];
 
   // Active tournament
   currentTournament: Tournament | null;
-  phase: PlayPhase;            // which Play screen state we're in
+  phase: PlayPhase;
 
-  // Coin flip state (when tiebreak needed for finalists)
+  // Pending tournament config (set in 'setup' phase, used when startTournament is called)
+  pendingConfig: TournamentConfig;
+
+  // Coin flip state
   needsCoinFlip: boolean;
   coinFlipWinnerId: string | null;
 
   // Day table
   dayTable: DayTable;
-  pastTournaments: Tournament[]; // closed tournaments for history
+  pastTournaments: Tournament[];
 
   // Actions
   addPlayer: (player: Player) => void;
   togglePlayerSelection: (playerId: string) => void;
   clearSelection: () => void;
 
+  // Called from player-select to move to setup screen
+  goToSetup: () => void;
+  setPendingConfig: (config: TournamentConfig) => void;
+
   startTournament: () => void;
-  shuffleFixtures: () => void;      // regenerate fixtures with new player order
-  cancelTournament: () => void;     // discard current tournament, back to player-select
+  shuffleFixtures: () => void;
+  cancelTournament: () => void;
   confirmMatchScore: (matchId: string, scoreA: number, scoreB: number) => void;
+  editMatchScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastMatch: () => void;
   toggleCourtSide: (matchId: string) => void;
 
@@ -53,7 +61,6 @@ interface AppState {
   startNextTournament: () => void;
   startNewDay: () => void;
 
-  // For resuming
   setPhase: (phase: PlayPhase) => void;
 }
 
@@ -65,6 +72,23 @@ function generateId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
+/** Re-compute points for a single match given a config */
+function computeMatchPoints(
+  match: Match,
+  config: TournamentConfig
+): { [id: string]: number } {
+  const { playerA, playerB, scoreA, scoreB } = match;
+  if (scoreA === undefined || scoreB === undefined) return {};
+  const winScore = Math.max(scoreA, scoreB);
+  const loseScore = Math.min(scoreA, scoreB);
+  const winnerPts = pointsForMatch(winScore, loseScore, config);
+  const winnerIsA = scoreA > scoreB;
+  return {
+    [playerA]: winnerIsA ? winnerPts : 0,
+    [playerB]: winnerIsA ? 0 : winnerPts,
+  };
+}
+
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -72,6 +96,7 @@ export const useStore = create<AppState>()(
       selectedPlayerIds: [],
       currentTournament: null,
       phase: "player-select",
+      pendingConfig: { ...DEFAULT_CONFIG },
       needsCoinFlip: false,
       coinFlipWinnerId: null,
       dayTable: {
@@ -82,7 +107,12 @@ export const useStore = create<AppState>()(
       pastTournaments: [],
 
       addPlayer: (player) =>
-        set((s) => ({ players: [...s.players, player] })),
+        set((s) => ({
+          players: [...s.players, player],
+          selectedPlayerIds: s.selectedPlayerIds.includes(player.id)
+            ? s.selectedPlayerIds
+            : [...s.selectedPlayerIds, player.id],
+        })),
 
       togglePlayerSelection: (playerId) =>
         set((s) => ({
@@ -93,8 +123,16 @@ export const useStore = create<AppState>()(
 
       clearSelection: () => set({ selectedPlayerIds: [] }),
 
-      startTournament: () => {
+      goToSetup: () => {
         const { selectedPlayerIds } = get();
+        if (selectedPlayerIds.length < 3) return;
+        set({ phase: "setup" });
+      },
+
+      setPendingConfig: (config) => set({ pendingConfig: config }),
+
+      startTournament: () => {
+        const { selectedPlayerIds, pendingConfig } = get();
         if (selectedPlayerIds.length < 3) return;
 
         const { matches, byes } = generateRoundRobin(selectedPlayerIds);
@@ -105,6 +143,7 @@ export const useStore = create<AppState>()(
           matches,
           byes,
           closed: false,
+          config: { ...pendingConfig },
         };
 
         set({
@@ -120,7 +159,6 @@ export const useStore = create<AppState>()(
         const { currentTournament } = get();
         if (!currentTournament) return;
 
-        // Fisher-Yates shuffle on the player order
         const shuffled = [...currentTournament.playerIds];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -145,8 +183,6 @@ export const useStore = create<AppState>()(
       cancelTournament: () => {
         const { currentTournament } = get();
         if (!currentTournament) return;
-
-        // Restore the player selection so they can tweak and restart
         set({
           currentTournament: null,
           phase: "player-select",
@@ -164,31 +200,13 @@ export const useStore = create<AppState>()(
         if (matchIdx === -1) return;
 
         const match = currentTournament.matches[matchIdx];
-        const winScore = Math.max(scoreA, scoreB);
-        const loseScore = Math.min(scoreA, scoreB);
-        const winnerIsA = scoreA > scoreB;
-        const winnerPts = pointsForMatch(winScore, loseScore);
-
-        const pointsAwarded: { [id: string]: number } = {
-          [match.playerA]: winnerIsA ? winnerPts : 0,
-          [match.playerB]: winnerIsA ? 0 : winnerPts,
-        };
+        const config = currentTournament.config;
+        const pointsAwarded = computeMatchPoints({ ...match, scoreA, scoreB }, config);
 
         const updatedMatches = [...currentTournament.matches];
-        updatedMatches[matchIdx] = {
-          ...match,
-          scoreA,
-          scoreB,
-          played: true,
-          pointsAwarded,
-        };
+        updatedMatches[matchIdx] = { ...match, scoreA, scoreB, played: true, pointsAwarded };
 
-        const updatedTournament: Tournament = {
-          ...currentTournament,
-          matches: updatedMatches,
-        };
-
-        // Check if round-robin is complete
+        const updatedTournament: Tournament = { ...currentTournament, matches: updatedMatches };
         const allPlayed = updatedMatches.every((m) => m.played);
 
         set({
@@ -196,7 +214,43 @@ export const useStore = create<AppState>()(
           phase: allPlayed ? "final" : "fixtures",
         });
 
-        // If transitioning to final, figure out finalists
+        if (allPlayed) {
+          const { finalistIds, needsCoinFlip } = getFinalists(updatedTournament);
+          set((s) => ({
+            currentTournament: s.currentTournament
+              ? { ...s.currentTournament, finalistIds }
+              : null,
+            needsCoinFlip,
+          }));
+        }
+      },
+
+      editMatchScore: (matchId, scoreA, scoreB) => {
+        const { currentTournament } = get();
+        if (!currentTournament) return;
+
+        const matchIdx = currentTournament.matches.findIndex((m) => m.id === matchId);
+        if (matchIdx === -1) return;
+
+        const match = currentTournament.matches[matchIdx];
+        const config = currentTournament.config;
+        const pointsAwarded = computeMatchPoints({ ...match, scoreA, scoreB }, config);
+
+        const updatedMatches = [...currentTournament.matches];
+        updatedMatches[matchIdx] = { ...match, scoreA, scoreB, played: true, pointsAwarded };
+
+        const updatedTournament: Tournament = { ...currentTournament, matches: updatedMatches };
+
+        // Re-evaluate if all matches played (could move back to final phase)
+        const allPlayed = updatedMatches.every((m) => m.played);
+        let newPhase = get().phase;
+        if (allPlayed && newPhase === "fixtures") {
+          newPhase = "final";
+        }
+
+        set({ currentTournament: updatedTournament, phase: newPhase });
+
+        // Re-compute finalists if all matches played
         if (allPlayed) {
           const { finalistIds, needsCoinFlip } = getFinalists(updatedTournament);
           set((s) => ({
@@ -212,7 +266,6 @@ export const useStore = create<AppState>()(
         const { currentTournament } = get();
         if (!currentTournament) return;
 
-        // Find last played match (reverse order)
         const matches = [...currentTournament.matches];
         const lastPlayedIdx = [...matches].reverse().findIndex((m) => m.played);
         if (lastPlayedIdx === -1) return;
@@ -253,7 +306,6 @@ export const useStore = create<AppState>()(
         const { currentTournament } = get();
         if (!currentTournament?.finalistIds) return;
 
-        // If coin flip provided, reorder finalists
         let finalistIds = currentTournament.finalistIds;
         if (coinFlipWinnerId && finalistIds[1] === coinFlipWinnerId) {
           finalistIds = [coinFlipWinnerId, finalistIds[0]];
@@ -270,11 +322,7 @@ export const useStore = create<AppState>()(
         };
 
         set({
-          currentTournament: {
-            ...currentTournament,
-            finalistIds,
-            final: finalMatch,
-          },
+          currentTournament: { ...currentTournament, finalistIds, final: finalMatch },
           coinFlipWinnerId: coinFlipWinnerId ?? null,
           needsCoinFlip: false,
           phase: "final",
@@ -290,19 +338,17 @@ export const useStore = create<AppState>()(
         const winnerIsA = scoreA > scoreB;
         const winScore = Math.max(scoreA, scoreB);
         const loseScore = Math.min(scoreA, scoreB);
+        const config = currentTournament.config;
 
-        const ptsA = pointsForFinal(winScore, loseScore, winnerIsA);
-        const ptsB = pointsForFinal(winScore, loseScore, !winnerIsA);
+        const ptsA = pointsForFinal(winScore, loseScore, winnerIsA, config);
+        const ptsB = pointsForFinal(winScore, loseScore, !winnerIsA, config);
 
         const updatedFinal: Match = {
           ...final,
           scoreA,
           scoreB,
           played: true,
-          pointsAwarded: {
-            [idA]: ptsA,
-            [idB]: ptsB,
-          },
+          pointsAwarded: { [idA]: ptsA, [idB]: ptsB },
         };
 
         set({
@@ -327,7 +373,6 @@ export const useStore = create<AppState>()(
           dayPointsAwarded: dayPoints,
         };
 
-        // If day date changed, reset day table
         const currentDate = today();
         const newDayTable: DayTable =
           dayTable.date !== currentDate
@@ -343,12 +388,11 @@ export const useStore = create<AppState>()(
           phase: "player-select",
           dayTable: newDayTable,
           pastTournaments: [...s.pastTournaments, closedTournament],
-          selectedPlayerIds: closedTournament.playerIds, // pre-select same players for next tournament
+          selectedPlayerIds: closedTournament.playerIds,
         }));
       },
 
       startNextTournament: () => {
-        // Re-select same players and go back to player-select
         set({ phase: "player-select", currentTournament: null });
       },
 
@@ -365,8 +409,7 @@ export const useStore = create<AppState>()(
       setPhase: (phase) => set({ phase }),
     }),
     {
-      name: "badminton-app-state-v1",
-      // Persist everything except ephemeral UI state
+      name: "badminton-app-state-v2",  // bumped version to avoid stale state from v1
     }
   )
 );

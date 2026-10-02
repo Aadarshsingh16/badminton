@@ -1,5 +1,5 @@
 "use client";
-// components/MatchCard.tsx — Fixture card with score display + tap to enter score
+// components/MatchCard.tsx — Fixture card with score display + tap to enter/edit score
 
 import React from "react";
 import { motion } from "framer-motion";
@@ -28,13 +28,13 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.3 }}
-      onClick={() => !played && onTap(match)}
-      className={`relative mb-3 rounded-2xl border transition-all ${
+      onClick={() => onTap(match)}
+      className={`relative mb-3 rounded-2xl border transition-all cursor-pointer ${
         played
-          ? "bg-white/5 border-white/5 opacity-75"
+          ? "bg-white/5 border-white/5 opacity-80 hover:opacity-100 hover:border-orange-400/30 hover:bg-orange-500/5"
           : isUpNext
-          ? "bg-gradient-to-br from-purple-900/60 to-blue-900/60 border-purple-500/50 cursor-pointer shadow-lg shadow-purple-500/10"
-          : "bg-white/5 border-white/10 cursor-pointer hover:bg-white/8"
+          ? "bg-gradient-to-br from-purple-900/60 to-blue-900/60 border-purple-500/50 shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20"
+          : "bg-white/5 border-white/10 hover:bg-white/8"
       }`}
     >
       {/* Up Next badge */}
@@ -44,8 +44,15 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
         </div>
       )}
 
+      {/* Edit badge on played matches */}
+      {played && (
+        <div className="absolute -top-2 right-4 bg-slate-700 text-white/50 text-[10px] font-medium px-2 py-0.5 rounded-full">
+          ✏️ tap to edit
+        </div>
+      )}
+
       {/* Round label */}
-      <div className={`text-center text-xs font-medium pt-2 pb-1 ${isUpNext && !played ? "text-purple-300" : "text-white/30"}`}>
+      <div className={`text-center text-xs font-medium pt-3 pb-1 ${isUpNext && !played ? "text-purple-300" : "text-white/30"}`}>
         Round {match.round + 1}
       </div>
 
@@ -58,7 +65,7 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
             emoji={playerA.avatarEmoji}
             color={playerA.avatarColor}
           />
-          <p className={`text-xs font-semibold text-center truncate w-full text-center ${winnerIsA ? "text-white" : "text-white/70"}`}>
+          <p className={`text-xs font-semibold text-center truncate w-full ${winnerIsA ? "text-white" : "text-white/70"}`}>
             {playerA.name}
           </p>
           {played && match.scoreA !== undefined && (
@@ -86,9 +93,7 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
           ) : (
             <div className="flex flex-col items-center gap-1">
               <span className="text-white/30 text-sm font-bold">VS</span>
-              {!played && (
-                <span className="text-purple-400 text-xs">Tap to score</span>
-              )}
+              <span className="text-purple-400 text-xs">Tap to score</span>
             </div>
           )}
         </div>
@@ -101,7 +106,7 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
             emoji={playerB.avatarEmoji}
             color={playerB.avatarColor}
           />
-          <p className={`text-xs font-semibold text-center truncate w-full text-center ${winnerIsB ? "text-white" : "text-white/70"}`}>
+          <p className={`text-xs font-semibold text-center truncate w-full ${winnerIsB ? "text-white" : "text-white/70"}`}>
             {playerB.name}
           </p>
           {played && match.scoreB !== undefined && (

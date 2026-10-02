@@ -1,20 +1,108 @@
 "use client";
 // components/ScoreInput.tsx — Bottom sheet for entering match scores
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Player, Match } from "@/lib/types";
+import { Player, Match, TournamentConfig, DEFAULT_CONFIG } from "@/lib/types";
 import { AvatarSVG } from "./avatars/AvatarSVG";
 
 interface ScoreInputProps {
   match: Match;
   playerA: Player;
   playerB: Player;
-  isFinal?: boolean;  // first-to-6 instead of 5
+  isFinal?: boolean;
+  isEditing?: boolean;       // true when editing an already-played match
   open: boolean;
   onClose: () => void;
   onConfirm: (scoreA: number, scoreB: number) => void;
   onToggleCourtSide?: () => void;
+  config?: TournamentConfig;
+}
+
+function ScoreCounter({
+  value,
+  onChange,
+  maxScore,
+  highlight,
+  label,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  maxScore: number;
+  highlight: boolean;
+  label: string;
+}) {
+  const [inputMode, setInputMode] = useState(false);
+  const [raw, setRaw] = useState(String(value));
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync raw when value changes externally
+  useEffect(() => {
+    if (!inputMode) setRaw(String(value));
+  }, [value, inputMode]);
+
+  const commitRaw = () => {
+    const n = parseInt(raw, 10);
+    if (!isNaN(n) && n >= 0 && n <= maxScore) {
+      onChange(n);
+    } else {
+      setRaw(String(value));
+    }
+    setInputMode(false);
+  };
+
+  return (
+    <div className="flex-1 flex flex-col items-center gap-2">
+      <div className="flex items-center gap-2 mt-1">
+        <button
+          onClick={() => onChange(Math.max(0, value - 1))}
+          className="w-10 h-10 rounded-full bg-white/10 text-white text-xl font-bold hover:bg-white/20 transition-colors active:scale-95 flex items-center justify-center"
+        >
+          −
+        </button>
+
+        {inputMode ? (
+          <input
+            ref={inputRef}
+            type="number"
+            value={raw}
+            min={0}
+            max={maxScore}
+            onChange={(e) => setRaw(e.target.value)}
+            onBlur={commitRaw}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRaw();
+              if (e.key === "Escape") { setRaw(String(value)); setInputMode(false); }
+            }}
+            className={`w-14 text-center text-4xl font-black bg-white/10 border-2 rounded-xl outline-none tabular-nums
+              ${highlight ? "border-green-400 text-green-400" : "border-purple-400 text-white"}`}
+            style={{ MozAppearance: "textfield" } as React.CSSProperties}
+          />
+        ) : (
+          <motion.button
+            key={value}
+            initial={{ scale: 1.25, opacity: 0.7 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={() => { setRaw(String(value)); setInputMode(true); setTimeout(() => inputRef.current?.select(), 30); }}
+            className={`text-4xl font-black w-14 text-center tabular-nums rounded-xl px-1 py-0.5 hover:bg-white/10 transition-colors ${
+              highlight ? "text-green-400" : "text-white"
+            }`}
+          >
+            {value}
+          </motion.button>
+        )}
+
+        <button
+          onClick={() => onChange(Math.min(maxScore, value + 1))}
+          disabled={value === maxScore}
+          className="w-10 h-10 rounded-full bg-white/10 text-white text-xl font-bold hover:bg-white/20 transition-colors active:scale-95 disabled:opacity-30 flex items-center justify-center"
+        >
+          +
+        </button>
+      </div>
+      <p className="text-white/30 text-[10px]">tap score to type</p>
+    </div>
+  );
 }
 
 export function ScoreInput({
@@ -22,14 +110,25 @@ export function ScoreInput({
   playerA,
   playerB,
   isFinal = false,
+  isEditing = false,
   open,
   onClose,
   onConfirm,
   onToggleCourtSide,
+  config = DEFAULT_CONFIG,
 }: ScoreInputProps) {
-  const [scoreA, setScoreA] = useState(0);
-  const [scoreB, setScoreB] = useState(0);
-  const maxScore = isFinal ? 6 : 5;
+  const maxScore = isFinal ? config.finalWinScore : config.winScore;
+
+  const [scoreA, setScoreA] = useState(() => match.scoreA ?? 0);
+  const [scoreB, setScoreB] = useState(() => match.scoreB ?? 0);
+
+  // Re-seed when sheet opens (e.g. re-opened to edit)
+  useEffect(() => {
+    if (open) {
+      setScoreA(match.scoreA ?? 0);
+      setScoreB(match.scoreB ?? 0);
+    }
+  }, [open, match.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const canConfirm =
     (scoreA === maxScore || scoreB === maxScore) && scoreA !== scoreB;
@@ -53,6 +152,14 @@ export function ScoreInput({
 
   const sideA = match.courtSide[playerA.id];
   const sideB = match.courtSide[playerB.id];
+
+  // Points preview
+  const winScore = Math.max(scoreA, scoreB);
+  const loseScore = Math.min(scoreA, scoreB);
+  const margin = winScore - loseScore;
+  const winnerIsA = scoreA > scoreB;
+  const aWins = scoreA === maxScore && scoreA > scoreB;
+  const bWins = scoreB === maxScore && scoreB > scoreA;
 
   return (
     <AnimatePresence>
@@ -79,9 +186,14 @@ export function ScoreInput({
             <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-5" />
 
             {/* Match label */}
-            <p className="text-center text-white/50 text-xs uppercase tracking-widest mb-4">
-              {isFinal ? "🏆 Grand Final — First to 6" : `Round ${match.round + 1} — First to ${maxScore}`}
+            <p className="text-center text-white/50 text-xs uppercase tracking-widest mb-1">
+              {isFinal
+                ? `🏆 Grand Final — First to ${maxScore}`
+                : `Round ${match.round + 1} — First to ${maxScore}`}
             </p>
+            {isEditing && (
+              <p className="text-center text-orange-400 text-xs mb-3">✏️ Editing confirmed score</p>
+            )}
 
             {/* Court side indicator */}
             <div className="flex items-center justify-center gap-2 mb-4">
@@ -102,79 +214,74 @@ export function ScoreInput({
             </div>
 
             {/* Score inputs */}
-            <div className="flex items-center justify-between gap-3 mb-6">
+            <div className="flex items-start justify-between gap-3 mb-2">
               {/* Player A */}
               <div className="flex-1 flex flex-col items-center gap-2">
                 <AvatarSVG type={playerA.avatar} size={52} emoji={playerA.avatarEmoji} color={playerA.avatarColor} />
-                <p className="text-white font-semibold text-sm text-center truncate w-full text-center">{playerA.name}</p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setScoreA(Math.max(0, scoreA - 1))}
-                    className="w-10 h-10 rounded-full bg-white/10 text-white text-xl font-bold hover:bg-white/20 transition-colors active:scale-95"
-                  >
-                    −
-                  </button>
-                  <motion.span
-                    key={scoreA}
-                    initial={{ scale: 1.3, opacity: 0.7 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className={`text-4xl font-black w-12 text-center tabular-nums ${
-                      scoreA === maxScore && scoreA > scoreB ? "text-green-400" : "text-white"
-                    }`}
-                  >
-                    {scoreA}
-                  </motion.span>
-                  <button
-                    onClick={() => setScoreA(Math.min(maxScore, scoreA + 1))}
-                    disabled={scoreA === maxScore}
-                    className="w-10 h-10 rounded-full bg-white/10 text-white text-xl font-bold hover:bg-white/20 transition-colors active:scale-95 disabled:opacity-30"
-                  >
-                    +
-                  </button>
-                </div>
+                <p className="text-white font-semibold text-sm text-center truncate w-full">{playerA.name}</p>
+                <ScoreCounter
+                  value={scoreA}
+                  onChange={setScoreA}
+                  maxScore={maxScore}
+                  highlight={aWins}
+                  label={playerA.name}
+                />
               </div>
 
               {/* VS divider */}
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-1 pt-14">
                 <span className="text-white/30 font-black text-xl">VS</span>
-                {scoreA === maxScore || scoreB === maxScore ? (
+                {canConfirm && (
                   <span className="text-xs text-white/40">
-                    {scoreA > scoreB ? "🏆 A wins" : "🏆 B wins"}
+                    {winnerIsA ? `🏆 ${playerA.name}` : `🏆 ${playerB.name}`}
                   </span>
-                ) : null}
+                )}
               </div>
 
               {/* Player B */}
               <div className="flex-1 flex flex-col items-center gap-2">
                 <AvatarSVG type={playerB.avatar} size={52} emoji={playerB.avatarEmoji} color={playerB.avatarColor} />
-                <p className="text-white font-semibold text-sm text-center truncate w-full text-center">{playerB.name}</p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setScoreB(Math.max(0, scoreB - 1))}
-                    className="w-10 h-10 rounded-full bg-white/10 text-white text-xl font-bold hover:bg-white/20 transition-colors active:scale-95"
-                  >
-                    −
-                  </button>
-                  <motion.span
-                    key={scoreB}
-                    initial={{ scale: 1.3, opacity: 0.7 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className={`text-4xl font-black w-12 text-center tabular-nums ${
-                      scoreB === maxScore && scoreB > scoreA ? "text-green-400" : "text-white"
-                    }`}
-                  >
-                    {scoreB}
-                  </motion.span>
-                  <button
-                    onClick={() => setScoreB(Math.min(maxScore, scoreB + 1))}
-                    disabled={scoreB === maxScore}
-                    className="w-10 h-10 rounded-full bg-white/10 text-white text-xl font-bold hover:bg-white/20 transition-colors active:scale-95 disabled:opacity-30"
-                  >
-                    +
-                  </button>
-                </div>
+                <p className="text-white font-semibold text-sm text-center truncate w-full">{playerB.name}</p>
+                <ScoreCounter
+                  value={scoreB}
+                  onChange={setScoreB}
+                  maxScore={maxScore}
+                  highlight={bWins}
+                  label={playerB.name}
+                />
               </div>
             </div>
+
+            {/* Points preview */}
+            {canConfirm && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-center gap-4 mb-4"
+              >
+                {[
+                  { player: playerA, score: scoreA, won: aWins },
+                  { player: playerB, score: scoreB, won: bWins },
+                ].map(({ player, score, won }) => {
+                  const pts = isFinal
+                    ? (won
+                        ? (margin >= config.finalBonusMargin ? config.finalWinBase + config.finalWinBonus : config.finalWinBase)
+                        : (margin >= config.finalBonusMargin ? config.finalLoserPenalty : 0))
+                    : (won
+                        ? (margin >= config.bonusMargin ? config.winPoints + config.bonusPoints : config.winPoints)
+                        : 0);
+                  return (
+                    <div key={player.id} className={`text-xs px-3 py-1 rounded-full font-bold ${
+                      pts > 0 ? "bg-green-500/20 text-green-400"
+                      : pts < 0 ? "bg-red-500/20 text-red-400"
+                      : "bg-white/10 text-white/40"
+                    }`}>
+                      {player.name}: {pts > 0 ? "+" : ""}{pts} pts
+                    </div>
+                  );
+                })}
+              </motion.div>
+            )}
 
             {/* Confirm button */}
             <motion.button
@@ -183,11 +290,15 @@ export function ScoreInput({
               whileTap={canConfirm ? { scale: 0.97 } : undefined}
               className={`w-full py-4 rounded-2xl font-bold text-white text-lg transition-all ${
                 canConfirm
-                  ? "bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg shadow-purple-500/30"
+                  ? isEditing
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 shadow-lg shadow-orange-500/30"
+                    : "bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg shadow-purple-500/30"
                   : "bg-white/10 text-white/30 cursor-not-allowed"
               }`}
             >
-              {canConfirm ? "Confirm Score ✓" : `Set a winner (first to ${maxScore})`}
+              {canConfirm
+                ? isEditing ? "Update Score ✏️" : "Confirm Score ✓"
+                : `Set a winner (first to ${maxScore})`}
             </motion.button>
           </motion.div>
         </>

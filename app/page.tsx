@@ -1,17 +1,19 @@
 "use client";
-// app/page.tsx — Play tab: context-aware screen (player-select → fixtures/table → final → summary)
+// app/page.tsx — Play tab: context-aware screen (player-select → setup → fixtures/table → final → summary)
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStore, FIXED_PLAYERS } from "@/lib/store";
-import { computeTournamentTable, isRoundRobinComplete } from "@/lib/ranking";
+import { computeTournamentTable } from "@/lib/ranking";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { MatchCard } from "@/components/MatchCard";
 import { ScoreInput } from "@/components/ScoreInput";
 import { TournamentTable } from "@/components/TournamentTable";
+import { TournamentSetup } from "@/components/TournamentSetup";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
-import { Player, Match, AvatarType } from "@/lib/types";
+import { Player, Match, AvatarType, TournamentConfig } from "@/lib/types";
+import { generateRoundRobin } from "@/lib/fixtures";
 
 type FixtureTab = "fixtures" | "table";
 
@@ -23,10 +25,14 @@ export default function PlayPage() {
     phase,
     needsCoinFlip,
     dayTable,
+    pendingConfig,
     togglePlayerSelection,
     addPlayer,
+    goToSetup,
+    setPendingConfig,
     startTournament,
     confirmMatchScore,
+    editMatchScore,
     undoLastMatch,
     toggleCourtSide,
     startFinal,
@@ -39,6 +45,7 @@ export default function PlayPage() {
 
   const [fixtureTab, setFixtureTab] = useState<FixtureTab>("fixtures");
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
+  const [isEditingMatch, setIsEditingMatch] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [coinFlipVisible, setCoinFlipVisible] = useState(false);
@@ -47,6 +54,13 @@ export default function PlayPage() {
 
   const getPlayer = (id: string): Player =>
     players.find((p) => p.id === id) ?? { id, name: id, avatar: "custom" as AvatarType };
+
+  // Compute match count for setup screen
+  const setupMatchCount = (() => {
+    const ids = selectedPlayerIds;
+    const { matches } = generateRoundRobin(ids);
+    return matches.length;
+  })();
 
   // ——— Player Select Screen ———
   if (phase === "player-select") {
@@ -137,7 +151,7 @@ export default function PlayPage() {
         {/* Start Tournament CTA */}
         <div className="px-4 pb-6">
           <motion.button
-            onClick={startTournament}
+            onClick={goToSetup}
             disabled={!canStart}
             whileTap={canStart ? { scale: 0.97 } : undefined}
             animate={{ opacity: canStart ? 1 : 0.4 }}
@@ -148,7 +162,7 @@ export default function PlayPage() {
             }`}
           >
             {canStart
-              ? `Start Tournament (${selectedPlayerIds.length} players) 🏸`
+              ? `Setup Tournament (${selectedPlayerIds.length} players) →`
               : `Select at least 3 players`}
           </motion.button>
         </div>
@@ -172,6 +186,21 @@ export default function PlayPage() {
     );
   }
 
+  // ——— Setup Screen ———
+  if (phase === "setup") {
+    return (
+      <TournamentSetup
+        playerCount={selectedPlayerIds.length}
+        matchCount={setupMatchCount}
+        onConfirm={(cfg) => {
+          setPendingConfig(cfg);
+          startTournament();
+        }}
+        onBack={() => useStore.getState().setPhase("player-select")}
+      />
+    );
+  }
+
   // ——— Fixtures + Table Screen ———
   if (phase === "fixtures" && currentTournament) {
     const table = computeTournamentTable(currentTournament);
@@ -181,9 +210,7 @@ export default function PlayPage() {
     const activeMatch = currentTournament.matches.find((m) => m.id === activeMatchId) ?? null;
     const activePlayerA = activeMatch ? getPlayer(activeMatch.playerA) : null;
     const activePlayerB = activeMatch ? getPlayer(activeMatch.playerB) : null;
-    const lastPlayedMatch = playedMatches[playedMatches.length - 1];
 
-    // Group matches by round for bye display
     const byeRounds = currentTournament.byes;
 
     return (
@@ -226,7 +253,7 @@ export default function PlayPage() {
                 <h3 className="text-white font-black text-xl mb-2">Shuffle Fixtures?</h3>
                 <p className="text-white/50 text-sm mb-6">
                   {playedMatches.length > 0
-                    ? `${playedMatches.length} match${playedMatches.length !== 1 ? "es" : ""} already played will be lost. Shuffle regenerates a new schedule with the same players.`
+                    ? `${playedMatches.length} match${playedMatches.length !== 1 ? "es" : ""} already played will be lost.`
                     : "Regenerate the match schedule in a new random order — same players, different fixtures."}
                 </p>
                 <div className="flex gap-3">
@@ -247,17 +274,16 @@ export default function PlayPage() {
               <h2 className="text-white font-black text-lg">Tournament</h2>
               <p className="text-white/40 text-xs">
                 {playedMatches.length}/{currentTournament.matches.length} matches played
+                {" · "}First to {currentTournament.config.winScore}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Shuffle fixtures */}
               <button
                 onClick={() => setShowShuffleConfirm(true)}
                 className="text-xs bg-orange-500/15 text-orange-400 border border-orange-500/20 px-3 py-1.5 rounded-full hover:bg-orange-500/25 transition-colors"
               >
                 🔀 Shuffle
               </button>
-              {/* Undo last match */}
               {playedMatches.length > 0 && (
                 <button
                   onClick={undoLastMatch}
@@ -266,7 +292,6 @@ export default function PlayPage() {
                   ↩ Undo
                 </button>
               )}
-              {/* Cancel tournament */}
               <button
                 onClick={() => setShowCancelConfirm(true)}
                 className="text-xs bg-red-500/15 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-full hover:bg-red-500/25 transition-colors"
@@ -306,7 +331,6 @@ export default function PlayPage() {
                 transition={{ duration: 0.2 }}
                 className="px-4"
               >
-                {/* Round-by-round with bye display */}
                 {currentTournament.matches.map((match, idx) => {
                   const pA = getPlayer(match.playerA);
                   const pB = getPlayer(match.playerB);
@@ -319,7 +343,10 @@ export default function PlayPage() {
                       playerB={pB}
                       isUpNext={isUpNext}
                       index={idx}
-                      onTap={(m) => setActiveMatchId(m.id)}
+                      onTap={(m) => {
+                        setActiveMatchId(m.id);
+                        setIsEditingMatch(m.played);
+                      }}
                     />
                   );
                 })}
@@ -346,6 +373,7 @@ export default function PlayPage() {
                 <TournamentTable
                   rows={table}
                   players={players}
+                  tournament={currentTournament}
                 />
               </motion.div>
             )}
@@ -359,16 +387,22 @@ export default function PlayPage() {
             playerA={activePlayerA}
             playerB={activePlayerB}
             isFinal={false}
+            isEditing={isEditingMatch}
             open={!!activeMatchId}
-            onClose={() => setActiveMatchId(null)}
+            onClose={() => { setActiveMatchId(null); setIsEditingMatch(false); }}
             onConfirm={(sA, sB) => {
-              // Check if this will be a blowout
               const margin = Math.abs(sA - sB);
-              if (margin >= 4) setShowConfetti(true);
-              confirmMatchScore(activeMatch.id, sA, sB);
+              if (margin >= (currentTournament.config.bonusMargin)) setShowConfetti(true);
+              if (isEditingMatch) {
+                editMatchScore(activeMatch.id, sA, sB);
+              } else {
+                confirmMatchScore(activeMatch.id, sA, sB);
+              }
               setActiveMatchId(null);
+              setIsEditingMatch(false);
             }}
-            onToggleCourtSide={() => toggleCourtSide(activeMatch.id)}
+            onToggleCourtSide={isEditingMatch ? undefined : () => toggleCourtSide(activeMatch.id)}
+            config={currentTournament.config}
           />
         )}
       </div>
@@ -410,11 +444,12 @@ export default function PlayPage() {
 
     // Final not yet started
     if (!final) {
+      const cfg = currentTournament.config;
       return (
         <div className="min-h-full flex flex-col">
           <div className="px-4 pt-6 pb-4">
             <h2 className="text-white font-black text-2xl mb-1">🏆 Grand Final</h2>
-            <p className="text-white/40 text-sm">Round-robin complete! Time for the final.</p>
+            <p className="text-white/40 text-sm">Round-robin complete! First to {cfg.finalWinScore} wins.</p>
           </div>
 
           {/* Finalists head-to-head */}
@@ -431,7 +466,7 @@ export default function PlayPage() {
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-white/30 text-2xl font-black">VS</span>
-                  <span className="text-yellow-400 text-xs">First to 6</span>
+                  <span className="text-yellow-400 text-xs">First to {cfg.finalWinScore}</span>
                 </div>
                 <div className="flex flex-col items-center gap-2">
                   <AvatarSVG type={finalistB.avatar} size={72} emoji={finalistB.avatarEmoji} color={finalistB.avatarColor} />
@@ -446,7 +481,7 @@ export default function PlayPage() {
 
           {/* Pre-final table */}
           <p className="px-4 text-white/40 text-xs uppercase tracking-widest mb-2">Standings before final</p>
-          <TournamentTable rows={table} players={players} finalistIds={finalistIds} />
+          <TournamentTable rows={table} players={players} finalistIds={finalistIds} tournament={currentTournament} />
 
           {/* Start final button */}
           <div className="px-4 py-4 mt-auto">
@@ -471,27 +506,21 @@ export default function PlayPage() {
 
         <div className="px-4 pt-6 pb-4">
           <h2 className="text-white font-black text-2xl mb-1">🏆 Grand Final</h2>
-          <p className="text-white/40 text-sm">First to 6 points wins the tournament</p>
+          <p className="text-white/40 text-sm">First to {currentTournament.config.finalWinScore} points wins the tournament</p>
         </div>
 
         {/* Head-to-head display */}
         <div className="px-4 mb-6">
           <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/20 border border-yellow-500/30 rounded-2xl p-6">
             <div className="flex items-center justify-around">
-              <motion.div
-                layoutId={`player-card-${finalPlayerA.id}`}
-                className="flex flex-col items-center gap-2"
-              >
+              <motion.div layoutId={`player-card-${finalPlayerA.id}`} className="flex flex-col items-center gap-2">
                 <AvatarSVG type={finalPlayerA.avatar} size={80} emoji={finalPlayerA.avatarEmoji} color={finalPlayerA.avatarColor} />
                 <p className="text-white font-bold text-sm">{finalPlayerA.name}</p>
               </motion.div>
               <div className="flex flex-col items-center">
                 <span className="text-white/30 text-2xl font-black">VS</span>
               </div>
-              <motion.div
-                layoutId={`player-card-${finalPlayerB.id}`}
-                className="flex flex-col items-center gap-2"
-              >
+              <motion.div layoutId={`player-card-${finalPlayerB.id}`} className="flex flex-col items-center gap-2">
                 <AvatarSVG type={finalPlayerB.avatar} size={80} emoji={finalPlayerB.avatarEmoji} color={finalPlayerB.avatarColor} />
                 <p className="text-white font-bold text-sm">{finalPlayerB.name}</p>
               </motion.div>
@@ -509,10 +538,11 @@ export default function PlayPage() {
           onClose={() => {}} // can't close final sheet
           onConfirm={(sA, sB) => {
             const margin = Math.abs(sA - sB);
-            if (margin >= 4) setShowConfetti(true);
+            if (margin >= currentTournament.config.finalBonusMargin) setShowConfetti(true);
             confirmFinalScore(sA, sB);
           }}
           onToggleCourtSide={undefined}
+          config={currentTournament.config}
         />
       </div>
     );
@@ -566,6 +596,7 @@ export default function PlayPage() {
           rows={table}
           players={players}
           showFinalLabel={true}
+          tournament={currentTournament}
         />
 
         {/* Actions */}
@@ -574,7 +605,7 @@ export default function PlayPage() {
             onClick={closeTournament}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 font-black text-white text-lg shadow-lg shadow-purple-500/30"
           >
-            Save & Start Next Tournament 🏸
+            Save &amp; Start Next Tournament 🏸
           </button>
         </div>
       </div>

@@ -63,6 +63,12 @@ export function AvatarPicker({ open, onClose, onConfirm }: AvatarPickerProps) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && name.trim()) {
+                  e.preventDefault();
+                  handleConfirm();
+                }
+              }}
               placeholder="Player name..."
               maxLength={16}
               className="w-full bg-white/10 text-white placeholder-white/40 border border-white/20 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:border-purple-400 text-sm"

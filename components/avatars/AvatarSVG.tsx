@@ -250,14 +250,52 @@ const ChineseAvatar = () => (
 
 // Custom avatar — emoji + color background
 const CustomAvatar = ({ emoji = "🏸", color = "#6C63FF" }: { emoji?: string; color?: string }) => (
-  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="50" cy="50" r="48" fill={color} fillOpacity="0.25" />
+  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+    <circle cx="50" cy="50" r="48" fill={color} fillOpacity="0.25" stroke={color} strokeWidth="2" strokeOpacity="0.5" />
     <circle cx="50" cy="50" r="36" fill={color} fillOpacity="0.15" />
-    <text x="50" y="62" textAnchor="middle" fontSize="36" fontFamily="system-ui">{emoji}</text>
+    <text
+      x="50"
+      y="55"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize="42"
+      fill="#FFFFFF"
+      style={{ fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif' }}
+    >
+      {emoji}
+    </text>
   </svg>
 );
 
 export function AvatarSVG({ type, size = 64, emoji, color, className }: AvatarSVGProps) {
+  const isCustom = type === "custom" || !["clumsy", "dwarf", "nerd", "bigfoot", "fighter", "chinese"].includes(type);
+
+  if (isCustom) {
+    const safeColor = color || "#6C63FF";
+    const safeEmoji = emoji || "🏸";
+    const fontSize = Math.round(size * 0.52);
+
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          backgroundColor: `${safeColor}25`,
+          borderColor: `${safeColor}60`,
+          fontSize: `${fontSize}px`,
+        }}
+        className={`rounded-full border-2 flex items-center justify-center select-none flex-shrink-0 shadow-sm ${className ?? ""}`}
+      >
+        <span
+          className="leading-none flex items-center justify-center select-none pointer-events-none"
+          style={{ transform: "translateY(-1px)" }}
+        >
+          {safeEmoji}
+        </span>
+      </div>
+    );
+  }
+
   const style: React.CSSProperties = { width: size, height: size };
 
   const avatar = (() => {
@@ -268,13 +306,12 @@ export function AvatarSVG({ type, size = 64, emoji, color, className }: AvatarSV
       case "bigfoot": return <BigfootAvatar />;
       case "fighter": return <FighterAvatar />;
       case "chinese": return <ChineseAvatar />;
-      case "custom": return <CustomAvatar emoji={emoji} color={color} />;
-      default: return <CustomAvatar />;
+      default: return <CustomAvatar emoji={emoji} color={color} />;
     }
   })();
 
   return (
-    <div style={style} className={className}>
+    <div style={style} className={`flex-shrink-0 flex items-center justify-center ${className ?? ""}`}>
       {avatar}
     </div>
   );
