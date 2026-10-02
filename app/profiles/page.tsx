@@ -209,6 +209,7 @@ const PLAYER_LORES: { [id: string]: PlayerLore } = {
 export default function ProfilesPage() {
   const { players, pastTournaments, currentTournament, completedDays, dayTable } = useStore();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(FIXED_PLAYERS[0]?.id || "adarsh");
+  const [activeProfileTab, setActiveProfileTab] = useState<"dossier" | "vibes" | "stats">("dossier");
   const [activeMoodTab, setActiveMoodTab] = useState<"courtMood" | "dailyRoast" | "excuse">("courtMood");
   const [showSpeechBubble, setShowSpeechBubble] = useState(true);
 
@@ -520,7 +521,7 @@ export default function ProfilesPage() {
       )}
 
       {/* Top Header */}
-      <div className="px-4 pt-6 pb-4 border-b border-slate-200/60 bg-[#F7F9FD]/90 backdrop-blur-md sticky top-0 z-20">
+      <div className="px-5 pt-6 pb-3 border-b border-slate-200/60 bg-[#F7F9FD]/90 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -528,7 +529,7 @@ export default function ProfilesPage() {
               <h1 className="text-slate-900 font-black text-2xl tracking-tight">The 6 Legends</h1>
             </div>
             <p className="text-slate-500 text-xs mt-0.5 font-medium">
-              Scouting reports, personality roasts &amp; career stats
+              Scouting dossiers, personality roasts &amp; career stats
             </p>
           </div>
           {isViewer && viewerSlug ? (
@@ -550,17 +551,16 @@ export default function ProfilesPage() {
         </div>
       </div>
 
-      {/* Interactive Avatar Stage / Lineup */}
-      <div className="px-4 pt-5 pb-2">
+      {/* Interactive Avatar Carousel / Player Picker */}
+      <div className="px-5 pt-4 pb-2">
         <div className="flex items-center justify-between mb-2.5 px-0.5">
           <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-            Tap to Scout Player
+            Select Athlete
           </p>
           <span className="text-[11px] font-bold text-slate-400">6 of 6 Active</span>
         </div>
 
-        {/* Horizontal avatar carousel */}
-        <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x -mx-1 px-1">
+        <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none snap-x -mx-1 px-1">
           {FIXED_PLAYERS.map((player) => {
             const isSelected = player.id === selectedPlayerId;
             const lore = PLAYER_LORES[player.id];
@@ -574,10 +574,10 @@ export default function ProfilesPage() {
                   setSelectedPlayerId(player.id);
                   setShowSpeechBubble(true);
                 }}
-                className={`flex-shrink-0 snap-center flex flex-col items-center py-2.5 px-2 rounded-[22px] border transition-all duration-200 relative ${
+                className={`flex-shrink-0 snap-center flex flex-col items-center py-2.5 px-2 rounded-[22px] transition-all duration-200 relative ${
                   isSelected
-                    ? "bg-white border-2 border-slate-950 shadow-md shadow-slate-950/10 -translate-y-1"
-                    : "bg-white/80 border border-slate-200/80 hover:border-slate-300 hover:bg-white text-slate-600 shadow-xs"
+                    ? "bg-slate-950 text-white shadow-md shadow-slate-950/15 -translate-y-1 ring-2 ring-slate-950"
+                    : "bg-white border border-slate-200/80 hover:border-slate-300 text-slate-700 shadow-xs"
                 }`}
                 style={{ width: "72px" }}
               >
@@ -594,7 +594,7 @@ export default function ProfilesPage() {
 
                 <span
                   className={`text-[11px] mt-1.5 truncate max-w-[62px] ${
-                    isSelected ? "font-black text-slate-950" : "font-bold text-slate-600"
+                    isSelected ? "font-black text-white" : "font-bold text-slate-700"
                   }`}
                 >
                   {player.name}
@@ -606,8 +606,8 @@ export default function ProfilesPage() {
 
                 {isSelected && (
                   <motion.div
-                    layoutId="active-indicator"
-                    className="absolute -bottom-1 w-6 h-1 bg-slate-950 rounded-full"
+                    layoutId="active-player-dot"
+                    className="w-1.5 h-1.5 bg-white rounded-full mt-1"
                   />
                 )}
               </motion.button>
@@ -617,274 +617,420 @@ export default function ProfilesPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="px-4 space-y-4">
-        {/* Interactive Speech Bubble / "How Are You?" Dialogue Box */}
-        <AnimatePresence mode="wait">
-          {showSpeechBubble && (
-            <motion.div
-              key={selectedPlayerId + activeMoodTab}
-              initial={{ opacity: 0, y: 8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              className="relative p-4 rounded-[28px] bg-gradient-to-br from-indigo-50/90 via-purple-50/60 to-white border border-indigo-100/90 shadow-sm overflow-hidden"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center flex-shrink-0 text-xl shadow-xs">
-                  {activeLore.badgeEmoji}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-900/80">
-                      {activeLore.name} speaks:
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-bold">
-                      {activeMoodTab === "courtMood"
-                        ? "🏸 Court Vibe"
-                        : activeMoodTab === "dailyRoast"
-                        ? "🍕 Daily Life"
-                        : "😤 Excuse"}
-                    </span>
-                  </div>
+      <div className="px-5 space-y-4 mt-1">
+        {/* Hero Player Card */}
+        <div className="rounded-[32px] p-5 bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border border-indigo-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] relative overflow-hidden">
+          {/* Ambient blur */}
+          <div className="absolute -top-12 -right-12 w-36 h-36 bg-purple-200/30 rounded-full blur-2xl pointer-events-none" />
 
-                  <p className="text-slate-800 text-[13px] font-bold mt-1.5 leading-relaxed italic">
-                    &ldquo;{activeLore.vibeQuotes[activeMoodTab]}&rdquo;
-                  </p>
-                </div>
-              </div>
-
-              {/* Mood selector buttons */}
-              <div className="flex gap-1.5 mt-3 pt-2.5 border-t border-indigo-100/60">
-                <button
-                  onClick={() => setActiveMoodTab("courtMood")}
-                  className={`flex-1 py-1.5 px-2 rounded-xl text-[10px] font-black transition-all ${
-                    activeMoodTab === "courtMood"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white/80 hover:bg-white text-slate-600 border border-slate-200/60"
-                  }`}
-                >
-                  🏸 On Court
-                </button>
-                <button
-                  onClick={() => setActiveMoodTab("dailyRoast")}
-                  className={`flex-1 py-1.5 px-2 rounded-xl text-[10px] font-black transition-all ${
-                    activeMoodTab === "dailyRoast"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white/80 hover:bg-white text-slate-600 border border-slate-200/60"
-                  }`}
-                >
-                  🍕 Daily Roast
-                </button>
-                <button
-                  onClick={() => setActiveMoodTab("excuse")}
-                  className={`flex-1 py-1.5 px-2 rounded-xl text-[10px] font-black transition-all ${
-                    activeMoodTab === "excuse"
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "bg-white/80 hover:bg-white text-slate-600 border border-slate-200/60"
-                  }`}
-                >
-                  😤 Excuse
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Selected Player Profile Card */}
-        <div className="p-5 rounded-[32px] bg-white border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-5">
-          {/* Card Header with Big Avatar */}
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-[24px] bg-gradient-to-tr from-slate-100 to-indigo-50/70 border border-slate-200/80 p-2 flex items-center justify-center flex-shrink-0 shadow-inner relative">
-              <AvatarSVG type={activeLore.avatar} size={68} />
-              <div className="absolute -bottom-1.5 -right-1.5 px-2.5 py-0.5 rounded-full bg-slate-950 border border-white text-[10px] font-black text-white shadow-sm">
+          <div className="flex items-start gap-4">
+            {/* Big Avatar with Rank Pill */}
+            <div className="w-20 h-20 rounded-[26px] bg-white border border-indigo-100/90 p-2 flex items-center justify-center flex-shrink-0 shadow-sm relative">
+              <AvatarSVG type={activeLore.avatar} size={64} />
+              <div className="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 rounded-full bg-slate-950 text-white text-[10px] font-black shadow-xs">
                 #{currentRank}
               </div>
             </div>
 
+            {/* Identity Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <h2 className="text-slate-900 font-black text-2xl leading-none tracking-tight truncate">
+                <h2 className="text-slate-900 font-black text-2xl tracking-tight leading-none truncate">
                   {activeLore.name}
                 </h2>
                 <span className="text-lg">{activeLore.badgeEmoji}</span>
               </div>
 
-              <p className="text-indigo-600 font-extrabold text-xs mt-1.5 truncate">
+              <p className="text-indigo-600 font-extrabold text-xs mt-1 truncate">
                 {activeLore.title}
               </p>
 
-              <div className="flex items-center gap-2 mt-2">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200/60 text-[10px] font-bold text-slate-600">
+              {/* Origin & Trophy Chips */}
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/90 border border-slate-200/80 text-[10px] font-bold text-slate-600 shadow-xs">
                   {activeLore.origin}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-[10px] font-black text-amber-800">
-                  🏆 {activeStats.tournamentsWon} Won
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Roast Bio Box */}
-          <div className="p-4 rounded-[22px] bg-amber-50/70 border border-amber-200/70 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
-                🔥 Scouting Dossier &amp; Roast
-              </span>
-              <span className="text-[10px] text-amber-700/60 italic font-mono">Confidential</span>
-            </div>
-            <p className="text-slate-700 text-xs leading-relaxed font-medium">
-              {activeLore.roastBio}
-            </p>
-          </div>
-
-          {/* Quick Playstyle & Kryptonite */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="p-3.5 rounded-[22px] bg-indigo-50/60 border border-indigo-100/80">
-              <p className="text-[10px] font-black text-indigo-700 uppercase tracking-wider mb-1">
-                ⚡ Playstyle
-              </p>
-              <p className="text-slate-900 font-black text-xs leading-snug">{activeLore.playstyle}</p>
-            </div>
-            <div className="p-3.5 rounded-[22px] bg-rose-50/60 border border-rose-100/80">
-              <p className="text-[10px] font-black text-rose-700 uppercase tracking-wider mb-1">
-                🎯 Kryptonite
-              </p>
-              <p className="text-slate-700 font-semibold text-[11px] leading-snug">
-                {activeLore.weakness}
-              </p>
-            </div>
-          </div>
-
-          {/* Signature Move Callout */}
-          <div className="px-4 py-3 rounded-[22px] bg-gradient-to-r from-purple-50 via-pink-50 to-amber-50/50 border border-purple-100/80 flex items-center gap-3">
-            <span className="text-xl flex-shrink-0">✨</span>
-            <div className="min-w-0">
-              <p className="text-[9px] uppercase font-black text-purple-700 tracking-wider">
-                Signature Technique
-              </p>
-              <p className="text-xs font-black text-slate-900 truncate">{activeLore.specialMove}</p>
-            </div>
-          </div>
-
-          {/* Career Stats Grid */}
-          <div className="space-y-2 pt-1">
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
-              Career History &amp; Standing
-            </p>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="p-3 rounded-[20px] bg-amber-50/70 border border-amber-200/60 text-center">
-                <p className="text-amber-900 font-black text-lg leading-tight">
-                  {activeStats.tournamentsWon}
-                </p>
-                <p className="text-[10px] text-amber-700/80 font-bold mt-0.5">🏆 Titles Won</p>
-              </div>
-
-              <div className="p-3 rounded-[20px] bg-rose-50/70 border border-rose-200/60 text-center">
-                <p className="text-rose-800 font-black text-lg leading-tight">
-                  {activeStats.woodenSpoons}
-                </p>
-                <p className="text-[10px] text-rose-700/80 font-bold mt-0.5">🥄 Spoons</p>
-              </div>
-
-              <div className="p-3 rounded-[20px] bg-emerald-50/70 border border-emerald-200/60 text-center">
-                <p className="text-emerald-800 font-black text-lg leading-tight">
-                  {winRate}%
-                </p>
-                <p className="text-[10px] text-emerald-700/80 font-bold mt-0.5">Win Rate</p>
-              </div>
-
-              <div className="p-3 rounded-[20px] bg-indigo-50/70 border border-indigo-200/60 text-center">
-                <p className="text-indigo-900 font-black text-lg leading-tight">
-                  {activeStats.totalPoints}
-                </p>
-                <p className="text-[10px] text-indigo-700/80 font-bold mt-0.5">Total Points</p>
-              </div>
-
-              <div className="p-3 rounded-[20px] bg-slate-50 border border-slate-200/70 text-center">
-                <p className="text-slate-900 font-black text-lg leading-tight">
-                  {activeStats.matchesPlayed}
-                </p>
-                <p className="text-[10px] text-slate-500 font-bold mt-0.5">Matches</p>
-              </div>
-
-              <div className="p-3 rounded-[20px] bg-slate-950 text-white text-center shadow-xs">
-                <p className="text-white font-black text-lg leading-tight">
-                  #{currentRank}
-                </p>
-                <p className="text-[10px] text-slate-300 font-bold mt-0.5">Squad Rank</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Funny Radar Attribute Bars */}
-          <div className="space-y-2.5 pt-1">
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
-              Scouting Attributes (Certified 100% Accurate)
-            </p>
-
-            <div className="space-y-2.5 p-3.5 rounded-[22px] bg-slate-50/80 border border-slate-200/70">
-              {activeLore.funStats.map((stat, idx) => (
-                <div key={idx} className="space-y-1">
-                  <div className="flex justify-between text-xs font-bold">
-                    <span className="text-slate-800">{stat.label}</span>
-                    <span className="text-slate-500 font-mono text-[11px]">{stat.value}%</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-slate-200/80 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stat.value}%` }}
-                      transition={{ duration: 0.6, delay: idx * 0.1 }}
-                      className={`h-full rounded-full bg-gradient-to-r ${stat.color}`}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Rivalry Dossier (Bunny & Nemesis) */}
-          <div className="space-y-2 pt-2 border-t border-slate-200/70">
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
-              Rivalry &amp; Head-to-Head
-            </p>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="p-3.5 rounded-[22px] bg-emerald-50/70 border border-emerald-200/70">
-                <p className="text-[9px] uppercase font-black text-emerald-800 tracking-wider">
-                  🐰 Favorite Bunny
-                </p>
-                {bunny ? (
-                  <div className="mt-1">
-                    <p className="text-slate-900 font-black text-xs">{bunny.name}</p>
-                    <p className="text-[10px] text-emerald-700 font-bold font-mono mt-0.5">
-                      {bunny.won} wins ({bunny.played} played)
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-slate-400 text-[10px] mt-1 italic font-medium">No victims recorded yet</p>
-                )}
-              </div>
-
-              <div className="p-3.5 rounded-[22px] bg-rose-50/70 border border-rose-200/70">
-                <p className="text-[9px] uppercase font-black text-rose-800 tracking-wider">
-                  😈 Greatest Nemesis
-                </p>
-                {nemesis ? (
-                  <div className="mt-1">
-                    <p className="text-slate-900 font-black text-xs">{nemesis.name}</p>
-                    <p className="text-[10px] text-rose-700 font-bold font-mono mt-0.5">
-                      {nemesis.lost} losses ({nemesis.played} played)
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-slate-400 text-[10px] mt-1 italic font-medium">Undefeated against all</p>
+                {activeStats.tournamentsWon > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100/80 border border-amber-300/80 text-[10px] font-black text-amber-900">
+                    🏆 {activeStats.tournamentsWon} Won
+                  </span>
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Player Tagline & Quick Highlight */}
+          <div className="mt-3.5 pt-3 border-t border-indigo-100/70 flex items-center justify-between">
+            <p className="text-xs font-semibold text-slate-600 italic truncate max-w-[78%]">
+              &ldquo;{activeLore.tagline}&rdquo;
+            </p>
+            <span className="text-[10px] font-black text-indigo-700 bg-indigo-100/70 px-2 py-0.5 rounded-full">
+              {winRate}% WR
+            </span>
           </div>
         </div>
 
-        {/* Squad Hall of Fame Quick Links */}
+        {/* Section Segmented Pill Switcher */}
+        <div className="flex gap-1.5 p-1 bg-white rounded-full border border-slate-200/80 shadow-xs">
+          <button
+            onClick={() => setActiveProfileTab("dossier")}
+            className={`flex-1 py-2 px-3 rounded-full text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              activeProfileTab === "dossier"
+                ? "bg-slate-950 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            <span>🔥</span>
+            <span>Dossier</span>
+          </button>
+          <button
+            onClick={() => setActiveProfileTab("vibes")}
+            className={`flex-1 py-2 px-3 rounded-full text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              activeProfileTab === "vibes"
+                ? "bg-slate-950 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            <span>💬</span>
+            <span>Vibes</span>
+          </button>
+          <button
+            onClick={() => setActiveProfileTab("stats")}
+            className={`flex-1 py-2 px-3 rounded-full text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              activeProfileTab === "stats"
+                ? "bg-slate-950 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            <span>📊</span>
+            <span>Stats &amp; H2H</span>
+          </button>
+        </div>
+
+        {/* Dynamic Tab Content with Smooth Transitions */}
+        <AnimatePresence mode="wait">
+          {activeProfileTab === "dossier" && (
+            <motion.div
+              key="dossier-tab"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-3.5"
+            >
+              {/* Scouting Dossier & Roast Card */}
+              <div className="rounded-[28px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60">
+                    <span>🔥</span>
+                    <span>Scouting Dossier &amp; Roast</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono italic">Confidential</span>
+                </div>
+                <p className="text-slate-700 text-sm leading-relaxed font-normal">
+                  {activeLore.roastBio}
+                </p>
+              </div>
+
+              {/* Playstyle & Kryptonite Bento Cards */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-[24px] bg-indigo-50/70 border border-indigo-100/90 p-4 space-y-1.5">
+                  <p className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">
+                    ⚡ Playstyle
+                  </p>
+                  <p className="text-slate-900 font-black text-xs leading-snug">
+                    {activeLore.playstyle}
+                  </p>
+                </div>
+                <div className="rounded-[24px] bg-rose-50/70 border border-rose-100/90 p-4 space-y-1.5">
+                  <p className="text-[10px] font-black text-rose-700 uppercase tracking-wider">
+                    🎯 Kryptonite
+                  </p>
+                  <p className="text-slate-700 font-semibold text-xs leading-snug">
+                    {activeLore.weakness}
+                  </p>
+                </div>
+              </div>
+
+              {/* Signature Technique Highlight */}
+              <div className="rounded-[24px] bg-gradient-to-r from-purple-50 via-pink-50 to-amber-50/50 border border-purple-100/80 p-4 flex items-center gap-3.5 shadow-xs">
+                <div className="w-10 h-10 rounded-2xl bg-white border border-purple-100 flex items-center justify-center flex-shrink-0 text-lg shadow-xs">
+                  ✨
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] uppercase font-black text-purple-700 tracking-wider">
+                    Signature Technique
+                  </p>
+                  <p className="text-xs font-black text-slate-900 mt-0.5 truncate">
+                    {activeLore.specialMove}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeProfileTab === "vibes" && (
+            <motion.div
+              key="vibes-tab"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-3.5"
+            >
+              {/* Interactive Speech Bubble Card */}
+              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{activeLore.badgeEmoji}</span>
+                    <span className="text-xs font-black text-slate-900">
+                      {activeLore.name} on the record:
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono font-medium">
+                    {activeMoodTab === "courtMood"
+                      ? "🏸 Court Vibe"
+                      : activeMoodTab === "dailyRoast"
+                      ? "🍕 Daily Life"
+                      : "😤 Excuse"}
+                  </span>
+                </div>
+
+                {/* Mood Switcher Pills */}
+                <div className="flex gap-1.5 p-1 bg-slate-100/80 rounded-full">
+                  <button
+                    onClick={() => setActiveMoodTab("courtMood")}
+                    className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-black transition-all ${
+                      activeMoodTab === "courtMood"
+                        ? "bg-slate-950 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    🏸 On Court
+                  </button>
+                  <button
+                    onClick={() => setActiveMoodTab("dailyRoast")}
+                    className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-black transition-all ${
+                      activeMoodTab === "dailyRoast"
+                        ? "bg-slate-950 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    🍕 Daily Roast
+                  </button>
+                  <button
+                    onClick={() => setActiveMoodTab("excuse")}
+                    className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-black transition-all ${
+                      activeMoodTab === "excuse"
+                        ? "bg-slate-950 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    😤 Excuse
+                  </button>
+                </div>
+
+                {/* The Speech Bubble */}
+                <div className="relative p-5 rounded-[26px] bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border border-indigo-100/90 shadow-inner">
+                  <span className="text-2xl text-indigo-300 font-serif leading-none select-none block -mb-1">
+                    “
+                  </span>
+                  <p className="text-slate-800 text-sm font-bold leading-relaxed italic">
+                    {activeLore.vibeQuotes[activeMoodTab]}
+                  </p>
+                  <p className="text-right text-[10px] text-slate-400 font-mono mt-2">
+                    — {activeLore.name},{" "}
+                    {activeMoodTab === "courtMood"
+                      ? "Courtside"
+                      : activeMoodTab === "dailyRoast"
+                      ? "Daily Reality"
+                      : "Post-Match"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Certified Scouting Attributes */}
+              <div className="rounded-[28px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                    Scouting Attributes (100% Certified)
+                  </p>
+                  <span className="text-[10px] text-slate-400 font-mono">Radar Spec</span>
+                </div>
+
+                <div className="space-y-3">
+                  {activeLore.funStats.map((stat, idx) => (
+                    <div key={idx} className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="text-slate-800">{stat.label}</span>
+                        <span className="text-slate-500 font-mono text-[11px]">{stat.value}%</span>
+                      </div>
+                      <div className="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${stat.value}%` }}
+                          transition={{ duration: 0.6, delay: idx * 0.1 }}
+                          className={`h-full rounded-full bg-gradient-to-r ${stat.color}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeProfileTab === "stats" && (
+            <motion.div
+              key="stats-tab"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-3.5"
+            >
+              {/* Career Performance Grid Card */}
+              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                    Career Tournament Record
+                  </p>
+                  <span className="text-[10px] text-slate-400 font-mono">All Time</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="p-3.5 rounded-[22px] bg-amber-50/70 border border-amber-200/60 text-center">
+                    <p className="text-amber-900 font-black text-xl leading-tight">
+                      {activeStats.tournamentsWon}
+                    </p>
+                    <p className="text-[10px] text-amber-700/80 font-bold mt-0.5">🏆 Titles Won</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-[22px] bg-rose-50/70 border border-rose-200/60 text-center">
+                    <p className="text-rose-800 font-black text-xl leading-tight">
+                      {activeStats.woodenSpoons}
+                    </p>
+                    <p className="text-[10px] text-rose-700/80 font-bold mt-0.5">🥄 Spoons</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-[22px] bg-emerald-50/70 border border-emerald-200/60 text-center">
+                    <p className="text-emerald-800 font-black text-xl leading-tight">
+                      {winRate}%
+                    </p>
+                    <p className="text-[10px] text-emerald-700/80 font-bold mt-0.5">Win Rate</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-[22px] bg-indigo-50/70 border border-indigo-200/60 text-center">
+                    <p className="text-indigo-900 font-black text-xl leading-tight">
+                      {activeStats.totalPoints}
+                    </p>
+                    <p className="text-[10px] text-indigo-700/80 font-bold mt-0.5">Total Points</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-[22px] bg-slate-50 border border-slate-200/70 text-center">
+                    <p className="text-slate-900 font-black text-xl leading-tight">
+                      {activeStats.matchesPlayed}
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-bold mt-0.5">Matches</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-[22px] bg-slate-950 text-white text-center shadow-xs">
+                    <p className="text-white font-black text-xl leading-tight">
+                      #{currentRank}
+                    </p>
+                    <p className="text-[10px] text-slate-300 font-bold mt-0.5">Squad Rank</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rivalry & Head-to-Head Dossier */}
+              <div className="rounded-[28px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                    Rivalry Matrix
+                  </p>
+                  <span className="text-[10px] text-slate-400 font-mono">H2H Standings</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="p-3.5 rounded-[22px] bg-emerald-50/70 border border-emerald-200/70">
+                    <p className="text-[9px] uppercase font-black text-emerald-800 tracking-wider">
+                      🐰 Favorite Bunny
+                    </p>
+                    {bunny ? (
+                      <div className="mt-1">
+                        <p className="text-slate-900 font-black text-xs">{bunny.name}</p>
+                        <p className="text-[10px] text-emerald-700 font-bold font-mono mt-0.5">
+                          {bunny.won} wins ({bunny.played} played)
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 text-[10px] mt-1 italic font-medium">
+                        No victims recorded
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="p-3.5 rounded-[22px] bg-rose-50/70 border border-rose-200/70">
+                    <p className="text-[9px] uppercase font-black text-rose-800 tracking-wider">
+                      😈 Greatest Nemesis
+                    </p>
+                    {nemesis ? (
+                      <div className="mt-1">
+                        <p className="text-slate-900 font-black text-xs">{nemesis.name}</p>
+                        <p className="text-[10px] text-rose-700 font-bold font-mono mt-0.5">
+                          {nemesis.lost} losses ({nemesis.played} played)
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 text-[10px] mt-1 italic font-medium">
+                        Undefeated against all
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Complete H2H Squad Breakdown */}
+                <div className="pt-2 border-t border-slate-100">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                    Record vs. Squad Opponents
+                  </p>
+                  <div className="space-y-1.5">
+                    {FIXED_PLAYERS.filter((p) => p.id !== selectedPlayerId).map((opp) => {
+                      const rec = activeStats.h2h?.[opp.id] || { played: 0, won: 0, lost: 0 };
+                      return (
+                        <div
+                          key={opp.id}
+                          className="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-slate-50/80 text-xs"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 flex items-center justify-center">
+                              <AvatarSVG type={opp.avatar} size={20} />
+                            </span>
+                            <span className="font-bold text-slate-800">{opp.name}</span>
+                          </div>
+                          <div className="font-mono text-[11px]">
+                            {rec.played > 0 ? (
+                              <span>
+                                <span className="font-bold text-emerald-700">{rec.won}W</span>
+                                <span className="text-slate-400 mx-1">-</span>
+                                <span className="font-bold text-rose-600">{rec.lost}L</span>
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">0 - 0</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Squad Hall of Fame Quick Link */}
         <div className="p-4 rounded-[26px] bg-white border border-slate-200/80 shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-2xl">👑</span>
