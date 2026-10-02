@@ -369,14 +369,14 @@ Then tell me — I'll proceed with **Phase 10: Core API**.
 
 ## Checklist summary
 
-- [ ] Neon account created, project `badminton` created, `DATABASE_URL` copied
-- [ ] Render account created, web service created pointing at `backend/` directory
-- [ ] Environment variables set in Render (`DATABASE_URL`, `PORT`, `SCOREKEEPER_PIN`, `NODE_ENV`)
-- [ ] `backend/` folder created locally with Express + Socket.io + TypeScript
-- [ ] `.env` file created locally (gitignored), `.env.example` committed
-- [ ] Migration SQL written (`001_initial.sql`)
-- [ ] Local `npm run dev` works + `/health` returns `{"status":"ok"}`
-- [ ] Pushed to GitHub, Render deploys successfully
-- [ ] Live `/health` endpoint on Render returns `{"status":"ok"}`
-- [ ] UptimeRobot monitor set up, pinging every 5 minutes
-- [ ] `phases.md` Phase 9 ticked, `review.md` Phase 9 entry appended
+- [x] Neon account created, project `badminton` created, `DATABASE_URL` copied
+- [x] Render account created, web service created pointing at `backend/` directory
+- [x] Environment variables set in Render (`DATABASE_URL`, `PORT`, `SCOREKEEPER_PIN`, `NODE_ENV`)
+- [x] `backend/` folder created locally with Express + Socket.io + TypeScript
+- [x] `.env` file created locally (gitignored), `.env.example` committed
+- [x] Migration SQL written (`001_initial.sql`)
+- [x] Local `npm run dev` works + `/health` returns `{"status":"ok"}`
+- [x] Pushed to GitHub, Render deploys successfully
+- [x] Live `/health` endpoint on Render returns `{"status":"ok"}`
+- [x] UptimeRobot monitor set up, pinging every 5 minutes
+- [x] `phases.md` Phase 9 ticked, `review.md` Phase 9 entry appended
