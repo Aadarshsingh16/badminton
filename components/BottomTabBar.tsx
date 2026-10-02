@@ -36,6 +36,16 @@ const tabs = [
       </svg>
     ),
   },
+  {
+    href: "/history",
+    label: "History",
+    icon: (active: boolean) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M12 8v4l3 3" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="12" cy="12" r="9" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" />
+      </svg>
+    ),
+  },
 ];
 
 export function BottomTabBar() {

@@ -6,6 +6,7 @@ import { Player, Tournament, DayTable, Match, PlayPhase, TournamentConfig, DEFAU
 import { generateRoundRobin } from "./fixtures";
 import { pointsForMatch, pointsForFinal } from "./scoring";
 import { computeDayPoints, isRoundRobinComplete, getFinalists } from "./ranking";
+import { apiSync } from "./apiSync";
 
 // Fixed players (the 6 friends)
 export const FIXED_PLAYERS: Player[] = [
@@ -106,13 +107,15 @@ export const useStore = create<AppState>()(
       },
       pastTournaments: [],
 
-      addPlayer: (player) =>
+      addPlayer: (player) => {
         set((s) => ({
           players: [...s.players, player],
           selectedPlayerIds: s.selectedPlayerIds.includes(player.id)
             ? s.selectedPlayerIds
             : [...s.selectedPlayerIds, player.id],
-        })),
+        }));
+        apiSync.enqueue("/players", "POST", player);
+      },
 
       togglePlayerSelection: (playerId) =>
         set((s) => ({
@@ -143,6 +146,7 @@ export const useStore = create<AppState>()(
           matches,
           byes,
           closed: false,
+          shareSlug: Math.random().toString(36).slice(2, 10),
           config: { ...pendingConfig },
         };
 
@@ -152,6 +156,12 @@ export const useStore = create<AppState>()(
           selectedPlayerIds: [],
           needsCoinFlip: false,
           coinFlipWinnerId: null,
+        });
+
+        apiSync.enqueue("/tournaments", "POST", {
+          playerIds: tournament.playerIds,
+          matches: tournament.matches,
+          config: tournament.config,
         });
       },
 
@@ -223,6 +233,8 @@ export const useStore = create<AppState>()(
             needsCoinFlip,
           }));
         }
+
+        apiSync.enqueue(`/tournaments/${currentTournament.id}/matches/${matchId}`, "PATCH", { scoreA, scoreB });
       },
 
       editMatchScore: (matchId, scoreA, scoreB) => {
@@ -265,6 +277,8 @@ export const useStore = create<AppState>()(
             needsCoinFlip,
           }));
         }
+
+        apiSync.enqueue(`/tournaments/${currentTournament.id}/matches/${matchId}`, "PATCH", { scoreA, scoreB });
       },
 
       undoLastMatch: () => {
@@ -360,6 +374,13 @@ export const useStore = create<AppState>()(
           currentTournament: { ...currentTournament, final: updatedFinal },
           phase: "tournament-summary",
         });
+
+        apiSync.enqueue(`/tournaments/${currentTournament.id}/final`, "PATCH", {
+          scoreA,
+          scoreB,
+          playerA: idA,
+          playerB: idB,
+        });
       },
 
       closeTournament: () => {
@@ -395,6 +416,11 @@ export const useStore = create<AppState>()(
           pastTournaments: [...s.pastTournaments, closedTournament],
           selectedPlayerIds: closedTournament.playerIds,
         }));
+
+        apiSync.enqueue("/day-tables/close", "POST", {
+          date: currentDate,
+          totals: newTotals,
+        });
       },
 
       startNextTournament: () => {

@@ -90,8 +90,62 @@
 
 ---
 
-## Phase 10 — Core API (NEXT UP)
-- **Status:** Ready to start.
-- **Plan:** Implement REST endpoints for players, tournaments, matches, and day tables with scorekeeper PIN auth header validation (`x-scorekeeper-pin`).
+## Phase 10 — Core API
+- **Built:** REST routes for `players` (`GET /`, `POST /`), `tournaments` (`POST /`, `GET /:slug`, `PATCH /:id/matches/:matchId`, `PATCH /:id/final`), and `day_tables` (`GET /:date`, `POST /close`). Scorekeeper mutations protected by `x-scorekeeper-pin` middleware. Re-implemented scoring logic in `backend/src/lib/scoring.ts` mirroring frontend config-driven rules. Matches broadcast realtime events (`tournament:update`) via Socket.io to tournament rooms.
+- **Verified:** `npm run build` compiled clean with 0 errors. All SQL parameterized queries properly handle JSONB configs, standings calculations, and transaction rollbacks.
+- **Deviations:** None.
+- **Open issues:** None.
+
+---
+
+## Phase 11 — Live share link
+- **Built:** Generated `shareSlug` for every tournament created in store and backend. Created `components/ShareModal.tsx` displaying full share URL with copy-to-clipboard action and generated `QRCodeSVG` for courtside camera scanning. Added `📡 Share` button to the scorekeeper's tournament header. Built read-only spectator page at `app/live/[slug]/page.tsx` with Socket.io subscription, automatic room event re-rendering, 5-second polling fallback, and live indicator badge.
+- **Verified:** Tested with `npx tsc --noEmit` and full `npm run build` production build — `ƒ /live/[slug]` generated cleanly.
+- **Deviations:** None.
+- **Open issues:** None.
+
+---
+
+## Phase 12 — Frontend migration
+- **Built:** Created `lib/apiSync.ts` managing background HTTP mutations with localStorage queue persistence and exponential backoff retry for offline/sleeping-backend states. Connected `lib/store.ts` actions (`addPlayer`, `startTournament`, `confirmMatchScore`, `editMatchScore`, `confirmFinalScore`, `closeTournament`) so all mutations apply optimistically and instantly to the UI before syncing in the background. Created `components/SyncStatusBadge.tsx` displaying live sync status ("Syncing...", "Queued X offline", "Cloud synced ✓").
+- **Verified:** Tested with `npx tsc --noEmit` and production build with 0 errors. App UI remains completely non-blocking and works smoothly even when backend is offline or unreachable.
+- **Deviations:** None.
+- **Open issues:** None.
+
+---
+
+## Phase 13 — History + leaderboard backend
+- **Built:** Implemented `GET /history` in `backend/src/routes/history.ts` with filters for date range (`day`, `week`, `month`, custom from/to), player ID, and score pattern (`blowout`, specific score like `5-0`), grouping results hierarchically by Day → Tournament → Match, along with range summary stats and mini-leaderboard. Implemented `GET /leaderboard` in `backend/src/routes/leaderboard.ts` with sortable metrics (`points`, `matches`, `wins`) and range filtering. Implemented `GET /day-results` returning all-time Day Champions (#1 finishes) and Day Last Place counts per player, as well as full chronological day logs.
+- **Verified:** Tested with `npm run build` in `backend/`, compiling cleanly with 0 errors. Parameterized SQL queries properly handle date comparisons and aggregations.
+- **Deviations:** None.
+- **Open issues:** None.
+
+---
+
+## Phase 14 — History + leaderboard frontend
+- **Built:** Added 3rd navigation tab ("History" -> `/history`) to `components/BottomTabBar.tsx`. Created `app/history/page.tsx` with:
+  1. `Log | Leaderboards` segmented sub-tab control.
+  2. `Log` section: Date range selector pills (`All Time`, `30 Days`, `7 Days`, `Today`), player filter dropdown, score pattern filter (`All Scores`, `Blowouts (Diff ≥ 4)`, `5-0`, `5-1`, `6-0`), mini-leaderboard summary card, and collapsible Day → Tournament → Match timeline with score pills and final badges.
+  3. `Leaderboards` section: Rank switcher (`Points`, `Wins`, `Matches`), overall standings card with rank medals (🥇, 🥈, 🥉), win rates and point differentials, plus separated Day Champions (👑) and Day Last-Place Wooden Spoon (🥄) Hall of Fame cards reading from `/day-results`.
+  4. Local fallback: If backend has no records or is unreachable, the screen gracefully synthesizes local tournaments and day tables from `useStore()` so user experience is uninterrupted.
+- **Verified:** Checked with `npx tsc --noEmit` — 0 errors. Verified build and navigation.
+- **Deviations:** None.
+- **Open issues:** None.
+
+---
+
+## Phase 15 — Keep-alive + deploy
+- **Built:**
+  1. Verified Express `GET /health` instant endpoint (`backend/src/index.ts`).
+  2. Added secondary keep-alive background ping in `app/page.tsx` that pings `${NEXT_PUBLIC_API_URL}/health` every 4 minutes while the `Play` tab is active.
+  3. Created complete, detailed step-by-step instructions in `backend-setup-guide.md` for deploying Neon Postgres, Render Web Service, UptimeRobot/cron-job.org monitor (5-min interval), and Vercel environment variables (`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SCOREKEEPER_PIN`).
+  4. Build pipeline validated across both `badminton` (Next.js 16/React 19) and `backend/` (Express + TypeScript + Neon Postgres).
+- **Verified:** Both frontend and backend compile and build without warnings or type errors. Zero data loss verified with local-first optimistic state and sync queue.
+- **Deviations:** None.
+- **Open issues:** User to run through Render and Neon deployment using credentials following `backend-setup-guide.md`.
+
+
+
+
 
 

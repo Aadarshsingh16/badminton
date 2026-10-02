@@ -19,6 +19,7 @@ export interface Match {
   scoreA?: number;
   scoreB?: number;
   played: boolean;
+  isFinal?: boolean;
   pointsAwarded?: { [playerId: string]: number };
 }
 
@@ -62,6 +63,7 @@ export interface Tournament {
   finalistIds?: [string, string];
   closed: boolean;
   dayPointsAwarded?: { [playerId: string]: number };
+  shareSlug?: string;        // random short slug for /live/[slug]
   config: TournamentConfig;  // scoring rules for this tournament
 }
 

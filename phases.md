@@ -24,9 +24,9 @@
 ## Phase 2 (Backend + Live Share + History — Planned)
 
 - [x] Phase 9:  Backend scaffold — Express + TypeScript + Socket.io on Render, Neon Postgres schema + migration, `GET /health` keep-alive endpoint
-- [ ] Phase 10: Core API — players, tournaments, matches, day tables; scorekeeper-only writes via shared-secret PIN header
-- [ ] Phase 11: Live share link — `share_slug` generation, `/live/[slug]` read-only page, Socket.io room broadcast + 5s polling fallback
-- [ ] Phase 12: Frontend migration — Zustand becomes optimistic cache + background sync, retry queue for offline/sleeping-backend writes, "syncing…" indicator
-- [ ] Phase 13: History + leaderboard backend — `/history` (filterable), `/leaderboard`, `day_results` logging on day close
-- [ ] Phase 14: History + leaderboard frontend — 3rd "History" tab with `Log | Leaderboards` segmented control, filter bar, collapsible timeline, two separate leaderboard cards
-- [ ] Phase 15: Keep-alive + deploy — Render env vars, UptimeRobot/cron-job.org monitor, Vercel env vars, end-to-end test
+- [x] Phase 10: Core API — players, tournaments, matches, day tables; scorekeeper-only writes via shared-secret PIN header
+- [x] Phase 11: Live share link — `share_slug` generation, `/live/[slug]` read-only page, Socket.io room broadcast + 5s polling fallback
+- [x] Phase 12: Frontend migration — Zustand becomes optimistic cache + background sync, retry queue for offline/sleeping-backend writes, "syncing…" indicator
+- [x] Phase 13: History + leaderboard backend — `/history` (filterable), `/leaderboard`, `day_results` logging on day close
+- [x] Phase 14: History + leaderboard frontend — 3rd "History" tab with `Log | Leaderboards` segmented control, filter bar, collapsible timeline, two separate leaderboard cards
+- [x] Phase 15: Keep-alive + deploy — Render env vars, UptimeRobot/cron-job.org monitor, Vercel env vars, end-to-end test

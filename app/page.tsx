@@ -11,6 +11,8 @@ import { MatchCard } from "@/components/MatchCard";
 import { ScoreInput } from "@/components/ScoreInput";
 import { TournamentTable } from "@/components/TournamentTable";
 import { TournamentSetup } from "@/components/TournamentSetup";
+import { ShareModal } from "@/components/ShareModal";
+import { SyncStatusBadge } from "@/components/SyncStatusBadge";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
 import { Player, Match, AvatarType, TournamentConfig } from "@/lib/types";
 import { generateRoundRobin } from "@/lib/fixtures";
@@ -52,6 +54,18 @@ export default function PlayPage() {
   const [coinFlipVisible, setCoinFlipVisible] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showShuffleConfirm, setShowShuffleConfirm] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  // Harmless frontend keep-alive backup ping while Play tab is mounted
+  React.useEffect(() => {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const ping = () => {
+      fetch(`${backendUrl}/health`).catch(() => {});
+    };
+    ping();
+    const interval = setInterval(ping, 4 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getPlayer = (id: string): Player =>
     players.find((p) => p.id === id) ?? { id, name: id, avatar: "custom" as AvatarType };
@@ -292,13 +306,22 @@ export default function PlayPage() {
         <div className="sticky top-0 z-10 bg-slate-950/90 backdrop-blur border-b border-white/5 px-4 pt-4 pb-0">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-white font-black text-lg">Tournament</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-white font-black text-lg">Tournament</h2>
+                <SyncStatusBadge />
+              </div>
               <p className="text-white/40 text-xs">
-                {playedMatches.length}/{currentTournament.matches.length} matches played
-                {" · "}First to {currentTournament.config.winScore}
+                {playedMatches.length}/{currentTournament.matches.length} matches played · First to {currentTournament.config.winScore}
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="text-xs bg-purple-500/15 text-purple-300 border border-purple-500/25 px-3 py-1.5 rounded-full hover:bg-purple-500/25 transition-colors font-medium flex items-center gap-1 shadow-sm"
+              >
+                <span>📡</span>
+                <span>Share</span>
+              </button>
               <button
                 onClick={() => setShowShuffleConfirm(true)}
                 className="text-xs bg-orange-500/15 text-orange-400 border border-orange-500/20 px-3 py-1.5 rounded-full hover:bg-orange-500/25 transition-colors font-medium flex items-center gap-1"
@@ -426,6 +449,12 @@ export default function PlayPage() {
             config={currentTournament.config}
           />
         )}
+        {/* Share modal */}
+        <ShareModal
+          open={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          slug={currentTournament.shareSlug ?? currentTournament.id}
+        />
       </div>
     );
   }

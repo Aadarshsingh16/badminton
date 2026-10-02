@@ -62,6 +62,20 @@ io.on("connection", (socket) => {
 
 export { io };
 
+// ── Routes ───────────────────────────────────────────────────────────────────
+import { playersRouter } from "./routes/players";
+import { tournamentsRouter } from "./routes/tournaments";
+import { dayTablesRouter } from "./routes/dayTables";
+import { historyRouter } from "./routes/history";
+import { leaderboardRouter, dayResultsRouter } from "./routes/leaderboard";
+
+app.use("/players", playersRouter);
+app.use("/tournaments", tournamentsRouter);
+app.use("/day-tables", dayTablesRouter);
+app.use("/history", historyRouter);
+app.use("/leaderboard", leaderboardRouter);
+app.use("/day-results", dayResultsRouter);
+
 // ── Server listen & startup migration ────────────────────────────────────────
 const PORT = parseInt(process.env.PORT ?? "3001", 10);
 
