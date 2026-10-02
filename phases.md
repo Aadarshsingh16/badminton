@@ -23,7 +23,7 @@
 
 ## Phase 2 (Backend + Live Share + History — Planned)
 
-- [ ] Phase 9:  Backend scaffold — Express + TypeScript + Socket.io on Render, Neon Postgres schema + migration, `GET /health` keep-alive endpoint
+- [x] Phase 9:  Backend scaffold — Express + TypeScript + Socket.io on Render, Neon Postgres schema + migration, `GET /health` keep-alive endpoint
 - [ ] Phase 10: Core API — players, tournaments, matches, day tables; scorekeeper-only writes via shared-secret PIN header
 - [ ] Phase 11: Live share link — `share_slug` generation, `/live/[slug]` read-only page, Socket.io room broadcast + 5s polling fallback
 - [ ] Phase 12: Frontend migration — Zustand becomes optimistic cache + background sync, retry queue for offline/sleeping-backend writes, "syncing…" indicator
