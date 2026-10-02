@@ -29,4 +29,4 @@
 - [x] Phase 12: Frontend migration — Zustand becomes optimistic cache + background sync, retry queue for offline/sleeping-backend writes, "syncing…" indicator
 - [x] Phase 13: History + leaderboard backend — `/history` (filterable), `/leaderboard`, `day_results` logging on day close
 - [x] Phase 14: History + leaderboard frontend — 3rd "History" tab with `Log | Leaderboards` segmented control, filter bar, collapsible timeline, two separate leaderboard cards
-- [x] Phase 15: Keep-alive + deploy — Render env vars, UptimeRobot/cron-job.org monitor, Vercel env vars, end-to-end test
+- [ ] Phase 15: Keep-alive + deploy — Render env vars, UptimeRobot/cron-job.org monitor, Vercel env vars, end-to-end test
