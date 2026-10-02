@@ -71,16 +71,40 @@ class ApiSyncService {
     this.listeners.forEach((l) => l(status));
   }
 
+  private unauthorizedListeners: Set<() => void> = new Set();
+
+  public onUnauthorized(listener: () => void) {
+    this.unauthorizedListeners.add(listener);
+    return () => {
+      this.unauthorizedListeners.delete(listener);
+    };
+  }
+
+  private notifyUnauthorized() {
+    this.unauthorizedListeners.forEach((l) => l());
+  }
+
   public getBackendUrl(): string {
     return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
   }
 
   public getPin(): string {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("scorekeeper_pin");
-      if (stored) return stored;
+      return localStorage.getItem("scorekeeper_pin") || "";
     }
-    return process.env.NEXT_PUBLIC_SCOREKEEPER_PIN || "badminton2024";
+    return "";
+  }
+
+  public setPin(pin: string) {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("scorekeeper_pin", pin);
+      this.notify();
+      this.processQueue();
+    }
+  }
+
+  public hasPin(): boolean {
+    return !!this.getPin();
   }
 
   /**
@@ -133,6 +157,7 @@ class ApiSyncService {
           item.nextRetry = now + 60000;
           item.attempts++;
           this.saveQueue();
+          this.notifyUnauthorized();
         } else {
           // Server error / waking up -> retry with exponential backoff
           item.attempts++;

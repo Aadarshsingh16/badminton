@@ -12,10 +12,12 @@ import { ScoreInput } from "@/components/ScoreInput";
 import { TournamentTable } from "@/components/TournamentTable";
 import { TournamentSetup } from "@/components/TournamentSetup";
 import { ShareModal } from "@/components/ShareModal";
+import { PinModal } from "@/components/PinModal";
 import { SyncStatusBadge } from "@/components/SyncStatusBadge";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
 import { Player, Match, AvatarType, TournamentConfig } from "@/lib/types";
 import { generateRoundRobin } from "@/lib/fixtures";
+import { apiSync } from "@/lib/apiSync";
 
 type FixtureTab = "fixtures" | "table";
 
@@ -55,6 +57,27 @@ export default function PlayPage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showShuffleConfirm, setShowShuffleConfirm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinIsInvalid, setPinIsInvalid] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+
+  // Listen for unauthorized 401s from backend sync
+  React.useEffect(() => {
+    return apiSync.onUnauthorized(() => {
+      setPinIsInvalid(true);
+      setShowPinModal(true);
+    });
+  }, []);
+
+  const ensurePin = (action: () => void) => {
+    if (apiSync.hasPin()) {
+      action();
+    } else {
+      setPendingAction(() => action);
+      setPinIsInvalid(false);
+      setShowPinModal(true);
+    }
+  };
 
   // Harmless frontend keep-alive backup ping while Play tab is mounted
   React.useEffect(() => {
@@ -86,24 +109,27 @@ export default function PlayPage() {
 
   const handleScoreConfirm = (sA: number, sB: number) => {
     if (!currentTournament || !activeMatch) return;
-    const margin = Math.abs(sA - sB);
-    const isFinal = activeMatch.round === -1;
-    const bonusMargin = isFinal ? currentTournament.config.finalBonusMargin : currentTournament.config.bonusMargin;
-    if (margin >= bonusMargin) setShowConfetti(true);
+    ensurePin(() => {
+      const margin = Math.abs(sA - sB);
+      const isFinal = activeMatch.round === -1;
+      const bonusMargin = isFinal ? currentTournament.config.finalBonusMargin : currentTournament.config.bonusMargin;
+      if (margin >= bonusMargin) setShowConfetti(true);
 
-    if (isFinal) {
-      confirmFinalScore(sA, sB);
-    } else if (isEditingMatch) {
-      editMatchScore(activeMatch.id, sA, sB);
-    } else {
-      confirmMatchScore(activeMatch.id, sA, sB);
-    }
-    setActiveMatchId(null);
-    setIsEditingMatch(false);
+      if (isFinal) {
+        confirmFinalScore(sA, sB);
+      } else if (isEditingMatch) {
+        editMatchScore(activeMatch.id, sA, sB);
+      } else {
+        confirmMatchScore(activeMatch.id, sA, sB);
+      }
+      setActiveMatchId(null);
+      setIsEditingMatch(false);
+    });
   };
 
-  // ——— Player Select Screen ———
-  if (phase === "player-select") {
+  const renderPhaseContent = () => {
+    // ——— Player Select Screen ———
+    if (phase === "player-select") {
     const canStart = selectedPlayerIds.length >= 3;
     const hasPreviousTournament = dayTable.tournaments.length > 0;
 
@@ -113,12 +139,25 @@ export default function PlayPage() {
 
         {/* Header */}
         <div className="px-4 pt-6 pb-4">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="text-3xl">🏸</span>
-            <div>
-              <h1 className="text-white font-black text-2xl leading-tight">Badminton</h1>
-              <p className="text-white/40 text-xs">Round-robin tournament manager</p>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🏸</span>
+              <div>
+                <h1 className="text-white font-black text-2xl leading-tight">Badminton</h1>
+                <p className="text-white/40 text-xs">Round-robin tournament manager</p>
+              </div>
             </div>
+            <button
+              onClick={() => {
+                setPinIsInvalid(false);
+                setShowPinModal(true);
+              }}
+              title="Scorekeeper PIN"
+              className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all text-xs flex items-center gap-1.5"
+            >
+              <span>🔑</span>
+              <span className="text-[10px] font-semibold text-gray-300">PIN</span>
+            </button>
           </div>
           {hasPreviousTournament && (
             <div className="mt-3 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-2">
@@ -234,7 +273,9 @@ export default function PlayPage() {
         matchCount={setupMatchCount}
         onConfirm={(cfg) => {
           setPendingConfig(cfg);
-          startTournament();
+          ensurePin(() => {
+            startTournament();
+          });
         }}
         onBack={() => useStore.getState().setPhase("player-select")}
       />
@@ -314,7 +355,17 @@ export default function PlayPage() {
                 {playedMatches.length}/{currentTournament.matches.length} matches played · First to {currentTournament.config.winScore}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  setPinIsInvalid(false);
+                  setShowPinModal(true);
+                }}
+                title="Scorekeeper PIN"
+                className="text-xs bg-white/10 text-gray-300 border border-white/15 px-2.5 py-1.5 rounded-full hover:bg-white/20 transition-colors font-medium flex items-center gap-1"
+              >
+                <span>🔑</span>
+              </button>
               <button
                 onClick={() => setShowShareModal(true)}
                 className="text-xs bg-purple-500/15 text-purple-300 border border-purple-500/25 px-3 py-1.5 rounded-full hover:bg-purple-500/25 transition-colors font-medium flex items-center gap-1 shadow-sm"
@@ -557,7 +608,7 @@ export default function PlayPage() {
           {/* Start final button */}
           <div className="px-4 py-4 mt-auto">
             <button
-              onClick={() => startFinal()}
+              onClick={() => ensurePin(() => startFinal())}
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-yellow-500 to-orange-500 font-black text-white text-lg shadow-lg shadow-yellow-500/30"
             >
               🏆 Start Final Match
@@ -711,7 +762,7 @@ export default function PlayPage() {
         {/* Actions */}
         <div className="px-4 py-6 flex flex-col gap-3">
           <button
-            onClick={closeTournament}
+            onClick={() => ensurePin(() => closeTournament())}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 font-black text-white text-lg shadow-lg shadow-purple-500/30"
           >
             Save &amp; Start Next Tournament 🏸
@@ -737,5 +788,27 @@ export default function PlayPage() {
     );
   }
 
-  return null;
+    return null;
+  };
+
+  return (
+    <>
+      {renderPhaseContent()}
+      <PinModal
+        open={showPinModal}
+        isInvalid={pinIsInvalid}
+        onClose={() => {
+          setShowPinModal(false);
+          setPendingAction(null);
+        }}
+        onSuccess={() => {
+          if (pendingAction) {
+            const act = pendingAction;
+            setPendingAction(null);
+            act();
+          }
+        }}
+      />
+    </>
+  );
 }
