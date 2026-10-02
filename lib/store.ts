@@ -347,11 +347,19 @@ export const useStore = create<AppState>()(
         if (selectedPlayerIds.length < 3) return;
 
         const isPractice = !!pendingConfig.isPractice;
-        const { matches, byes } = generateRoundRobin(selectedPlayerIds);
+
+        // Automatically randomize / shuffle player order so every tournament starts with fresh, random fixtures
+        const randomized = [...selectedPlayerIds];
+        for (let i = randomized.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [randomized[i], randomized[j]] = [randomized[j], randomized[i]];
+        }
+
+        const { matches, byes } = generateRoundRobin(randomized);
         const tournament: Tournament = {
           id: generateId(),
           createdAt: Date.now(),
-          playerIds: [...selectedPlayerIds],
+          playerIds: randomized,
           matches,
           byes,
           closed: false,

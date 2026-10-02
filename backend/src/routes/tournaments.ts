@@ -44,8 +44,8 @@ function computeTable(matches: any[], playerIds: string[]) {
 tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
   const { id: customId, shareSlug: customSlug, playerIds, matches, config } = req.body;
 
-  if (!Array.isArray(playerIds) || playerIds.length < 3) {
-    return res.status(400).json({ error: "playerIds must be an array of at least 3 players" });
+  if (!Array.isArray(playerIds) || playerIds.length < 2) {
+    return res.status(400).json({ error: "playerIds must be an array of at least 2 players" });
   }
 
   const slug = customSlug || nanoid(8);
@@ -112,7 +112,7 @@ tournamentsRouter.get("/:slug", async (req, res) => {
   try {
     const tRes = await pool.query(
       `SELECT id, share_slug, day_id, player_ids, status, config, created_at, completed_at
-       FROM tournaments WHERE share_slug = $1`,
+       FROM tournaments WHERE share_slug = $1 OR id = $1`,
       [slug]
     );
 
@@ -134,7 +134,7 @@ tournamentsRouter.get("/:slug", async (req, res) => {
     // Fetch players
     const pRes = await pool.query(
       `SELECT id, name, avatar_type AS "avatar", avatar_emoji AS "avatarEmoji", avatar_color AS "avatarColor"
-       FROM players WHERE id = ANY($1::uuid[])`,
+       FROM players WHERE id = ANY($1::text[])`,
       [tournament.player_ids]
     );
 

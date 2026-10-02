@@ -8,6 +8,8 @@ import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { TournamentTable } from "@/components/TournamentTable";
 import { MatchCard } from "@/components/MatchCard";
 import { Player, Match, Tournament, TournamentRow } from "@/lib/types";
+import { useStore } from "@/lib/store";
+import { computeTournamentTable } from "@/lib/ranking";
 
 interface LiveData {
   tournament: any;
@@ -29,8 +31,31 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
 
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-  // Fetch initial tournament data
+  // Fetch initial tournament data with local fallback
   const fetchData = async () => {
+    // 1. Try local store first (if host is viewing or tournament in local storage)
+    const state = useStore.getState();
+    const localT =
+      state.currentTournament &&
+      (state.currentTournament.shareSlug === slug || state.currentTournament.id === slug)
+        ? state.currentTournament
+        : state.pastTournaments.find((t) => t.shareSlug === slug || t.id === slug);
+
+    if (localT) {
+      const standings = computeTournamentTable(localT);
+      setData({
+        tournament: localT,
+        matches: [...localT.matches, ...(localT.final ? [localT.final] : [])],
+        players: state.players,
+        standings,
+      });
+      setLoading(false);
+      setError(null);
+      setLastUpdated(new Date().toLocaleTimeString());
+      return;
+    }
+
+    // 2. Fetch from backend API
     try {
       const res = await fetch(`${backendUrl}/tournaments/${slug}`);
       if (!res.ok) {
@@ -42,13 +67,12 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       const json = await res.json();
       setData(json);
       setLoading(false);
+      setError(null);
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (err: any) {
       console.warn("Live fetch error:", err.message);
-      // If backend is waking up or local fallback
-      if (loading) {
-        setError(err.message || "Failed to connect to tournament stream");
-      }
+      setError(err.message || "Connecting to tournament stream...");
+      setLoading(false);
     }
   };
 

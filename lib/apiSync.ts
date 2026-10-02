@@ -121,6 +121,26 @@ class ApiSyncService {
   }
 
   /**
+   * Immediately reset retry timers and flush all pending queued items.
+   */
+  public forceSyncAll() {
+    this.queue.forEach((item) => {
+      item.nextRetry = 0;
+      item.attempts = 0;
+    });
+    this.saveQueue();
+    this.processQueue();
+  }
+
+  /**
+   * Clear all pending items in the sync queue.
+   */
+  public clearQueue() {
+    this.queue = [];
+    this.saveQueue();
+  }
+
+  /**
    * Queue a backend mutation. Tries immediately; if backend is sleeping or offline,
    * will retry in background with exponential backoff.
    */
@@ -150,6 +170,13 @@ class ApiSyncService {
     const readyItems = this.queue.filter((item) => item.nextRetry <= now);
 
     for (const item of readyItems) {
+      // Drop items that have failed 5+ times or are hopelessly stale
+      if (item.attempts >= 5) {
+        this.queue = this.queue.filter((q) => q.id !== item.id);
+        this.saveQueue();
+        continue;
+      }
+
       try {
         const res = await fetch(item.url, {
           method: item.method,
@@ -160,28 +187,28 @@ class ApiSyncService {
           body: item.body ? JSON.stringify(item.body) : undefined,
         });
 
-        if (res.ok || res.status === 409) {
-          // Success or already exists -> remove from queue
+        if (res.ok || res.status === 409 || res.status === 404 || res.status === 400 || res.status === 422) {
+          // Success, already exists, or unprocessable/not found -> remove from queue
           this.queue = this.queue.filter((q) => q.id !== item.id);
           this.saveQueue();
         } else if (res.status === 401) {
           console.warn("Sync unauthorized (check scorekeeper PIN):", item.url);
-          // Don't spin loop on 401
-          item.nextRetry = now + 60000;
+          // Wait 30s before retrying unauthorized requests to avoid spin loop
+          item.nextRetry = now + 30000;
           item.attempts++;
           this.saveQueue();
           this.notifyUnauthorized();
         } else {
           // Server error / waking up -> retry with exponential backoff
           item.attempts++;
-          const backoff = Math.min(60000, Math.pow(2, item.attempts) * 2000);
+          const backoff = Math.min(30000, Math.pow(2, item.attempts) * 1500);
           item.nextRetry = now + backoff;
           this.saveQueue();
         }
       } catch (err) {
         // Network offline or failed connection
         item.attempts++;
-        const backoff = Math.min(60000, Math.pow(2, item.attempts) * 2000);
+        const backoff = Math.min(30000, Math.pow(2, item.attempts) * 1500);
         item.nextRetry = now + backoff;
         this.saveQueue();
       }
