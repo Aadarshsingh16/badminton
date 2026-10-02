@@ -384,6 +384,7 @@ export const useStore = create<AppState>()(
             matches: tournament.matches,
             config: tournament.config,
           });
+          apiSync.syncTournamentDirectly(tournament, get().players);
         }
       },
 

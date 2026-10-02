@@ -96,6 +96,13 @@ export default function PlayPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Proactively sync active tournament to cloud so spectator stream is guaranteed to exist
+  React.useEffect(() => {
+    if (currentTournament && !currentTournament.isPractice) {
+      apiSync.syncTournamentDirectly(currentTournament, players);
+    }
+  }, [currentTournament?.id, currentTournament?.isPractice]);
+
   const getPlayer = (id: string): Player =>
     players.find((p) => p.id === id) ?? { id, name: id, avatar: "custom" as AvatarType };
 

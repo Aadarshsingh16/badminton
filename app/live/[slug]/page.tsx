@@ -10,6 +10,7 @@ import { MatchCard } from "@/components/MatchCard";
 import { Player, Match, Tournament, TournamentRow } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { computeTournamentTable } from "@/lib/ranking";
+import { apiSync } from "@/lib/apiSync";
 
 interface LiveData {
   tournament: any;
@@ -25,6 +26,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
   const [data, setData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isWaiting, setIsWaiting] = useState(false);
   const [tab, setTab] = useState<"fixtures" | "table">("fixtures");
   const [socketConnected, setSocketConnected] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
@@ -34,24 +36,52 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
   // Fetch initial tournament data with local fallback
   const fetchData = async () => {
     // 1. Try local store first (if host is viewing or tournament in local storage)
+    let localT: any = null;
+    let localPlayers: Player[] = [];
     const state = useStore.getState();
-    const localT =
-      state.currentTournament &&
-      (state.currentTournament.shareSlug === slug || state.currentTournament.id === slug)
-        ? state.currentTournament
-        : state.pastTournaments.find((t) => t.shareSlug === slug || t.id === slug);
+    if (state.currentTournament && (state.currentTournament.shareSlug === slug || state.currentTournament.id === slug)) {
+      localT = state.currentTournament;
+      localPlayers = state.players;
+    } else if (state.pastTournaments) {
+      localT = state.pastTournaments.find((t) => t.shareSlug === slug || t.id === slug);
+      localPlayers = state.players;
+    }
+
+    // Direct localStorage lookup if Zustand is still hydrating
+    if (!localT && typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("badminton_storage");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const st = parsed?.state;
+          if (st?.currentTournament && (st.currentTournament.shareSlug === slug || st.currentTournament.id === slug)) {
+            localT = st.currentTournament;
+            localPlayers = st.players || [];
+          } else if (st?.pastTournaments) {
+            localT = st.pastTournaments.find((t: any) => t.shareSlug === slug || t.id === slug);
+            localPlayers = st.players || [];
+          }
+        }
+      } catch {}
+    }
 
     if (localT) {
       const standings = computeTournamentTable(localT);
       setData({
         tournament: localT,
         matches: [...localT.matches, ...(localT.final ? [localT.final] : [])],
-        players: state.players,
+        players: localPlayers.length > 0 ? localPlayers : state.players,
         standings,
       });
       setLoading(false);
+      setIsWaiting(false);
       setError(null);
       setLastUpdated(new Date().toLocaleTimeString());
+
+      // If online, directly sync to backend in background so spectators on other phones can see it
+      if (!localT.isPractice) {
+        apiSync.syncTournamentDirectly(localT, localPlayers.length > 0 ? localPlayers : state.players);
+      }
       return;
     }
 
@@ -60,18 +90,22 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       const res = await fetch(`${backendUrl}/tournaments/${slug}`);
       if (!res.ok) {
         if (res.status === 404) {
-          throw new Error("Tournament not found. Check the link or ask the scorekeeper.");
+          setIsWaiting(true);
+          setLoading(false);
+          return;
         }
         throw new Error(`Server returned ${res.status}`);
       }
       const json = await res.json();
       setData(json);
+      setIsWaiting(false);
       setLoading(false);
       setError(null);
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (err: any) {
-      console.warn("Live fetch error:", err.message);
-      setError(err.message || "Connecting to tournament stream...");
+      if (!data) {
+        setIsWaiting(true);
+      }
       setLoading(false);
     }
   };
@@ -105,10 +139,10 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       console.warn("Socket.io connection error:", err);
     }
 
-    // 5s polling fallback in case socket disconnects courtside
+    // 4s polling fallback in case socket disconnects courtside
     const interval = setInterval(() => {
       fetchData();
-    }, 5000);
+    }, 4000);
 
     return () => {
       clearInterval(interval);
@@ -125,6 +159,38 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mb-4" />
         <h2 className="text-white font-bold text-lg">Connecting to Court Stream...</h2>
         <p className="text-white/40 text-xs mt-1">Live updates via Socket.io</p>
+      </div>
+    );
+  }
+
+  if (isWaiting && !data) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+        <motion.div
+          animate={{ scale: [1, 1.1, 1], rotate: [0, 8, -8, 0] }}
+          transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+          className="w-16 h-16 rounded-3xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-3xl mb-4 shadow-lg shadow-purple-500/20"
+        >
+          🏸
+        </motion.div>
+        <h2 className="text-white font-black text-xl mb-2">Connecting to Match Stream</h2>
+        <p className="text-white/60 text-xs max-w-xs mb-5 leading-relaxed">
+          Waiting for the scorekeeper to broadcast match scores. This screen will auto-refresh the moment court play begins.
+        </p>
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-purple-300 text-xs font-semibold mb-6">
+          <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+          Listening for live stream updates...
+        </div>
+        <button
+          onClick={() => {
+            setLoading(true);
+            fetchData();
+          }}
+          className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all active:scale-95 flex items-center gap-2"
+        >
+          <span>↻</span>
+          <span>Refresh Stream</span>
+        </button>
       </div>
     );
   }

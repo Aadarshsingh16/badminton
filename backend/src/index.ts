@@ -63,7 +63,7 @@ io.on("connection", (socket) => {
 export { io };
 
 // ── Routes ───────────────────────────────────────────────────────────────────
-import { playersRouter } from "./routes/players";
+import { playersRouter, seedFixedPlayers } from "./routes/players";
 import { tournamentsRouter } from "./routes/tournaments";
 import { dayTablesRouter } from "./routes/dayTables";
 import { historyRouter } from "./routes/history";
@@ -84,6 +84,7 @@ httpServer.listen(PORT, async () => {
   if (process.env.DATABASE_URL) {
     try {
       await runMigration();
+      await seedFixedPlayers();
     } catch (err) {
       console.error("Migration error on startup:", err);
     }

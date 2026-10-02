@@ -90,21 +90,79 @@ class ApiSyncService {
 
   public getPin(): string {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("scorekeeper_pin") || "";
+      const stored = localStorage.getItem("scorekeeper_pin");
+      if (stored && stored.trim()) return stored.trim();
     }
-    return "";
+    return "badminton2024";
   }
 
   public setPin(pin: string) {
     if (typeof window !== "undefined") {
       localStorage.setItem("scorekeeper_pin", pin);
       this.notify();
-      this.processQueue();
+      this.forceSyncAll();
     }
   }
 
   public hasPin(): boolean {
-    return !!this.getPin();
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("scorekeeper_pin");
+      return !!(stored && stored.trim());
+    }
+    return false;
+  }
+
+  /**
+   * Directly syncs a tournament, its players, and its matches to the cloud,
+   * guaranteeing that the spectator link (/live/[slug]) will immediately find it.
+   */
+  public async syncTournamentDirectly(tournament: any, players?: any[]): Promise<boolean> {
+    if (!tournament || tournament.isPractice) return false;
+    const backendUrl = this.getBackendUrl();
+    const pin = this.getPin();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "x-scorekeeper-pin": pin,
+    };
+
+    try {
+      // 1. Ensure players exist on backend
+      if (Array.isArray(players) && players.length > 0) {
+        for (const p of players) {
+          fetch(`${backendUrl}/players`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(p),
+          }).catch(() => {});
+        }
+      }
+
+      // 2. Upsert tournament, matches, and final if present
+      const tRes = await fetch(`${backendUrl}/tournaments`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          id: tournament.id,
+          shareSlug: tournament.shareSlug,
+          playerIds: tournament.playerIds,
+          matches: tournament.matches,
+          final: tournament.final,
+          config: tournament.config,
+        }),
+      });
+
+      if (!tRes.ok && tRes.status !== 409) {
+        console.warn("Direct tournament sync response:", tRes.status);
+        return false;
+      }
+
+      // 3. Purge matching tournament create item from queue
+      this.purgeTournament(tournament.id);
+      return true;
+    } catch (err) {
+      console.warn("Direct tournament sync error:", err);
+      return false;
+    }
   }
 
   /**
@@ -170,8 +228,8 @@ class ApiSyncService {
     const readyItems = this.queue.filter((item) => item.nextRetry <= now);
 
     for (const item of readyItems) {
-      // Drop items that have failed 5+ times or are hopelessly stale
-      if (item.attempts >= 5) {
+      // Drop items that have failed 8+ times
+      if (item.attempts >= 8) {
         this.queue = this.queue.filter((q) => q.id !== item.id);
         this.saveQueue();
         continue;
@@ -187,14 +245,20 @@ class ApiSyncService {
           body: item.body ? JSON.stringify(item.body) : undefined,
         });
 
-        if (res.ok || res.status === 409 || res.status === 404 || res.status === 400 || res.status === 422) {
-          // Success, already exists, or unprocessable/not found -> remove from queue
+        if (res.ok || res.status === 409 || res.status === 400 || res.status === 422) {
+          // Success, already exists, or unprocessable -> remove from queue
           this.queue = this.queue.filter((q) => q.id !== item.id);
+          this.saveQueue();
+        } else if (res.status === 404) {
+          // If tournament wasn't created yet, don't drop immediately; retry with backoff
+          item.attempts++;
+          const backoff = Math.min(20000, Math.pow(2, item.attempts) * 1000);
+          item.nextRetry = now + backoff;
           this.saveQueue();
         } else if (res.status === 401) {
           console.warn("Sync unauthorized (check scorekeeper PIN):", item.url);
-          // Wait 30s before retrying unauthorized requests to avoid spin loop
-          item.nextRetry = now + 30000;
+          // Wait 15s before retrying unauthorized requests
+          item.nextRetry = now + 15000;
           item.attempts++;
           this.saveQueue();
           this.notifyUnauthorized();

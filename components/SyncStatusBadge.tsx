@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { apiSync } from "@/lib/apiSync";
+import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function SyncStatusBadge() {
@@ -75,6 +76,10 @@ export function SyncStatusBadge() {
               <div className="space-y-2 pt-1">
                 <button
                   onClick={() => {
+                    const st = useStore.getState();
+                    if (st.currentTournament && !st.currentTournament.isPractice) {
+                      apiSync.syncTournamentDirectly(st.currentTournament, st.players);
+                    }
                     apiSync.forceSyncAll();
                     setShowMenu(false);
                   }}

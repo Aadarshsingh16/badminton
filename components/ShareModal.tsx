@@ -4,6 +4,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
+import { apiSync } from "@/lib/apiSync";
+import { useStore } from "@/lib/store";
 
 interface ShareModalProps {
   open: boolean;
@@ -14,12 +16,21 @@ interface ShareModalProps {
 export function ShareModal({ open, onClose, slug }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [isCloudSynced, setIsCloudSynced] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setShareUrl(`${window.location.origin}/live/${slug}`);
     }
-  }, [slug]);
+    if (open) {
+      const state = useStore.getState();
+      if (state.currentTournament && !state.currentTournament.isPractice) {
+        apiSync.syncTournamentDirectly(state.currentTournament, state.players).then((ok) => {
+          if (ok) setIsCloudSynced(true);
+        });
+      }
+    }
+  }, [slug, open]);
 
   const handleCopy = async () => {
     if (!shareUrl) return;
@@ -63,9 +74,16 @@ export function ShareModal({ open, onClose, slug }: ShareModalProps) {
             </div>
 
             <h3 className="text-white font-black text-xl mb-1">Live Share Link</h3>
-            <p className="text-white/50 text-xs mb-5">
+            <p className="text-white/50 text-xs mb-3">
               Friends can scan or open the link to watch real-time scores courtside!
             </p>
+
+            {isCloudSynced && (
+              <div className="mb-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Cloud Stream Ready ✓
+              </div>
+            )}
 
             {/* QR Code Container */}
             <div className="bg-white p-3.5 rounded-2xl shadow-inner mb-5">

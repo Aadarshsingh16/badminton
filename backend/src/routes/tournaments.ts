@@ -42,7 +42,7 @@ function computeTable(matches: any[], playerIds: string[]) {
 
 // POST /tournaments — create a new tournament (scorekeeper only)
 tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
-  const { id: customId, shareSlug: customSlug, playerIds, matches, config } = req.body;
+  const { id: customId, shareSlug: customSlug, playerIds, matches, final, config } = req.body;
 
   if (!Array.isArray(playerIds) || playerIds.length < 2) {
     return res.status(400).json({ error: "playerIds must be an array of at least 2 players" });
@@ -65,30 +65,65 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
     );
     const dayId = dayRes.rows[0].id;
 
-    // Insert tournament
+    // Insert or update tournament
     const tourneyRes = await pool.query(
       `INSERT INTO tournaments (id, share_slug, day_id, player_ids, status, config)
        VALUES ($1, $2, $3, $4, 'active', $5)
-       ON CONFLICT (id) DO UPDATE SET player_ids = $4, config = $5
+       ON CONFLICT (id) DO UPDATE SET share_slug = $2, player_ids = $4, config = $5
        RETURNING id, share_slug, day_id, player_ids, status, config, created_at`,
       [tourneyId, slug, dayId, playerIds, JSON.stringify(tournamentConfig)]
     );
     const tournament = tourneyRes.rows[0];
 
-    // Insert matches if provided
+    // Insert or update round-robin matches if provided
     const insertedMatches: any[] = [];
     if (Array.isArray(matches)) {
       for (const m of matches) {
         const matchId = m.id || nanoid(10);
+        const scoreA = typeof m.scoreA === "number" ? m.scoreA : null;
+        const scoreB = typeof m.scoreB === "number" ? m.scoreB : null;
+        const played = !!m.played;
+        const ptsA = typeof m.pointsA === "number" ? m.pointsA : (m.pointsAwarded && m.pointsAwarded[m.playerA]) ?? null;
+        const ptsB = typeof m.pointsB === "number" ? m.pointsB : (m.pointsAwarded && m.pointsAwarded[m.playerB]) ?? null;
+
         const mRes = await pool.query(
-          `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, court_side, played)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, false)
-           ON CONFLICT (id) DO UPDATE SET round = $3, court_side = $7
-           RETURNING id, round, is_final, player_a AS "playerA", player_b AS "playerB", court_side AS "courtSide", played`,
-          [matchId, tournament.id, m.round ?? 0, !!m.isFinal, m.playerA, m.playerB, JSON.stringify(m.courtSide ?? {})]
+          `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, court_side, score_a, score_b, points_a, points_b, played)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+           ON CONFLICT (id) DO UPDATE SET
+             round = EXCLUDED.round,
+             court_side = EXCLUDED.court_side,
+             score_a = EXCLUDED.score_a,
+             score_b = EXCLUDED.score_b,
+             points_a = EXCLUDED.points_a,
+             points_b = EXCLUDED.points_b,
+             played = EXCLUDED.played
+           RETURNING id, round, is_final, player_a AS "playerA", player_b AS "playerB", court_side AS "courtSide", score_a AS "scoreA", score_b AS "scoreB", points_a AS "pointsA", points_b AS "pointsB", played`,
+          [matchId, tournament.id, m.round ?? 0, !!m.isFinal, m.playerA, m.playerB, JSON.stringify(m.courtSide ?? {}), scoreA, scoreB, ptsA, ptsB, played]
         );
         insertedMatches.push(mRes.rows[0]);
       }
+    }
+
+    // Insert final match if provided
+    if (final && final.playerA && final.playerB) {
+      const finalId = final.id || `final-${tournament.id}`;
+      const fScoreA = typeof final.scoreA === "number" ? final.scoreA : null;
+      const fScoreB = typeof final.scoreB === "number" ? final.scoreB : null;
+      const fPlayed = !!final.played;
+      const fPtsA = typeof final.pointsA === "number" ? final.pointsA : (final.pointsAwarded && final.pointsAwarded[final.playerA]) ?? null;
+      const fPtsB = typeof final.pointsB === "number" ? final.pointsB : (final.pointsAwarded && final.pointsAwarded[final.playerB]) ?? null;
+
+      await pool.query(
+        `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, court_side, score_a, score_b, points_a, points_b, played)
+         VALUES ($1, $2, -1, true, $3, $4, $5, $6, $7, $8, $9, $10)
+         ON CONFLICT (id) DO UPDATE SET
+           score_a = EXCLUDED.score_a,
+           score_b = EXCLUDED.score_b,
+           points_a = EXCLUDED.points_a,
+           points_b = EXCLUDED.points_b,
+           played = EXCLUDED.played`,
+        [finalId, tournament.id, final.playerA, final.playerB, JSON.stringify(final.courtSide ?? {}), fScoreA, fScoreB, fPtsA, fPtsB, fPlayed]
+      );
     }
 
     await pool.query("COMMIT");
@@ -122,12 +157,12 @@ tournamentsRouter.get("/:slug", async (req, res) => {
 
     const tournament = tRes.rows[0];
 
-    // Fetch matches
+    // Fetch matches (ordered by round ASC, id ASC)
     const mRes = await pool.query(
       `SELECT id, round, is_final AS "isFinal", player_a AS "playerA", player_b AS "playerB",
               court_side AS "courtSide", score_a AS "scoreA", score_b AS "scoreB",
               points_a AS "pointsA", points_b AS "pointsB", played, played_at
-       FROM matches WHERE tournament_id = $1 ORDER BY round ASC, created_at ASC`,
+       FROM matches WHERE tournament_id = $1 ORDER BY round ASC, id ASC`,
       [tournament.id]
     );
 
@@ -141,10 +176,23 @@ tournamentsRouter.get("/:slug", async (req, res) => {
     const matches = mRes.rows;
     const table = computeTable(matches, tournament.player_ids);
 
+    // Return complete player objects for all tournament player_ids
+    const foundPlayerIds = new Set(pRes.rows.map((p: any) => p.id));
+    const players = [...pRes.rows];
+    for (const pid of tournament.player_ids) {
+      if (!foundPlayerIds.has(pid)) {
+        players.push({
+          id: pid,
+          name: pid.charAt(0).toUpperCase() + pid.slice(1),
+          avatar: "clumsy",
+        });
+      }
+    }
+
     res.json({
       tournament,
       matches,
-      players: pRes.rows,
+      players,
       standings: table,
     });
   } catch (err: any) {
@@ -230,12 +278,13 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
     await pool.query("BEGIN");
 
     // Upsert final match
+    const finalMatchId = `final-${tournamentId}`;
     const mRes = await pool.query(
-      `INSERT INTO matches (tournament_id, round, is_final, player_a, player_b, score_a, score_b, points_a, points_b, played, played_at)
-       VALUES ($1, -1, true, $2, $3, $4, $5, $6, $7, true, now())
-       ON CONFLICT (id) DO UPDATE SET score_a = $4, score_b = $5, points_a = $6, points_b = $7, played = true
+      `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, score_a, score_b, points_a, points_b, played, played_at)
+       VALUES ($1, $2, -1, true, $3, $4, $5, $6, $7, $8, true, now())
+       ON CONFLICT (id) DO UPDATE SET score_a = $5, score_b = $6, points_a = $7, points_b = $8, played = true, played_at = now()
        RETURNING id, round, is_final AS "isFinal", player_a AS "playerA", player_b AS "playerB", score_a AS "scoreA", score_b AS "scoreB", points_a AS "pointsA", points_b AS "pointsB", played`,
-      [tournamentId, playerA, playerB, scoreA, scoreB, ptsA, ptsB]
+      [finalMatchId, tournamentId, playerA, playerB, scoreA, scoreB, ptsA, ptsB]
     );
 
     // Mark tournament as completed
