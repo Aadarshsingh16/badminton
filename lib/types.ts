@@ -39,6 +39,7 @@ export interface TournamentConfig {
   finalWinBase: number;    // base points for winning the final (default 2)
   finalWinBonus: number;   // extra points for winning final with big margin (default 1, total 3)
   finalLoserPenalty: number; // points for loser when margin >= finalBonusMargin (default -1)
+  isPractice?: boolean;    // when true, test tournament (scores not saved to permanent history)
 }
 
 export const DEFAULT_CONFIG: TournamentConfig = {
@@ -51,6 +52,7 @@ export const DEFAULT_CONFIG: TournamentConfig = {
   finalWinBase: 2,
   finalWinBonus: 0,
   finalLoserPenalty: -1,
+  isPractice: false,
 };
 
 export interface Tournament {
@@ -65,6 +67,7 @@ export interface Tournament {
   dayPointsAwarded?: { [playerId: string]: number };
   shareSlug?: string;        // random short slug for /live/[slug]
   config: TournamentConfig;  // scoring rules for this tournament
+  isPractice?: boolean;      // practice/test mode flag
 }
 
 export interface DayTable {

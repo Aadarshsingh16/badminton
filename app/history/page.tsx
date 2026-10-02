@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "@/lib/store";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
+import { PinModal } from "@/components/PinModal";
+import { apiSync } from "@/lib/apiSync";
 
 interface MiniLeaderboardEntry {
   playerId: string;
@@ -116,8 +119,44 @@ export default function HistoryPage() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [dayHonors, setDayHonors] = useState<DayHonors | null>(null);
   const [expandedTournaments, setExpandedTournaments] = useState<{ [tId: string]: boolean }>({});
+  const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(null);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  const handleDeleteTournament = async (tId: string) => {
+    if (!apiSync.hasPin()) {
+      setShowPinModal(true);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`${backendUrl}/tournaments/${tId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "x-scorekeeper-pin": apiSync.getPin(),
+        },
+      });
+
+      if (res.ok || res.status === 404) {
+        useStore.getState().deleteTournament(tId);
+        setTournamentToDelete(null);
+        await Promise.all([fetchHistory(), fetchLeaderboards()]);
+      } else if (res.status === 401) {
+        setShowPinModal(true);
+      }
+    } catch (e) {
+      console.warn("Failed to delete tournament on backend, deleting locally:", e);
+      useStore.getState().deleteTournament(tId);
+      setTournamentToDelete(null);
+      await fetchHistory();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Fetch History data for Log tab
   const fetchHistory = async () => {
@@ -533,6 +572,16 @@ export default function HistoryPage() {
                                   <span>👁️ Live</span>
                                 </Link>
                               )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTournamentToDelete(tourney.tournamentId);
+                                }}
+                                title="Delete Tournament"
+                                className="text-[11px] p-1.5 rounded-md bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 text-red-400 hover:text-red-300 transition-colors"
+                              >
+                                <span>🗑️</span>
+                              </button>
                               <svg
                                 className={`w-4 h-4 text-gray-400 transition-transform ${
                                   isExpanded ? "rotate-180" : ""
@@ -863,6 +912,65 @@ export default function HistoryPage() {
           </div>
         )}
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {tournamentToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-sm bg-slate-900 border border-red-500/30 rounded-3xl p-6 shadow-2xl space-y-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-xl text-red-400">
+                  🗑️
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white">Delete Tournament?</h2>
+                  <p className="text-[11px] text-gray-400">Remove accidental or test match</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-300 leading-relaxed">
+                This will permanently delete this tournament and its matches, and automatically recalculate player points and day standings.
+              </p>
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setTournamentToDelete(null)}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteTournament(tournamentToDelete)}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 px-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-xs font-bold text-white shadow-lg shadow-red-600/30 transition-all flex items-center justify-center gap-1.5"
+                >
+                  {isDeleting ? <span>Deleting...</span> : <span>Delete Permanently</span>}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Scorekeeper PIN Modal */}
+      <PinModal
+        open={showPinModal}
+        onClose={() => setShowPinModal(false)}
+        onSuccess={() => {
+          setShowPinModal(false);
+          if (tournamentToDelete) {
+            handleDeleteTournament(tournamentToDelete);
+          }
+        }}
+      />
     </div>
   );
 }

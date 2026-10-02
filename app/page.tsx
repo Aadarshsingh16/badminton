@@ -70,6 +70,10 @@ export default function PlayPage() {
   }, []);
 
   const ensurePin = (action: () => void) => {
+    if (currentTournament?.isPractice) {
+      action();
+      return;
+    }
     if (apiSync.hasPin()) {
       action();
     } else {
@@ -273,9 +277,13 @@ export default function PlayPage() {
         matchCount={setupMatchCount}
         onConfirm={(cfg) => {
           setPendingConfig(cfg);
-          ensurePin(() => {
+          if (cfg.isPractice) {
             startTournament();
-          });
+          } else {
+            ensurePin(() => {
+              startTournament();
+            });
+          }
         }}
         onBack={() => useStore.getState().setPhase("player-select")}
       />
@@ -349,7 +357,14 @@ export default function PlayPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-white font-black text-lg">Tournament</h2>
-                <SyncStatusBadge />
+                {currentTournament.isPractice ? (
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/40 flex items-center gap-1 shadow-sm">
+                    <span>🧪</span>
+                    <span>Practice Mode (Unranked)</span>
+                  </span>
+                ) : (
+                  <SyncStatusBadge />
+                )}
               </div>
               <p className="text-white/40 text-xs">
                 {playedMatches.length}/{currentTournament.matches.length} matches played · First to {currentTournament.config.winScore}
@@ -699,7 +714,14 @@ export default function PlayPage() {
 
         {/* Winner celebration */}
         <div className="px-4 pt-8 pb-6 text-center">
-          <p className="text-yellow-400 text-xs uppercase tracking-widest mb-2">Tournament Winner</p>
+          {currentTournament.isPractice ? (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold mb-3 shadow-sm">
+              <span>🧪</span>
+              <span>Practice Match Complete (Unranked — not saved)</span>
+            </div>
+          ) : (
+            <p className="text-yellow-400 text-xs uppercase tracking-widest mb-2">Tournament Winner</p>
+          )}
           {winnerPlayer && (
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -762,10 +784,22 @@ export default function PlayPage() {
         {/* Actions */}
         <div className="px-4 py-6 flex flex-col gap-3">
           <button
-            onClick={() => ensurePin(() => closeTournament())}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 font-black text-white text-lg shadow-lg shadow-purple-500/30"
+            onClick={() => {
+              if (currentTournament.isPractice) {
+                closeTournament();
+              } else {
+                ensurePin(() => closeTournament());
+              }
+            }}
+            className={`w-full py-4 rounded-2xl font-black text-white text-lg shadow-lg transition-all ${
+              currentTournament.isPractice
+                ? "bg-gradient-to-r from-amber-600 to-orange-600 shadow-amber-500/30"
+                : "bg-gradient-to-r from-purple-600 to-blue-600 shadow-purple-500/30"
+            }`}
           >
-            Save &amp; Start Next Tournament 🏸
+            {currentTournament.isPractice
+              ? "Finish Practice & Exit 🧪"
+              : "Save & Start Next Tournament 🏸"}
           </button>
         </div>
 

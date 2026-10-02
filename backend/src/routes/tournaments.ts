@@ -262,3 +262,31 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
     res.status(500).json({ error: "Failed to record final match", details: err.message });
   }
 });
+
+// DELETE /tournaments/:id — delete a tournament and its matches (scorekeeper only)
+tournamentsRouter.delete("/:id", requireScorekeeper, async (req, res) => {
+  const { id: tournamentId } = req.params;
+
+  try {
+    await pool.query("BEGIN");
+
+    // Delete matches belonging to tournament
+    await pool.query("DELETE FROM matches WHERE tournament_id = $1", [tournamentId]);
+
+    // Delete tournament
+    const result = await pool.query("DELETE FROM tournaments WHERE id = $1 RETURNING id", [tournamentId]);
+
+    if (result.rowCount === 0) {
+      await pool.query("ROLLBACK");
+      return res.status(404).json({ error: "Tournament not found" });
+    }
+
+    await pool.query("COMMIT");
+    res.json({ success: true, deletedId: tournamentId });
+  } catch (err: any) {
+    await pool.query("ROLLBACK");
+    console.error("DELETE tournament error:", err);
+    res.status(500).json({ error: "Failed to delete tournament", details: err.message });
+  }
+});
+

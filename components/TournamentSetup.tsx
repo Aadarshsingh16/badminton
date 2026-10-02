@@ -221,6 +221,51 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
             })}
           </div>
         </motion.div>
+        {/* Practice / Test Mode Toggle Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          onClick={() => setCfg((c) => ({ ...c, isPractice: !c.isPractice }))}
+          className={`cursor-pointer border rounded-2xl p-4 transition-all flex items-center justify-between gap-3 ${
+            cfg.isPractice
+              ? "bg-amber-500/15 border-amber-500/40 shadow-lg shadow-amber-500/10"
+              : "bg-white/5 border-white/10 hover:border-white/20"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${
+              cfg.isPractice ? "bg-amber-500/30 text-amber-300" : "bg-white/10 text-gray-400"
+            }`}>
+              🧪
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-white">Practice / Test Mode</span>
+                {cfg.isPractice && (
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/40">
+                    TESTING
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {cfg.isPractice
+                  ? "Test match active: won't be saved to permanent history or leaderboards."
+                  : "Ranked match: will be saved to Day Table & permanent Leaderboards."}
+              </p>
+            </div>
+          </div>
+
+          {/* Toggle Switch */}
+          <div className={`w-12 h-6 rounded-full transition-colors p-0.5 flex items-center ${
+            cfg.isPractice ? "bg-amber-500 justify-end" : "bg-white/20 justify-start"
+          }`}>
+            <motion.div
+              layout
+              className="w-5 h-5 rounded-full bg-white shadow-md"
+            />
+          </div>
+        </motion.div>
       </div>
 
       {/* Start button */}
@@ -228,9 +273,13 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
         <motion.button
           onClick={() => onConfirm(cfg)}
           whileTap={{ scale: 0.97 }}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 font-black text-white text-lg shadow-lg shadow-purple-500/30"
+          className={`w-full py-4 rounded-2xl font-black text-white text-lg shadow-lg transition-all ${
+            cfg.isPractice
+              ? "bg-gradient-to-r from-amber-600 to-orange-600 shadow-amber-500/30"
+              : "bg-gradient-to-r from-purple-600 to-blue-600 shadow-purple-500/30"
+          }`}
         >
-          Start Tournament 🏸
+          {cfg.isPractice ? "Start Practice Tournament 🧪" : "Start Ranked Tournament 🏸"}
         </motion.button>
       </div>
     </div>

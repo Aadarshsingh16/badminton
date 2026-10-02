@@ -59,6 +59,7 @@ interface AppState {
   confirmFinalScore: (scoreA: number, scoreB: number) => void;
 
   closeTournament: () => void;
+  deleteTournament: (id: string, skipSync?: boolean) => void;
   startNextTournament: () => void;
   startNewDay: () => void;
 
@@ -138,6 +139,7 @@ export const useStore = create<AppState>()(
         const { selectedPlayerIds, pendingConfig } = get();
         if (selectedPlayerIds.length < 3) return;
 
+        const isPractice = !!pendingConfig.isPractice;
         const { matches, byes } = generateRoundRobin(selectedPlayerIds);
         const tournament: Tournament = {
           id: generateId(),
@@ -148,6 +150,7 @@ export const useStore = create<AppState>()(
           closed: false,
           shareSlug: Math.random().toString(36).slice(2, 10),
           config: { ...pendingConfig },
+          isPractice,
         };
 
         set({
@@ -158,11 +161,13 @@ export const useStore = create<AppState>()(
           coinFlipWinnerId: null,
         });
 
-        apiSync.enqueue("/tournaments", "POST", {
-          playerIds: tournament.playerIds,
-          matches: tournament.matches,
-          config: tournament.config,
-        });
+        if (!isPractice) {
+          apiSync.enqueue("/tournaments", "POST", {
+            playerIds: tournament.playerIds,
+            matches: tournament.matches,
+            config: tournament.config,
+          });
+        }
       },
 
       shuffleFixtures: () => {
@@ -234,7 +239,9 @@ export const useStore = create<AppState>()(
           }));
         }
 
-        apiSync.enqueue(`/tournaments/${currentTournament.id}/matches/${matchId}`, "PATCH", { scoreA, scoreB });
+        if (!currentTournament.isPractice) {
+          apiSync.enqueue(`/tournaments/${currentTournament.id}/matches/${matchId}`, "PATCH", { scoreA, scoreB });
+        }
       },
 
       editMatchScore: (matchId, scoreA, scoreB) => {
@@ -278,7 +285,9 @@ export const useStore = create<AppState>()(
           }));
         }
 
-        apiSync.enqueue(`/tournaments/${currentTournament.id}/matches/${matchId}`, "PATCH", { scoreA, scoreB });
+        if (!currentTournament.isPractice) {
+          apiSync.enqueue(`/tournaments/${currentTournament.id}/matches/${matchId}`, "PATCH", { scoreA, scoreB });
+        }
       },
 
       undoLastMatch: () => {
@@ -375,17 +384,29 @@ export const useStore = create<AppState>()(
           phase: "tournament-summary",
         });
 
-        apiSync.enqueue(`/tournaments/${currentTournament.id}/final`, "PATCH", {
-          scoreA,
-          scoreB,
-          playerA: idA,
-          playerB: idB,
-        });
+        if (!currentTournament.isPractice) {
+          apiSync.enqueue(`/tournaments/${currentTournament.id}/final`, "PATCH", {
+            scoreA,
+            scoreB,
+            playerA: idA,
+            playerB: idB,
+          });
+        }
       },
 
       closeTournament: () => {
         const { currentTournament, dayTable } = get();
         if (!currentTournament) return;
+
+        // If practice/test tournament, do not save to day table or sync to backend
+        if (currentTournament.isPractice) {
+          set({
+            currentTournament: null,
+            phase: "player-select",
+            selectedPlayerIds: currentTournament.playerIds,
+          });
+          return;
+        }
 
         const dayPoints = computeDayPoints(currentTournament);
         const newTotals = { ...dayTable.totals };
@@ -421,6 +442,34 @@ export const useStore = create<AppState>()(
           date: currentDate,
           totals: newTotals,
         });
+      },
+
+      deleteTournament: (id: string, skipSync?: boolean) => {
+        const { dayTable, pastTournaments } = get();
+        const updatedPast = pastTournaments.filter((t) => t.id !== id);
+        const updatedDayTournaments = dayTable.tournaments.filter((tId) => tId !== id);
+
+        const recalculatedTotals: { [playerId: string]: number } = {};
+        for (const t of updatedPast) {
+          if (t.dayPointsAwarded) {
+            for (const [pid, pts] of Object.entries(t.dayPointsAwarded)) {
+              recalculatedTotals[pid] = (recalculatedTotals[pid] ?? 0) + pts;
+            }
+          }
+        }
+
+        set({
+          pastTournaments: updatedPast,
+          dayTable: {
+            ...dayTable,
+            tournaments: updatedDayTournaments,
+            totals: recalculatedTotals,
+          },
+        });
+
+        if (!skipSync) {
+          apiSync.enqueue(`/tournaments/${id}`, "DELETE", {});
+        }
       },
 
       startNextTournament: () => {
