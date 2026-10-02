@@ -49,3 +49,44 @@
 - **Verified:** Day table shows empty state. New Day confirm dialog works. Build: exit code 0. Dev server: running on :3000. All pages render correctly.
 - **Deviations:** None.
 - **Open issues:** None (MVP complete).
+
+## Phase 8a — Shuffle fixtures + cancel tournament
+- **Built:** `shuffleFixtures` store action (Fisher-Yates on playerIds, regenerates round-robin, preserves config). `cancelTournament` action (discards tournament, restores player selection). Both show a confirm dialog before executing. Shuffle/Cancel buttons in fixture screen header. Shuffle warns if matches already played.
+- **Verified:** Fixtures regenerate with same players. Cancelling mid-tournament returns to player-select with players pre-selected. Build passes.
+- **Deviations:** None.
+- **Open issues:** None.
+
+## Phase 8b — Custom player avatar fix
+- **Built:** `AvatarSVG` rewritten to render custom avatars as native HTML emoji in a styled circular div (not SVG `<text>` — that was invisible due to inherited `fill="none"`). Custom type gets size-proportional fontSize. Fixed players keep SVG rendering unchanged.
+- **Verified:** Custom player emoji visible in player grid, match cards, score sheet, and both tables.
+- **Deviations:** Custom avatar uses `<div>` + `<span>` instead of SVG, to ensure emoji rendering on Windows/mobile.
+- **Open issues:** None.
+
+## Phase 8c–8d — Score editing + type-in input
+- **Built:** `editMatchScore` store action — re-computes points, re-checks if all matches played, re-derives finalists. MatchCard now always calls `onTap` regardless of played status; played cards show `✏️ tap to edit` badge and orange hover state. ScoreInput: `isEditing` prop seeds scores from existing match values; tapping the score number converts it to a `<input type="number">` with Enter/Escape/blur commit; orange button style in edit mode; live points preview shown when a valid score is set. Zustand storage key bumped to `v2`.
+- **Verified:** Editing a played match recomputes table and re-ranks. Type-in works alongside +/- buttons. Build + tsc: 0 errors.
+- **Deviations:** Court side swap is disabled when editing a played match (swap is meaningless retroactively).
+- **Open issues:** None.
+
+## Phase 8e — Tournament setup screen
+- **Built:** `TournamentConfig` interface + `DEFAULT_CONFIG` in `lib/types.ts`. `scoring.ts` functions now accept config. `TournamentSetup` component: stepper controls for all 9 config params (round-robin + final), live points preview tables for both. New `setup` phase in store. `goToSetup` / `setPendingConfig` actions. Player-select CTA now says "Setup Tournament →" and goes to setup; setup confirms → `startTournament` uses `pendingConfig`. Tournament stores its own config; scoring + ranking use it throughout.
+- **Verified:** Default config produces same points as original hardcoded rules. Setup screen shows correct preview tables. Config propagates to ScoreInput (maxScore), TournamentTable (history), and summary.
+- **Deviations:** Zustand storage key is `v2` (old `v1` state has no `config` field).
+- **Open issues:** None.
+
+## Phase 8f–8g — Player history expansion
+- **Built:** `TournamentTable` accepts optional `tournament` prop. When provided, each player row has a ▾ toggle that expands to an inline match history (round label, opponent avatar, score, pts badge, W/L color). `app/day/page.tsx` player rows now also expand to show per-tournament position (medal, pts, day pts, W/L count) and match-by-match breakdown across all past tournaments.
+- **Verified:** Expansion works in tournament table (fixtures + final screens), pre-final standings, summary, and day table. Closing one row doesn't affect others.
+- **Deviations:** None.
+- **Open issues:** None.
+
+---
+
+## Phase 9 — Backend scaffold (NEXT UP)
+- **Status:** Not started. Awaiting service setup (Render account + Neon account).
+- **See setup guide:** `backend-setup-guide.md` in this repo root.
+- **Built:** —
+- **Verified:** —
+- **Deviations:** —
+- **Open issues:** Free-tier limits on Neon Postgres and Render web services should be confirmed before starting (see note in `badminton-app-backend-expansion-spec.md` §9).
+
