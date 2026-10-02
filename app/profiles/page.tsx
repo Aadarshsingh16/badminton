@@ -11,6 +11,8 @@ import {
 } from "@/lib/store";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
+import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
+import { getBackendUrl } from "@/lib/backend";
 
 interface PlayerLore {
   id: string;
@@ -210,6 +212,44 @@ export default function ProfilesPage() {
   const [activeMoodTab, setActiveMoodTab] = useState<"courtMood" | "dailyRoast" | "excuse">("courtMood");
   const [showSpeechBubble, setShowSpeechBubble] = useState(true);
 
+  const [isViewer, setIsViewer] = useState(false);
+  const [viewerSlug, setViewerSlugState] = useState<string | null>(null);
+  const [cloudHistory, setCloudHistory] = useState<any | null>(null);
+  const [cloudDayHonors, setCloudDayHonors] = useState<any | null>(null);
+  const [cloudLoading, setCloudLoading] = useState(false);
+
+  useEffect(() => {
+    const viewer = isViewerMode() && !currentTournament;
+    setIsViewer(viewer);
+    setViewerSlugState(getViewerSlug());
+
+    // Fetch cloud history & honors so spectators see real career stats across all 6 players
+    const fetchCloudData = async () => {
+      setCloudLoading(true);
+      try {
+        const backendUrl = getBackendUrl();
+        const [resHist, resDays] = await Promise.all([
+          fetch(`${backendUrl}/history?range=all`),
+          fetch(`${backendUrl}/day-results`),
+        ]);
+        if (resHist.ok) {
+          const hData = await resHist.json();
+          setCloudHistory(hData);
+        }
+        if (resDays.ok) {
+          const dData = await resDays.json();
+          setCloudDayHonors(dData);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch cloud profile stats:", err);
+      } finally {
+        setCloudLoading(false);
+      }
+    };
+
+    fetchCloudData();
+  }, [currentTournament]);
+
   // Auto-recovery if tournaments were wiped
   useEffect(() => {
     if (pastTournaments.length === 0) {
@@ -226,7 +266,7 @@ export default function ProfilesPage() {
     }
   }, [pastTournaments.length, completedDays?.length]);
 
-  // Combine all tournaments for stats
+  // Combine all tournaments for stats (local store + recovered + cloud fallback)
   const allTourneys = useMemo(() => {
     let list = [...pastTournaments];
     if (list.length === 0) {
@@ -234,8 +274,44 @@ export default function ProfilesPage() {
       if (rec.length > 0) list = rec;
     }
     if (currentTournament) list.push(currentTournament);
+
+    // If local has 0 tournaments (e.g. spectator device), populate from cloud history
+    if (list.length === 0 && cloudHistory?.days && cloudHistory.days.length > 0) {
+      const cloudTourneys: any[] = [];
+      cloudHistory.days.forEach((day: any) => {
+        (day.tournaments || []).forEach((ct: any) => {
+          const mappedMatches = (ct.matches || []).map((m: any) => ({
+            id: m.id,
+            round: m.round,
+            isFinal: !!m.isFinal,
+            playerA: m.playerA,
+            playerB: m.playerB,
+            scoreA: m.scoreA,
+            scoreB: m.scoreB,
+            played: !!m.played,
+            pointsAwarded: {
+              [m.playerA]: m.pointsA ?? 0,
+              [m.playerB]: m.pointsB ?? 0,
+            },
+          }));
+
+          const finalMatch = mappedMatches.find((m: any) => m.isFinal);
+          const rrMatches = mappedMatches.filter((m: any) => !m.isFinal);
+
+          cloudTourneys.push({
+            id: ct.tournamentId,
+            shareSlug: ct.shareSlug,
+            matches: rrMatches,
+            final: finalMatch,
+            dayPointsAwarded: {},
+          });
+        });
+      });
+      return cloudTourneys;
+    }
+
     return list;
-  }, [pastTournaments, currentTournament]);
+  }, [pastTournaments, currentTournament, cloudHistory]);
 
   // Overall career stats for all 6 players
   const playerStatsMap = useMemo(() => {
@@ -281,7 +357,7 @@ export default function ProfilesPage() {
 
       // Wooden Spoon / Last place
       if (t.dayPointsAwarded) {
-        const sorted = Object.entries(t.dayPointsAwarded).sort(([, a], [, b]) => a - b);
+        const sorted = Object.entries(t.dayPointsAwarded).sort(([, a], [, b]) => (Number(a) || 0) - (Number(b) || 0));
         if (sorted.length > 0) {
           const lastId = sorted[0][0];
           if (stats[lastId]) {
@@ -291,10 +367,10 @@ export default function ProfilesPage() {
       }
 
       // Matches
-      const allMatches = [...t.matches.filter((m) => m.played)];
+      const allMatches = [...(t.matches || []).filter((m: any) => m.played)];
       if (t.final && t.final.played) allMatches.push(t.final);
 
-      allMatches.forEach((m) => {
+      allMatches.forEach((m: any) => {
         const { playerA, playerB, scoreA = 0, scoreB = 0 } = m;
         if (stats[playerA] && stats[playerB]) {
           stats[playerA].matchesPlayed += 1;
@@ -323,9 +399,9 @@ export default function ProfilesPage() {
         if (t.dayPointsAwarded && t.dayPointsAwarded[p.id] !== undefined) {
           stats[p.id].totalPoints += t.dayPointsAwarded[p.id];
         } else {
-          t.matches
-            .filter((m) => m.played)
-            .forEach((m) => {
+          (t.matches || [])
+            .filter((m: any) => m.played)
+            .forEach((m: any) => {
               stats[p.id].totalPoints += m.pointsAwarded?.[p.id] || 0;
             });
           if (t.final?.played) {
@@ -339,17 +415,27 @@ export default function ProfilesPage() {
     if (completedDays && completedDays.length > 0) {
       completedDays.forEach((cd) => {
         if (cd.spoonPlayerId && stats[cd.spoonPlayerId]) {
-          // If not already counted from tournaments
           if (allTourneys.length === 0) stats[cd.spoonPlayerId].woodenSpoons += 1;
         }
         if (cd.topPlayerId && stats[cd.topPlayerId]) {
           if (allTourneys.length === 0) stats[cd.topPlayerId].tournamentsWon += 1;
         }
       });
+    } else if (cloudDayHonors) {
+      (cloudDayHonors.dayChampions || []).forEach((c: any) => {
+        if (stats[c.playerId] && stats[c.playerId].tournamentsWon === 0) {
+          stats[c.playerId].tournamentsWon = c.count;
+        }
+      });
+      (cloudDayHonors.dayLastPlaces || []).forEach((s: any) => {
+        if (stats[s.playerId] && stats[s.playerId].woodenSpoons === 0) {
+          stats[s.playerId].woodenSpoons = s.count;
+        }
+      });
     }
 
     return stats;
-  }, [allTourneys, completedDays]);
+  }, [allTourneys, completedDays, cloudDayHonors]);
 
   // Overall Standings Ranking
   const rankingList = useMemo(() => {
@@ -415,6 +501,24 @@ export default function ProfilesPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white pb-28 selection:bg-purple-500 selection:text-white">
+      {/* Spectator Mode Banner */}
+      {isViewer && (
+        <div className="bg-purple-950/40 border-b border-purple-500/20 px-4 py-2 flex items-center justify-between text-xs sticky top-0 z-30 backdrop-blur-md">
+          <span className="text-purple-300 font-bold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Spectator Mode · Squad Scouting
+          </span>
+          {viewerSlug && (
+            <Link
+              href={`/live/${viewerSlug}`}
+              className="text-white bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/40 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1 transition-colors"
+            >
+              <span>🏸 Live Court</span>
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="px-4 pt-6 pb-4 border-b border-white/10 bg-slate-900/60 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center justify-between">
@@ -427,13 +531,22 @@ export default function ProfilesPage() {
               Player scouting reports, personality roasts &amp; career stats
             </p>
           </div>
-          <Link
-            href="/history"
-            className="text-xs bg-purple-500/10 border border-purple-500/30 text-purple-300 font-bold px-3 py-1.5 rounded-full hover:bg-purple-500/20 transition-all flex items-center gap-1.5"
-          >
-            <span>📊</span>
-            <span>Logs</span>
-          </Link>
+          {isViewer && viewerSlug ? (
+            <Link
+              href={`/live/${viewerSlug}`}
+              className="text-xs bg-purple-600/30 border border-purple-500/40 text-purple-200 font-bold px-3 py-1.5 rounded-full hover:bg-purple-600/50 transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <span>🏸 Match Stream</span>
+            </Link>
+          ) : (
+            <Link
+              href="/history"
+              className="text-xs bg-purple-500/10 border border-purple-500/30 text-purple-300 font-bold px-3 py-1.5 rounded-full hover:bg-purple-500/20 transition-all flex items-center gap-1.5"
+            >
+              <span>📊</span>
+              <span>Logs</span>
+            </Link>
+          )}
         </div>
       </div>
 

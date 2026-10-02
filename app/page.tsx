@@ -18,6 +18,8 @@ import { ConfettiBurst } from "@/components/ConfettiBurst";
 import { Player, Match, AvatarType, TournamentConfig } from "@/lib/types";
 import { generateRoundRobin } from "@/lib/fixtures";
 import { apiSync } from "@/lib/apiSync";
+import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
+import { getBackendUrl } from "@/lib/backend";
 
 type FixtureTab = "fixtures" | "table";
 
@@ -87,7 +89,7 @@ export default function PlayPage() {
 
   // Harmless frontend keep-alive backup ping while Play tab is mounted
   React.useEffect(() => {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const backendUrl = getBackendUrl();
     const ping = () => {
       fetch(`${backendUrl}/health`).catch(() => {});
     };
@@ -95,6 +97,16 @@ export default function PlayPage() {
     const interval = setInterval(ping, 4 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // If a spectator arrives at root "/", seamlessly redirect back to live court
+  React.useEffect(() => {
+    if (!currentTournament && isViewerMode()) {
+      const slug = getViewerSlug();
+      if (slug) {
+        window.location.replace(`/live/${slug}`);
+      }
+    }
+  }, [currentTournament]);
 
   // Proactively sync active tournament to cloud so spectator stream is guaranteed to exist
   React.useEffect(() => {
@@ -141,6 +153,45 @@ export default function PlayPage() {
   };
 
   const renderPhaseContent = () => {
+    // ——— Spectator Returning Screen ———
+    if (!currentTournament && isViewerMode()) {
+      const viewerSlug = getViewerSlug();
+      return (
+        <div className="min-h-[80vh] flex flex-col items-center justify-center text-center px-6">
+          <div className="w-16 h-16 rounded-3xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-3xl mb-4 shadow-xl shadow-purple-600/20 animate-pulse">
+            📡
+          </div>
+          <span className="text-[11px] font-black uppercase tracking-wider text-purple-400 mb-1">
+            Spectator Mode Active
+          </span>
+          <h2 className="text-white font-black text-xl mb-2">Connecting to Live Court...</h2>
+          <p className="text-white/50 text-xs max-w-xs mb-6">
+            You are in live spectator mode. Taking you back to the court action.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2.5 w-full max-w-xs">
+            {viewerSlug && (
+              <a
+                href={`/live/${viewerSlug}`}
+                className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all flex items-center justify-center gap-1.5"
+              >
+                <span>👁️</span>
+                <span>Open Live Court</span>
+              </a>
+            )}
+            <button
+              onClick={() => {
+                clearViewerMode();
+                window.location.reload();
+              }}
+              className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/70 font-semibold text-xs transition-colors"
+            >
+              Switch to Host Mode ⚙️
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     // ——— Player Select Screen ———
     if (phase === "player-select") {
     const canStart = selectedPlayerIds.length >= 3;

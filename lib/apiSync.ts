@@ -1,5 +1,7 @@
 // lib/apiSync.ts — Optimistic background sync queue with offline / waking-backend retry
 
+import { getBackendUrl } from "@/lib/backend";
+
 type SyncStatusListener = (status: { isSyncing: boolean; pendingCount: number; error: boolean }) => void;
 
 interface QueuedItem {
@@ -85,7 +87,7 @@ class ApiSyncService {
   }
 
   public getBackendUrl(): string {
-    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    return getBackendUrl();
   }
 
   public getPin(): string {

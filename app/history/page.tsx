@@ -13,6 +13,8 @@ import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
 import { PinModal } from "@/components/PinModal";
 import { apiSync } from "@/lib/apiSync";
+import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
+import { getBackendUrl } from "@/lib/backend";
 
 interface MiniLeaderboardEntry {
   playerId: string;
@@ -128,7 +130,15 @@ export default function HistoryPage() {
   const [showPinModal, setShowPinModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const [isViewer, setIsViewer] = useState(false);
+  const [viewerSlug, setViewerSlugState] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsViewer(isViewerMode() && !currentTournament);
+    setViewerSlugState(getViewerSlug());
+  }, [currentTournament]);
+
+  const backendUrl = getBackendUrl();
 
   const handleDeleteTournament = async (tId: string) => {
     if (!apiSync.hasPin()) {
@@ -663,6 +673,24 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white pb-24 selection:bg-purple-500 selection:text-white">
+      {/* Spectator Mode Banner */}
+      {isViewer && (
+        <div className="bg-purple-950/40 border-b border-purple-500/20 px-4 py-2 flex items-center justify-between text-xs sticky top-0 z-30 backdrop-blur-md">
+          <span className="text-purple-300 font-bold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Spectator Mode · Match History & Logs
+          </span>
+          {viewerSlug && (
+            <Link
+              href={`/live/${viewerSlug}`}
+              className="text-white bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/40 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1 transition-colors"
+            >
+              <span>🏸 Live Court</span>
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Top Header */}
       <header className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur-xl border-b border-white/10 px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
@@ -902,16 +930,18 @@ export default function HistoryPage() {
                                   <span>👁️ Live</span>
                                 </Link>
                               )}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTournamentToDelete(tourney.tournamentId);
-                                }}
-                                title="Delete Tournament"
-                                className="text-[11px] p-1.5 rounded-md bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 text-red-400 hover:text-red-300 transition-colors"
-                              >
-                                <span>🗑️</span>
-                              </button>
+                              {!isViewer && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTournamentToDelete(tourney.tournamentId);
+                                  }}
+                                  title="Delete Tournament"
+                                  className="text-[11px] p-1.5 rounded-md bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 text-red-400 hover:text-red-300 transition-colors"
+                                >
+                                  <span>🗑️</span>
+                                </button>
+                              )}
                               <svg
                                 className={`w-4 h-4 text-gray-400 transition-transform ${
                                   isExpanded ? "rotate-180" : ""

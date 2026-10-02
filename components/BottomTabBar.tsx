@@ -1,95 +1,27 @@
 "use client";
 // components/BottomTabBar.tsx — Persistent 2-tab bottom navigation
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useStore } from "@/lib/store";
-
-const tabs = [
-  {
-    href: "/",
-    label: "Play",
-    icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path
-          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1.5a8.5 8.5 0 110 17 8.5 8.5 0 010-17z"
-          fill={active ? "#A78BFA" : "#4B5563"}
-        />
-        <ellipse cx="12" cy="12" rx="3.5" ry="5" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" fill="none" transform="rotate(-30 12 12)" />
-        <line x1="6" y1="17" x2="18" y2="7" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    href: "/day",
-    label: "Day Table",
-    icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="3" width="18" height="18" rx="3" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" fill="none" />
-        <path d="M7 15l3-3 3 3 4-5" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="7" cy="15" r="1" fill={active ? "#A78BFA" : "#4B5563"} />
-        <circle cx="10" cy="12" r="1" fill={active ? "#A78BFA" : "#4B5563"} />
-        <circle cx="13" cy="15" r="1" fill={active ? "#A78BFA" : "#4B5563"} />
-        <circle cx="17" cy="10" r="1" fill={active ? "#A78BFA" : "#4B5563"} />
-      </svg>
-    ),
-  },
-  {
-    href: "/history",
-    label: "History",
-    icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M12 8v4l3 3" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="12" cy="12" r="9" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" />
-      </svg>
-    ),
-  },
-  {
-    href: "/profiles",
-    label: "Squad",
-    icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path
-          d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
-          stroke={active ? "#A78BFA" : "#4B5563"}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle
-          cx="9"
-          cy="7"
-          r="4"
-          stroke={active ? "#A78BFA" : "#4B5563"}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M22 21v-2a4 4 0 0 0-3-3.87"
-          stroke={active ? "#A78BFA" : "#4B5563"}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M16 3.13a4 4 0 0 1 0 7.75"
-          stroke={active ? "#A78BFA" : "#4B5563"}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
-  },
-];
+import { getViewerSlug, isViewerMode } from "@/lib/viewerMode";
 
 export function BottomTabBar() {
   const pathname = usePathname();
   const { dayTable, currentTournament, phase } = useStore();
+  const [viewerSlug, setViewerSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    setViewerSlug(getViewerSlug());
+  }, [pathname]);
+
+  const isViewer = !currentTournament && (isViewerMode() || !!viewerSlug);
 
   // Status indicator for Play tab
   const playStatus = (() => {
+    if (isViewer) return "Live 📡";
     if (!currentTournament) return null;
     if (phase === "fixtures") {
       const remaining = currentTournament.matches.filter(m => !m.played).length;
@@ -100,6 +32,91 @@ export function BottomTabBar() {
     return null;
   })();
 
+  const tabs = [
+    {
+      href: isViewer ? `/live/${viewerSlug}` : "/",
+      label: isViewer ? "Live Court" : "Play",
+      icon: (active: boolean) => (
+        <div className="relative">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1.5a8.5 8.5 0 110 17 8.5 8.5 0 010-17z"
+              fill={active ? "#A78BFA" : "#4B5563"}
+            />
+            <ellipse cx="12" cy="12" rx="3.5" ry="5" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" fill="none" transform="rotate(-30 12 12)" />
+            <line x1="6" y1="17" x2="18" y2="7" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          {isViewer && (
+            <>
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-ping opacity-75" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400" />
+            </>
+          )}
+        </div>
+      ),
+    },
+    {
+      href: "/day",
+      label: "Day Table",
+      icon: (active: boolean) => (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="3" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" fill="none" />
+          <path d="M7 15l3-3 3 3 4-5" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="7" cy="15" r="1" fill={active ? "#A78BFA" : "#4B5563"} />
+          <circle cx="10" cy="12" r="1" fill={active ? "#A78BFA" : "#4B5563"} />
+          <circle cx="13" cy="15" r="1" fill={active ? "#A78BFA" : "#4B5563"} />
+          <circle cx="17" cy="10" r="1" fill={active ? "#A78BFA" : "#4B5563"} />
+        </svg>
+      ),
+    },
+    {
+      href: "/history",
+      label: "History",
+      icon: (active: boolean) => (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 8v4l3 3" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="12" r="9" stroke={active ? "#A78BFA" : "#4B5563"} strokeWidth="1.5" />
+        </svg>
+      ),
+    },
+    {
+      href: "/profiles",
+      label: "Squad",
+      icon: (active: boolean) => (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+            stroke={active ? "#A78BFA" : "#4B5563"}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle
+            cx="9"
+            cy="7"
+            r="4"
+            stroke={active ? "#A78BFA" : "#4B5563"}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M22 21v-2a4 4 0 0 0-3-3.87"
+            stroke={active ? "#A78BFA" : "#4B5563"}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M16 3.13a4 4 0 0 1 0 7.75"
+            stroke={active ? "#A78BFA" : "#4B5563"}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      ),
+    },
+  ];
+
   // Badge for Day Table tab
   const dayBadge = dayTable.tournaments.length > 0 ? dayTable.tournaments.length : null;
 
@@ -108,10 +125,16 @@ export function BottomTabBar() {
       {/* Frosted glass tab bar */}
       <div className="bg-slate-900/95 backdrop-blur-xl border-t border-white/10 px-6 pb-safe">
         <div className="flex items-center pt-2 pb-3">
-          {tabs.map((tab) => {
-            const isActive = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+          {tabs.map((tab, idx) => {
+            const isFirstTab = idx === 0;
+            const isActive = isFirstTab
+              ? isViewer
+                ? pathname.startsWith("/live") || pathname === "/"
+                : pathname === "/"
+              : pathname.startsWith(tab.href);
+
             const badge = tab.href === "/day" ? dayBadge : null;
-            const status = tab.href === "/" ? playStatus : null;
+            const status = isFirstTab ? playStatus : null;
 
             return (
               <Link key={tab.href} href={tab.href} className="flex-1 flex flex-col items-center gap-1 py-1 relative">

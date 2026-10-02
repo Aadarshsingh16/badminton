@@ -11,6 +11,9 @@ import { Player, Match, Tournament, TournamentRow } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { computeTournamentTable } from "@/lib/ranking";
 import { apiSync } from "@/lib/apiSync";
+import { setViewerSlug, clearViewerMode } from "@/lib/viewerMode";
+import { getBackendUrl } from "@/lib/backend";
+import Link from "next/link";
 
 interface LiveData {
   tournament: any;
@@ -31,7 +34,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
   const [socketConnected, setSocketConnected] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
 
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const backendUrl = getBackendUrl();
 
   // Fetch initial tournament data with local fallback
   const fetchData = async () => {
@@ -111,6 +114,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
   };
 
   useEffect(() => {
+    setViewerSlug(slug);
     fetchData();
 
     // Setup Socket.io client
@@ -235,12 +239,23 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
             </div>
           </div>
 
-          {/* Connection status badge */}
-          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full text-xs">
-            <span className={`w-2 h-2 rounded-full ${socketConnected ? "bg-green-400 animate-pulse" : "bg-yellow-400"}`} />
-            <span className="text-white/70 font-medium text-[11px]">
-              {socketConnected ? "Live" : "Polling"}
-            </span>
+          {/* Actions & connection status */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              onClick={() => clearViewerMode()}
+              className="text-[10px] text-purple-300 hover:text-purple-200 bg-purple-500/10 border border-purple-500/20 px-2 py-1 rounded-full transition-colors font-medium flex items-center gap-1"
+            >
+              <span>⚙️</span>
+              <span>Host Mode</span>
+            </Link>
+
+            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full text-xs">
+              <span className={`w-2 h-2 rounded-full ${socketConnected ? "bg-green-400 animate-pulse" : "bg-yellow-400"}`} />
+              <span className="text-white/70 font-medium text-[11px]">
+                {socketConnected ? "Live" : "Polling"}
+              </span>
+            </div>
           </div>
         </div>
 
