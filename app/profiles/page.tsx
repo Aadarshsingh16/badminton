@@ -208,7 +208,7 @@ const PLAYER_LORES: { [id: string]: PlayerLore } = {
 
 export default function ProfilesPage() {
   const { players, pastTournaments, currentTournament, completedDays, dayTable } = useStore();
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("gautam");
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>(FIXED_PLAYERS[0]?.id || "adarsh");
   const [activeMoodTab, setActiveMoodTab] = useState<"courtMood" | "dailyRoast" | "excuse">("courtMood");
   const [showSpeechBubble, setShowSpeechBubble] = useState(true);
 
