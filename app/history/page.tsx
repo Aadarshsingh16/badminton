@@ -3,7 +3,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useStore } from "@/lib/store";
+import {
+  useStore,
+  recoverTournamentsFromSyncQueue,
+  recoverCompletedDaysFromSyncQueue,
+} from "@/lib/store";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
 import { PinModal } from "@/components/PinModal";
@@ -107,7 +111,7 @@ interface DayHonors {
 }
 
 export default function HistoryPage() {
-  const { players, dayTable, currentTournament, pastTournaments } = useStore();
+  const { players, dayTable, currentTournament, pastTournaments, completedDays } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<"log" | "leaderboards">("log");
   const [rangeFilter, setRangeFilter] = useState<"day" | "week" | "month" | "all">("all");
   const [playerFilter, setPlayerFilter] = useState<string>("all");
@@ -213,6 +217,22 @@ export default function HistoryPage() {
     }
   };
 
+  // Automatic data recovery if pastTournaments or completedDays was lost from state
+  useEffect(() => {
+    if (pastTournaments.length === 0) {
+      const recovered = recoverTournamentsFromSyncQueue();
+      if (recovered.length > 0) {
+        useStore.setState({ pastTournaments: recovered });
+      }
+    }
+    if (!completedDays || completedDays.length === 0) {
+      const recoveredDays = recoverCompletedDaysFromSyncQueue();
+      if (recoveredDays.length > 0) {
+        useStore.setState({ completedDays: recoveredDays });
+      }
+    }
+  }, [pastTournaments.length, completedDays?.length]);
+
   useEffect(() => {
     if (activeSubTab === "log") {
       fetchHistory();
@@ -223,20 +243,27 @@ export default function HistoryPage() {
 
   // Local fallback synthesis if backend returned no records or offline
   const localHistoryFallback = useMemo<HistoryData>(() => {
-    const allTourneys = [...pastTournaments];
+    let allTourneys = [...pastTournaments];
+    if (allTourneys.length === 0) {
+      const rec = recoverTournamentsFromSyncQueue();
+      if (rec.length > 0) allTourneys = rec;
+    }
     if (currentTournament) {
       allTourneys.push(currentTournament);
     }
 
-    if (allTourneys.length === 0 && dayTable.tournaments.length === 0) {
+    if (allTourneys.length === 0) {
       return { totalMatches: 0, totalPoints: 0, days: [], miniLeaderboard: [] };
     }
 
     const allMatches: MatchHistoryItem[] = [];
-    const tournamentsList: TournamentGroup[] = [];
+    const daysMap: { [dateStr: string]: TournamentGroup[] } = {};
 
     allTourneys.forEach((t) => {
       const tourneyMatches: MatchHistoryItem[] = [];
+      const tourneyDate = t.createdAt
+        ? new Date(t.createdAt).toISOString().split("T")[0]
+        : dayTable.date;
 
       t.matches
         .filter((m) => m.played)
@@ -264,7 +291,7 @@ export default function HistoryPage() {
             pointsB: m.pointsAwarded?.[m.playerB] ?? 0,
             played: true,
             shareSlug: t.shareSlug,
-            date: dayTable.date,
+            date: tourneyDate,
           };
           tourneyMatches.push(item);
           allMatches.push(item);
@@ -295,7 +322,7 @@ export default function HistoryPage() {
           pointsB: m.pointsAwarded?.[m.playerB] ?? 0,
           played: true,
           shareSlug: t.shareSlug,
-          date: dayTable.date,
+          date: tourneyDate,
         };
         tourneyMatches.push(item);
         allMatches.push(item);
@@ -322,7 +349,10 @@ export default function HistoryPage() {
       }
 
       if (filteredTourneyMatches.length > 0 || (playerFilter === "all" && patternFilter === "all")) {
-        tournamentsList.push({
+        if (!daysMap[tourneyDate]) {
+          daysMap[tourneyDate] = [];
+        }
+        daysMap[tourneyDate].push({
           tournamentId: t.id,
           shareSlug: t.shareSlug,
           matches: filteredTourneyMatches,
@@ -347,38 +377,62 @@ export default function HistoryPage() {
       }
     }
 
+    const days: DayGroup[] = Object.entries(daysMap)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([date, tournaments]) => ({ date, tournaments }));
+
+    const miniLeaderboard = players
+      .map((p) => {
+        let points = 0;
+        allTourneys.forEach((t) => {
+          if (t.dayPointsAwarded && t.dayPointsAwarded[p.id] !== undefined) {
+            points += t.dayPointsAwarded[p.id];
+          } else {
+            t.matches.filter((m) => m.played).forEach((m) => {
+              points += m.pointsAwarded?.[p.id] || 0;
+            });
+            if (t.final?.played) {
+              points += t.final.pointsAwarded?.[p.id] || 0;
+            }
+          }
+        });
+        if (points === 0 && dayTable.totals[p.id]) {
+          points = dayTable.totals[p.id];
+        }
+
+        const pMatches = allMatches.filter((m) => m.playerA === p.id || m.playerB === p.id);
+        const wins = pMatches.filter(
+          (m) =>
+            (m.playerA === p.id && m.scoreA > m.scoreB) ||
+            (m.playerB === p.id && m.scoreB > m.scoreA)
+        ).length;
+
+        return {
+          playerId: p.id,
+          name: p.name,
+          points,
+          matches: pMatches.length,
+          wins,
+        };
+      })
+      .filter((p) => p.matches > 0 || p.points > 0)
+      .sort((a, b) => b.points - a.points);
+
     return {
       totalMatches: displayMatches.length,
       totalPoints: displayMatches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
-      days:
-        tournamentsList.length > 0
-          ? [
-              {
-                date: dayTable.date,
-                tournaments: tournamentsList,
-              },
-            ]
-          : [],
-      miniLeaderboard: players
-        .map((p) => ({
-          playerId: p.id,
-          name: p.name,
-          points: dayTable.totals[p.id] || 0,
-          matches: allMatches.filter((m) => m.playerA === p.id || m.playerB === p.id).length,
-          wins: allMatches.filter(
-            (m) =>
-              (m.playerA === p.id && m.scoreA > m.scoreB) ||
-              (m.playerB === p.id && m.scoreB > m.scoreA)
-          ).length,
-        }))
-        .filter((p) => p.matches > 0 || (dayTable.totals[p.playerId] || 0) > 0)
-        .sort((a, b) => b.points - a.points),
+      days,
+      miniLeaderboard,
     };
   }, [currentTournament, pastTournaments, dayTable, players, playerFilter, patternFilter]);
 
   // Local fallback synthesis for Leaderboards if backend has no records yet
   const localLeaderboardFallback = useMemo<LeaderboardEntry[]>(() => {
-    const allTourneys = [...pastTournaments];
+    let allTourneys = [...pastTournaments];
+    if (allTourneys.length === 0) {
+      const rec = recoverTournamentsFromSyncQueue();
+      if (rec.length > 0) allTourneys = rec;
+    }
     if (currentTournament) allTourneys.push(currentTournament);
 
     const allMatches: Array<{
@@ -417,7 +471,24 @@ export default function HistoryPage() {
           (m.playerA === p.id && m.scoreA > m.scoreB) ||
           (m.playerB === p.id && m.scoreB > m.scoreA)
       ).length;
-      const totalPoints = dayTable.totals[p.id] ?? 0;
+
+      let totalPoints = 0;
+      allTourneys.forEach((t) => {
+        if (t.dayPointsAwarded && t.dayPointsAwarded[p.id] !== undefined) {
+          totalPoints += t.dayPointsAwarded[p.id];
+        } else {
+          t.matches.filter((m) => m.played).forEach((m) => {
+            totalPoints += m.pointsAwarded?.[p.id] || 0;
+          });
+          if (t.final?.played) {
+            totalPoints += t.final.pointsAwarded?.[p.id] || 0;
+          }
+        }
+      });
+      if (totalPoints === 0 && dayTable.totals[p.id]) {
+        totalPoints = dayTable.totals[p.id];
+      }
+
       let pointDiff = 0;
       pMatches.forEach((m) => {
         if (m.playerA === p.id) pointDiff += m.scoreA - m.scoreB;
@@ -453,45 +524,82 @@ export default function HistoryPage() {
 
   // Local fallback synthesis for Day Honors (Champion & Wooden Spoon)
   const localDayHonorsFallback = useMemo<DayHonors>(() => {
-    const dayTotalsEntries = Object.entries(dayTable.totals).sort(([, a], [, b]) => b - a);
-
-    const dayChampions: Array<{ playerId: string; name: string; avatar: AvatarType; emoji?: string; color?: string; count: number }> = [];
-    const dayLastPlaces: Array<{ playerId: string; name: string; avatar: AvatarType; emoji?: string; color?: string; count: number }> = [];
-
-    if (dayTotalsEntries.length >= 2) {
-      const topId = dayTotalsEntries[0][0];
-      const botId = dayTotalsEntries[dayTotalsEntries.length - 1][0];
-      const topP = players.find((p) => p.id === topId);
-      const botP = players.find((p) => p.id === botId);
-
-      if (topP) {
-        dayChampions.push({
-          playerId: topP.id,
-          name: `${topP.name} (Today's Leader)`,
-          avatar: topP.avatar,
-          emoji: topP.avatarEmoji,
-          color: topP.avatarColor,
-          count: 1,
-        });
-      }
-      if (botP) {
-        dayLastPlaces.push({
-          playerId: botP.id,
-          name: `${botP.name} (Today's Spoon)`,
-          avatar: botP.avatar,
-          emoji: botP.avatarEmoji,
-          color: botP.avatarColor,
-          count: 1,
-        });
-      }
+    let allCompletedDays = completedDays && completedDays.length > 0 ? [...completedDays] : [];
+    if (allCompletedDays.length === 0) {
+      allCompletedDays = recoverCompletedDaysFromSyncQueue();
     }
+
+    const champCounts: { [pid: string]: number } = {};
+    const spoonCounts: { [pid: string]: number } = {};
+    const historyItems: DayHonors["history"] = [];
+
+    // Active session day totals if session has played tournaments
+    const activeTotals = Object.entries(dayTable.totals).sort(([, a], [, b]) => b - a);
+    if (activeTotals.length >= 2 && !allCompletedDays.some((d) => d.date === dayTable.date)) {
+      const topId = activeTotals[0][0];
+      const botId = activeTotals[activeTotals.length - 1][0];
+      champCounts[topId] = (champCounts[topId] || 0) + 1;
+      spoonCounts[botId] = (spoonCounts[botId] || 0) + 1;
+    }
+
+    allCompletedDays.forEach((cd, idx) => {
+      const topP = players.find((p) => p.id === cd.topPlayerId);
+      const botP = players.find((p) => p.id === cd.spoonPlayerId);
+      if (cd.topPlayerId) champCounts[cd.topPlayerId] = (champCounts[cd.topPlayerId] || 0) + 1;
+      if (cd.spoonPlayerId) spoonCounts[cd.spoonPlayerId] = (spoonCounts[cd.spoonPlayerId] || 0) + 1;
+
+      if (topP && botP) {
+        historyItems.push({
+          id: `day-${cd.date}-${idx}`,
+          date: cd.date,
+          topPlayerId: topP.id,
+          topPlayerName: topP.name,
+          topPlayerAvatar: topP.avatar,
+          topPlayerAvatarEmoji: topP.avatarEmoji,
+          topPlayerAvatarColor: topP.avatarColor,
+          bottomPlayerId: botP.id,
+          bottomPlayerName: botP.name,
+          bottomPlayerAvatar: botP.avatar,
+          bottomPlayerAvatarEmoji: botP.avatarEmoji,
+          bottomPlayerAvatarColor: botP.avatarColor,
+        });
+      }
+    });
+
+    const dayChampions = Object.entries(champCounts)
+      .map(([pid, count]) => {
+        const p = players.find((pl) => pl.id === pid);
+        return {
+          playerId: pid,
+          name: p?.name || pid,
+          avatar: p?.avatar || "fighter",
+          emoji: p?.avatarEmoji,
+          color: p?.avatarColor,
+          count,
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+
+    const dayLastPlaces = Object.entries(spoonCounts)
+      .map(([pid, count]) => {
+        const p = players.find((pl) => pl.id === pid);
+        return {
+          playerId: pid,
+          name: p?.name || pid,
+          avatar: p?.avatar || "clumsy",
+          emoji: p?.avatarEmoji,
+          color: p?.avatarColor,
+          count,
+        };
+      })
+      .sort((a, b) => b.count - a.count);
 
     return {
       dayChampions,
       dayLastPlaces,
-      history: [],
+      history: historyItems,
     };
-  }, [dayTable.totals, players]);
+  }, [completedDays, dayTable.totals, dayTable.date, players]);
 
   const displayedHistory =
     historyData && historyData.days.length > 0 ? historyData : localHistoryFallback;

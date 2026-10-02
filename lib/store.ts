@@ -2,7 +2,16 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Player, Tournament, DayTable, Match, PlayPhase, TournamentConfig, DEFAULT_CONFIG } from "./types";
+import {
+  Player,
+  Tournament,
+  DayTable,
+  CompletedDaySummary,
+  Match,
+  PlayPhase,
+  TournamentConfig,
+  DEFAULT_CONFIG,
+} from "./types";
 import { generateRoundRobin } from "./fixtures";
 import { pointsForMatch, pointsForFinal } from "./scoring";
 import { computeDayPoints, isRoundRobinComplete, getFinalists } from "./ranking";
@@ -34,9 +43,10 @@ interface AppState {
   needsCoinFlip: boolean;
   coinFlipWinnerId: string | null;
 
-  // Day table
+  // Day table & archives
   dayTable: DayTable;
   pastTournaments: Tournament[];
+  completedDays: CompletedDaySummary[];
 
   // Actions
   addPlayer: (player: Player) => void;
@@ -91,6 +101,175 @@ function computeMatchPoints(
   };
 }
 
+/**
+ * Recovers tournaments from both permanent local archive and the pending sync queue.
+ * Ensures data is never lost even if the store is wiped or page reloads offline.
+ */
+export function recoverTournamentsFromSyncQueue(): Tournament[] {
+  if (typeof window === "undefined") return [];
+  const tournamentsMap: { [id: string]: Tournament } = {};
+
+  // 1. Read from permanent local archive if available
+  try {
+    const rawArchive = localStorage.getItem("badminton_archived_tournaments_v1");
+    if (rawArchive) {
+      const archived = JSON.parse(rawArchive);
+      if (Array.isArray(archived)) {
+        for (const t of archived) {
+          if (t && t.id) tournamentsMap[t.id] = t;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Failed reading archived tournaments:", e);
+  }
+
+  // 2. Reconstruct any pending/recent tournaments from the sync queue
+  try {
+    const rawQueue = localStorage.getItem("badminton_sync_queue_v1");
+    if (rawQueue) {
+      const queue = JSON.parse(rawQueue);
+      if (Array.isArray(queue)) {
+        for (const item of queue) {
+          if (item.method === "POST" && item.url.includes("/tournaments") && item.body) {
+            const b = item.body;
+            if (b.id && !tournamentsMap[b.id]) {
+              tournamentsMap[b.id] = {
+                id: b.id,
+                createdAt: Date.now(),
+                playerIds: b.playerIds || [],
+                matches: (b.matches || []).map((m: any) => ({
+                  ...m,
+                  scoreA: m.scoreA,
+                  scoreB: m.scoreB,
+                  played: !!m.played,
+                  courtSide: m.courtSide || { [m.playerA]: 1, [m.playerB]: 2 },
+                })),
+                byes: [],
+                closed: true,
+                shareSlug: b.shareSlug || "shared",
+                config: b.config || DEFAULT_CONFIG,
+              };
+            }
+          }
+        }
+
+        for (const item of queue) {
+          if (item.method === "PATCH" && item.url.includes("/matches/") && item.body) {
+            const parts = item.url.split("/matches/");
+            const matchId = parts[1];
+            const tourneyPart = parts[0].split("/tournaments/");
+            const tId = tourneyPart[1];
+            if (tId && tournamentsMap[tId]) {
+              const t = tournamentsMap[tId];
+              const m = t.matches.find((x) => x.id === matchId);
+              if (m) {
+                m.scoreA = item.body.scoreA;
+                m.scoreB = item.body.scoreB;
+                m.played = true;
+                m.pointsAwarded = computeMatchPoints(m, t.config);
+              }
+            }
+          } else if (item.method === "PATCH" && item.url.includes("/final") && item.body) {
+            const tId = item.url.split("/tournaments/")[1]?.split("/final")[0];
+            if (tId && tournamentsMap[tId]) {
+              const t = tournamentsMap[tId];
+              const b = item.body;
+              const winScore = Math.max(b.scoreA, b.scoreB);
+              const loseScore = Math.min(b.scoreA, b.scoreB);
+              const winnerIsA = b.scoreA > b.scoreB;
+              const ptsA = pointsForFinal(winScore, loseScore, winnerIsA, t.config);
+              const ptsB = pointsForFinal(winScore, loseScore, !winnerIsA, t.config);
+
+              t.final = {
+                id: `final-${tId}`,
+                round: -1,
+                isFinal: true,
+                playerA: b.playerA,
+                playerB: b.playerB,
+                courtSide: { [b.playerA]: 1, [b.playerB]: 2 },
+                scoreA: b.scoreA,
+                scoreB: b.scoreB,
+                played: true,
+                pointsAwarded: { [b.playerA]: ptsA, [b.playerB]: ptsB },
+              };
+            }
+          } else if (item.method === "POST" && item.url.includes("/day-tables/close") && item.body) {
+            const totals = item.body.totals;
+            Object.values(tournamentsMap).forEach((t) => {
+              if (!t.dayPointsAwarded && totals) {
+                t.dayPointsAwarded = totals;
+              }
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to recover tournaments from sync queue:", e);
+  }
+
+  const list = Object.values(tournamentsMap);
+  if (list.length > 0) {
+    try {
+      localStorage.setItem("badminton_archived_tournaments_v1", JSON.stringify(list));
+    } catch {}
+  }
+  return list;
+}
+
+/**
+ * Recovers completed day history from permanent archive or sync queue.
+ */
+export function recoverCompletedDaysFromSyncQueue(): CompletedDaySummary[] {
+  if (typeof window === "undefined") return [];
+  const daysMap: { [date: string]: CompletedDaySummary } = {};
+
+  try {
+    const rawArchive = localStorage.getItem("badminton_completed_days_v1");
+    if (rawArchive) {
+      const archived = JSON.parse(rawArchive);
+      if (Array.isArray(archived)) {
+        for (const d of archived) {
+          if (d && d.date) daysMap[d.date] = d;
+        }
+      }
+    }
+  } catch {}
+
+  try {
+    const rawQueue = localStorage.getItem("badminton_sync_queue_v1");
+    if (rawQueue) {
+      const queue = JSON.parse(rawQueue);
+      if (Array.isArray(queue)) {
+        for (const item of queue) {
+          if (item.method === "POST" && item.url.includes("/day-tables/close") && item.body) {
+            const { date, totals } = item.body;
+            if (date && totals && !daysMap[date]) {
+              const sorted = Object.entries(totals).sort(([, a]: any, [, b]: any) => b - a);
+              daysMap[date] = {
+                date,
+                totals,
+                topPlayerId: sorted[0]?.[0],
+                spoonPlayerId: sorted.length > 1 ? sorted[sorted.length - 1]?.[0] : undefined,
+                tournamentIds: [],
+              };
+            }
+          }
+        }
+      }
+    }
+  } catch {}
+
+  const result = Object.values(daysMap);
+  if (result.length > 0) {
+    try {
+      localStorage.setItem("badminton_completed_days_v1", JSON.stringify(result));
+    } catch {}
+  }
+  return result;
+}
+
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -107,6 +286,7 @@ export const useStore = create<AppState>()(
         totals: {},
       },
       pastTournaments: [],
+      completedDays: [],
 
       addPlayer: (player) => {
         set((s) => ({
@@ -397,7 +577,7 @@ export const useStore = create<AppState>()(
       },
 
       closeTournament: () => {
-        const { currentTournament, dayTable } = get();
+        const { currentTournament, dayTable, pastTournaments } = get();
         if (!currentTournament) return;
 
         // If practice/test tournament, do not save to day table or sync to backend
@@ -432,13 +612,20 @@ export const useStore = create<AppState>()(
                 totals: newTotals,
               };
 
-        set((s) => ({
+        const updatedPast = [...pastTournaments, closedTournament];
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("badminton_archived_tournaments_v1", JSON.stringify(updatedPast));
+          }
+        } catch {}
+
+        set({
           currentTournament: null,
           phase: "player-select",
           dayTable: newDayTable,
-          pastTournaments: [...s.pastTournaments, closedTournament],
+          pastTournaments: updatedPast,
           selectedPlayerIds: closedTournament.playerIds,
-        }));
+        });
 
         apiSync.enqueue("/day-tables/close", "POST", {
           date: currentDate,
@@ -460,6 +647,12 @@ export const useStore = create<AppState>()(
           }
         }
 
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("badminton_archived_tournaments_v1", JSON.stringify(updatedPast));
+          }
+        } catch {}
+
         set({
           pastTournaments: updatedPast,
           dayTable: {
@@ -479,9 +672,29 @@ export const useStore = create<AppState>()(
       },
 
       startNewDay: () => {
+        const { dayTable, completedDays } = get();
+        const newCompletedDays = [...completedDays];
+
+        if (dayTable.tournaments.length > 0 || Object.keys(dayTable.totals).length > 0) {
+          const sorted = Object.entries(dayTable.totals).sort(([, a], [, b]) => b - a);
+          const newSummary: CompletedDaySummary = {
+            date: dayTable.date,
+            totals: { ...dayTable.totals },
+            topPlayerId: sorted[0]?.[0],
+            spoonPlayerId: sorted.length > 1 ? sorted[sorted.length - 1]?.[0] : undefined,
+            tournamentIds: [...dayTable.tournaments],
+          };
+          newCompletedDays.push(newSummary);
+          try {
+            if (typeof window !== "undefined") {
+              localStorage.setItem("badminton_completed_days_v1", JSON.stringify(newCompletedDays));
+            }
+          } catch {}
+        }
+
         set({
+          completedDays: newCompletedDays,
           dayTable: { date: today(), tournaments: [], totals: {} },
-          pastTournaments: [],
           currentTournament: null,
           phase: "player-select",
           selectedPlayerIds: [],
@@ -491,7 +704,23 @@ export const useStore = create<AppState>()(
       setPhase: (phase) => set({ phase }),
     }),
     {
-      name: "badminton-app-state-v2",  // bumped version to avoid stale state from v1
+      name: "badminton-app-state-v2",
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          if (state.pastTournaments.length === 0) {
+            const recovered = recoverTournamentsFromSyncQueue();
+            if (recovered.length > 0) {
+              state.pastTournaments = recovered;
+            }
+          }
+          if (!state.completedDays || state.completedDays.length === 0) {
+            const recoveredDays = recoverCompletedDaysFromSyncQueue();
+            if (recoveredDays.length > 0) {
+              state.completedDays = recoveredDays;
+            }
+          }
+        }
+      },
     }
   )
 );

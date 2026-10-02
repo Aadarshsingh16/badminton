@@ -76,6 +76,14 @@ export interface DayTable {
   totals: { [playerId: string]: number };
 }
 
+export interface CompletedDaySummary {
+  date: string;
+  totals: { [playerId: string]: number };
+  topPlayerId?: string;
+  spoonPlayerId?: string;
+  tournamentIds: string[];
+}
+
 export interface TournamentRow {
   playerId: string;
   points: number;
