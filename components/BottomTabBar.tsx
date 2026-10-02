@@ -46,6 +46,42 @@ const tabs = [
       </svg>
     ),
   },
+  {
+    href: "/profiles",
+    label: "Squad",
+    icon: (active: boolean) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+          stroke={active ? "#A78BFA" : "#4B5563"}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle
+          cx="9"
+          cy="7"
+          r="4"
+          stroke={active ? "#A78BFA" : "#4B5563"}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M22 21v-2a4 4 0 0 0-3-3.87"
+          stroke={active ? "#A78BFA" : "#4B5563"}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M16 3.13a4 4 0 0 1 0 7.75"
+          stroke={active ? "#A78BFA" : "#4B5563"}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
 ];
 
 export function BottomTabBar() {
