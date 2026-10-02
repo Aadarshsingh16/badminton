@@ -41,6 +41,7 @@ export default function PlayPage() {
     startNextTournament,
     shuffleFixtures,
     cancelTournament,
+    setPhase,
   } = useStore();
 
   const [fixtureTab, setFixtureTab] = useState<FixtureTab>("fixtures");
@@ -328,6 +329,25 @@ export default function PlayPage() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto pt-4">
+          {playedMatches.length === currentTournament.matches.length && (
+            <div className="mx-4 mb-3 p-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-2xl flex items-center justify-between gap-3 shadow-lg shadow-yellow-500/10">
+              <div>
+                <p className="text-yellow-300 font-bold text-xs uppercase tracking-wide">
+                  {currentTournament.final?.played ? "🏆 Tournament Finished" : "🏆 All Matches Complete"}
+                </p>
+                <p className="text-white/60 text-xs">
+                  {currentTournament.final?.played ? "Reviewing past fixtures" : "Ready for the Grand Final"}
+                </p>
+              </div>
+              <button
+                onClick={() => setPhase(currentTournament.final?.played ? "tournament-summary" : "final")}
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold text-xs shadow-md shadow-yellow-500/20 flex-shrink-0 hover:brightness-110 active:scale-95 transition-all"
+              >
+                {currentTournament.final?.played ? "Back to Summary →" : "Proceed to Final →"}
+              </button>
+            </div>
+          )}
+
           <AnimatePresence mode="wait">
             {fixtureTab === "fixtures" ? (
               <motion.div
@@ -448,9 +468,21 @@ export default function PlayPage() {
       const cfg = currentTournament.config;
       return (
         <div className="min-h-full flex flex-col">
-          <div className="px-4 pt-6 pb-4">
-            <h2 className="text-white font-black text-2xl mb-1">🏆 Grand Final</h2>
-            <p className="text-white/40 text-sm">Round-robin complete! First to {cfg.finalWinScore} wins.</p>
+          <div className="px-4 pt-6 pb-3">
+            <div className="flex items-center justify-between mb-3">
+              <button
+                onClick={() => setPhase("fixtures")}
+                className="text-xs bg-white/10 hover:bg-white/15 text-white/70 border border-white/10 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+              >
+                <span>←</span>
+                <span>Review / Edit Matches</span>
+              </button>
+              <span className="text-[11px] text-yellow-400 font-medium bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-full">
+                Pre-Final Standings
+              </span>
+            </div>
+            <h2 className="text-white font-black text-2xl mb-0.5">🏆 Grand Final</h2>
+            <p className="text-white/40 text-xs">Round-robin complete! First to {cfg.finalWinScore} wins the tournament.</p>
           </div>
 
           {/* Finalists head-to-head */}
@@ -604,20 +636,38 @@ export default function PlayPage() {
             </motion.div>
           )}
 
-          {/* Final score display */}
+          {/* Final score display — tap to edit */}
           {final?.played && final.scoreA !== undefined && final.scoreB !== undefined && (
-            <div className="mt-4 bg-white/5 border border-white/10 rounded-xl px-6 py-3 inline-flex items-center gap-3">
+            <button
+              onClick={() => {
+                setActiveMatchId(final.id);
+                setIsEditingMatch(true);
+              }}
+              className="mt-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-yellow-500/40 rounded-xl px-5 py-2.5 inline-flex items-center gap-3 cursor-pointer transition-all active:scale-[0.99]"
+            >
               <span className="text-white font-bold">{getPlayer(final.playerA).name}</span>
-              <span className="text-white/40 text-sm">
+              <span className="text-yellow-400 font-bold text-base">
                 {final.scoreA} – {final.scoreB}
               </span>
               <span className="text-white font-bold">{getPlayer(final.playerB).name}</span>
-            </div>
+              <span className="text-[10px] font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 ml-1">
+                ✏️ Edit Final Score
+              </span>
+            </button>
           )}
         </div>
 
         {/* Final standings */}
-        <p className="px-4 text-white/40 text-xs uppercase tracking-widest mb-2">Final Standings</p>
+        <div className="px-4 flex items-center justify-between mb-2">
+          <p className="text-white/40 text-xs uppercase tracking-widest">Final Standings</p>
+          <button
+            onClick={() => setPhase("fixtures")}
+            className="text-xs bg-white/10 hover:bg-white/15 text-white/70 border border-white/10 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
+          >
+            <span>📋</span>
+            <span>View All Fixture Cards</span>
+          </button>
+        </div>
         <TournamentTable
           rows={table}
           players={players}

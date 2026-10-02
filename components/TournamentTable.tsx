@@ -20,6 +20,7 @@ const RANK_LABELS = ["🥇", "🥈", "🥉", "4th", "5th", "6th", "7th"];
 
 export function TournamentTable({ rows, players, finalistIds, showFinalLabel, tournament, onSelectMatch }: TournamentTableProps) {
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"table" | "matches">("table");
 
   const getPlayer = (id: string) => players.find((p) => p.id === id);
 
@@ -36,6 +37,10 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
     return allMatches;
   };
 
+  const allTournamentMatches = tournament
+    ? [...tournament.matches, ...(tournament.final ? [tournament.final] : [])]
+    : [];
+
   return (
     <div className="px-4 pb-4">
       {showFinalLabel && (
@@ -46,22 +51,103 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
         </div>
       )}
 
-      {/* Header */}
+      {/* View Switcher: Standings Table vs All Matches Editor */}
       {tournament && onSelectMatch && (
-        <div className="text-center mb-2">
-          <span className="text-[11px] text-white/40 bg-white/5 border border-white/5 px-2.5 py-1 rounded-full">
-            💡 Tap any player to view &amp; edit match scores ✏️
+        <div className="flex items-center justify-between gap-2 mb-3 bg-white/5 border border-white/10 rounded-2xl p-1.5">
+          <div className="flex gap-1">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                viewMode === "table"
+                  ? "bg-white/20 text-white shadow-sm"
+                  : "text-white/40 hover:text-white/70"
+              }`}
+            >
+              📊 Standings Table
+            </button>
+            <button
+              onClick={() => setViewMode("matches")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                viewMode === "matches"
+                  ? "bg-orange-500/25 text-orange-300 border border-orange-500/40 shadow-sm"
+                  : "text-white/40 hover:text-white/70"
+              }`}
+            >
+              <span>✏️</span>
+              <span>Edit All Matches</span>
+              <span className="text-[10px] bg-white/10 px-1.5 py-0.2 rounded-full">
+                {allTournamentMatches.length}
+              </span>
+            </button>
+          </div>
+          <span className="text-[11px] text-white/30 pr-2 hidden sm:inline">
+            {viewMode === "table" ? "Tap row to expand" : "Tap match to edit"}
           </span>
         </div>
       )}
-      <div className="flex items-center px-3 py-2 mb-1">
-        <span className="text-white/30 text-xs w-6 text-center">#</span>
-        <span className="text-white/30 text-xs flex-1 pl-2">Player</span>
-        <span className="text-white/30 text-xs w-8 text-center">MP</span>
-        <span className="text-white/30 text-xs w-8 text-center">W</span>
-        <span className="text-white/30 text-xs w-10 text-center">+/-</span>
-        <span className="text-white/30 text-xs w-10 text-center font-bold">PTS</span>
-      </div>
+
+      {viewMode === "matches" ? (
+        /* Direct Match List with Edit buttons */
+        <div className="space-y-2">
+          {allTournamentMatches.map((m, idx) => {
+            const isFinalMatch = m.round === -1;
+            const pA = getPlayer(m.playerA);
+            const pB = getPlayer(m.playerB);
+            const aWon = m.played && m.scoreA !== undefined && m.scoreB !== undefined && m.scoreA > m.scoreB;
+            const bWon = m.played && m.scoreA !== undefined && m.scoreB !== undefined && m.scoreB > m.scoreA;
+
+            return (
+              <button
+                key={m.id}
+                onClick={() => onSelectMatch?.(m)}
+                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-orange-500/40 rounded-xl p-3 flex items-center justify-between gap-3 text-left transition-all active:scale-[0.99] group"
+              >
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ${
+                    isFinalMatch ? "bg-yellow-500/25 text-yellow-300 border border-yellow-500/30" : "bg-white/10 text-white/50"
+                  }`}>
+                    {isFinalMatch ? "🏆 Final" : `Match ${idx + 1}`}
+                  </span>
+
+                  <div className="flex items-center gap-1.5 truncate">
+                    <span className={`text-xs font-semibold truncate ${aWon ? "text-green-400 font-bold" : "text-white/80"}`}>
+                      {pA?.name ?? m.playerA}
+                    </span>
+                    <span className="text-white/30 text-xs font-normal">vs</span>
+                    <span className={`text-xs font-semibold truncate ${bWon ? "text-green-400 font-bold" : "text-white/80"}`}>
+                      {pB?.name ?? m.playerB}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-shrink-0">
+                  {m.played && m.scoreA !== undefined && m.scoreB !== undefined ? (
+                    <span className="text-sm font-black tabular-nums text-white">
+                      {m.scoreA}–{m.scoreB}
+                    </span>
+                  ) : (
+                    <span className="text-white/30 text-xs">pending</span>
+                  )}
+
+                  <span className="text-[11px] font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/30 group-hover:bg-orange-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    ✏️ Edit
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        /* Standings Table */
+        <>
+          <div className="flex items-center px-3 py-2 mb-1">
+            <span className="text-white/30 text-xs w-6 text-center">#</span>
+            <span className="text-white/30 text-xs flex-1 pl-2">Player</span>
+            <span className="text-white/30 text-xs w-8 text-center">MP</span>
+            <span className="text-white/30 text-xs w-8 text-center">W</span>
+            <span className="text-white/30 text-xs w-10 text-center">+/-</span>
+            <span className="text-white/30 text-xs w-10 text-center font-bold">PTS</span>
+          </div>
 
       <AnimatePresence>
         {rows.map((row, idx) => {
@@ -254,6 +340,8 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
           );
         })}
       </AnimatePresence>
+        </>
+      )}
     </div>
   );
 }
