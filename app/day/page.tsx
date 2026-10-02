@@ -8,6 +8,10 @@ import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { computeTournamentTable } from "@/lib/ranking";
 import { Player, Tournament } from "@/lib/types";
 
+import { PinModal } from "@/components/PinModal";
+import { apiSync } from "@/lib/apiSync";
+import { ConfettiBurst } from "@/components/ConfettiBurst";
+
 const RANK_LABELS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣"];
 const PODIUM_COLORS = ["#FFD166", "#A8DADC", "#FF6B35", "#9E9E9E"];
 const RANK_MEDAL = ["🥇", "🥈", "🥉", "4th", "5th", "6th", "7th"];
@@ -17,6 +21,9 @@ export default function DayPage() {
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
   const [expandedTournament, setExpandedTournament] = useState<string | null>(null);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [showFinishDayModal, setShowFinishDayModal] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const getPlayer = (id: string): Player =>
     players.find((p) => p.id === id) ?? { id, name: id, avatar: "custom" as any };
@@ -28,6 +35,23 @@ export default function DayPage() {
 
   const hasTournaments = pastTournaments.length > 0;
   const hasData = sortedPlayers.length > 0;
+
+  const handleFinishDay = () => {
+    if (!apiSync.hasPin()) {
+      setShowPinModal(true);
+      return;
+    }
+
+    // Close day table on backend and crown champions
+    apiSync.enqueue("/day-tables/close", "POST", {
+      date: dayTable.date,
+      totals: dayTable.totals,
+    });
+
+    setShowConfetti(true);
+    setShowFinishDayModal(false);
+    startNewDay();
+  };
 
   /** For a given player, get their position in each past tournament */
   const getPlayerTournamentHistory = (playerId: string) => {
@@ -42,7 +66,9 @@ export default function DayPage() {
   };
 
   return (
-    <div className="min-h-full flex flex-col">
+    <div className="min-h-full flex flex-col relative">
+      <ConfettiBurst active={showConfetti} onComplete={() => setShowConfetti(false)} />
+
       {/* Header */}
       <div className="px-4 pt-6 pb-4">
         <div className="flex items-center justify-between mb-1">
@@ -52,14 +78,109 @@ export default function DayPage() {
               {dayTable.date} · {dayTable.tournaments.length} tournament{dayTable.tournaments.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <button
-            onClick={() => setShowConfirmReset(true)}
-            className="text-xs bg-red-500/15 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-full hover:bg-red-500/25 transition-colors"
-          >
-            New Day
-          </button>
+          <div className="flex items-center gap-2">
+            {hasData && (
+              <button
+                onClick={() => setShowFinishDayModal(true)}
+                className="text-xs bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black px-3.5 py-1.5 rounded-full shadow-md shadow-amber-500/20 active:scale-95 transition-all flex items-center gap-1.5"
+              >
+                <span>👑</span>
+                <span>Finish Day</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowConfirmReset(true)}
+              title="Reset Day"
+              className="text-xs bg-white/5 hover:bg-white/10 text-gray-400 hover:text-red-400 border border-white/10 p-1.5 rounded-full transition-colors"
+            >
+              <span>🗑️</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Finish Day Celebration Modal */}
+      <AnimatePresence>
+        {showFinishDayModal && hasData && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
+              onClick={() => setShowFinishDayModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto bg-slate-900 border border-amber-500/30 rounded-3xl p-6 shadow-2xl space-y-4"
+            >
+              <div className="text-center space-y-1">
+                <div className="text-4xl mb-2">👑</div>
+                <h3 className="text-white font-black text-xl">Crown Day Champions</h3>
+                <p className="text-white/40 text-xs">Finish session for {dayTable.date}</p>
+              </div>
+
+              {/* Honors Preview */}
+              <div className="space-y-2 py-1">
+                {sortedPlayers[0] && (
+                  <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="text-xl">👑</div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-amber-400">Day Champion</p>
+                        <p className="text-sm font-black text-white">{getPlayer(sortedPlayers[0].id).name}</p>
+                      </div>
+                    </div>
+                    <div className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs">
+                      {sortedPlayers[0].pts} pts
+                    </div>
+                  </div>
+                )}
+
+                {sortedPlayers.length >= 2 && sortedPlayers[sortedPlayers.length - 1] && (
+                  <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="text-xl">🥄</div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-red-400">Wooden Spoon</p>
+                        <p className="text-sm font-black text-white">
+                          {getPlayer(sortedPlayers[sortedPlayers.length - 1].id).name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="px-2.5 py-1 rounded-full bg-red-500/20 text-red-300 font-bold text-xs">
+                      {sortedPlayers[sortedPlayers.length - 1].pts} pts
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-[11px] text-gray-400 text-center leading-relaxed">
+                This saves today's champions into your permanent Hall of Fame and starts a fresh day table for your next session.
+              </p>
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFinishDayModal(false)}
+                  className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/70 font-semibold text-xs transition-colors"
+                >
+                  Keep Playing
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFinishDay}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+                >
+                  Crown &amp; Finish 👑
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* New Day confirmation */}
       <AnimatePresence>
@@ -79,9 +200,9 @@ export default function DayPage() {
               className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-50 bg-slate-900 border border-red-500/30 rounded-2xl p-6 text-center"
             >
               <div className="text-4xl mb-3">🗑️</div>
-              <h3 className="text-white font-black text-xl mb-2">Start New Day?</h3>
+              <h3 className="text-white font-black text-xl mb-2">Reset Day Table?</h3>
               <p className="text-white/50 text-sm mb-6">
-                This will reset the day table and all tournament history. Cannot be undone.
+                This will clear today's table without recording Day Champions. Cannot be undone.
               </p>
               <div className="flex gap-3">
                 <button
@@ -101,6 +222,16 @@ export default function DayPage() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Scorekeeper PIN Modal */}
+      <PinModal
+        open={showPinModal}
+        onClose={() => setShowPinModal(false)}
+        onSuccess={() => {
+          setShowPinModal(false);
+          handleFinishDay();
+        }}
+      />
 
       {/* Empty state */}
       {!hasData && (

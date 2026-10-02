@@ -60,6 +60,8 @@ export default function PlayPage() {
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinIsInvalid, setPinIsInvalid] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [isFinalSheetOpen, setIsFinalSheetOpen] = useState(true);
+  const [finalPendingScores, setFinalPendingScores] = useState({ scoreA: 0, scoreB: 0 });
 
   // Listen for unauthorized 401s from backend sync
   React.useEffect(() => {
@@ -654,41 +656,112 @@ export default function PlayPage() {
     const finalPlayerB = getPlayer(final.playerB);
 
     return (
-      <div className="min-h-full flex flex-col">
+      <div className="min-h-full flex flex-col relative pb-20">
         <ConfettiBurst active={showConfetti} onComplete={() => setShowConfetti(false)} />
 
-        <div className="px-4 pt-6 pb-4">
-          <h2 className="text-white font-black text-2xl mb-1">🏆 Grand Final</h2>
-          <p className="text-white/40 text-sm">First to {currentTournament.config.finalWinScore} points wins the tournament</p>
+        <div className="px-4 pt-6 pb-3 flex items-center justify-between">
+          <div>
+            <h2 className="text-white font-black text-2xl mb-0.5">🏆 Grand Final</h2>
+            <p className="text-white/40 text-xs">First to {currentTournament.config.finalWinScore} points wins the tournament</p>
+          </div>
+          {!isFinalSheetOpen && (
+            <button
+              onClick={() => setIsFinalSheetOpen(true)}
+              className="text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+            >
+              <span>🏸 Enter Score</span>
+            </button>
+          )}
         </div>
 
         {/* Head-to-head display */}
-        <div className="px-4 mb-6">
-          <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/20 border border-yellow-500/30 rounded-2xl p-6">
+        <div className="px-4 mb-4">
+          <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/20 border border-yellow-500/30 rounded-2xl p-5">
             <div className="flex items-center justify-around">
-              <motion.div layoutId={`player-card-${finalPlayerA.id}`} className="flex flex-col items-center gap-2">
-                <AvatarSVG type={finalPlayerA.avatar} size={80} emoji={finalPlayerA.avatarEmoji} color={finalPlayerA.avatarColor} />
+              <motion.div layoutId={`player-card-${finalPlayerA.id}`} className="flex flex-col items-center gap-1.5">
+                <AvatarSVG type={finalPlayerA.avatar} size={70} emoji={finalPlayerA.avatarEmoji} color={finalPlayerA.avatarColor} />
                 <p className="text-white font-bold text-sm">{finalPlayerA.name}</p>
+                <p className="text-yellow-400 text-xs font-bold font-mono">
+                  {finalPendingScores.scoreA > 0 ? `${finalPendingScores.scoreA} pts` : "Finalist"}
+                </p>
               </motion.div>
               <div className="flex flex-col items-center">
-                <span className="text-white/30 text-2xl font-black">VS</span>
+                <span className="text-white/30 text-xl font-black">VS</span>
+                <span className="text-[10px] text-yellow-400/80 font-semibold mt-1">First to {currentTournament.config.finalWinScore}</span>
               </div>
-              <motion.div layoutId={`player-card-${finalPlayerB.id}`} className="flex flex-col items-center gap-2">
-                <AvatarSVG type={finalPlayerB.avatar} size={80} emoji={finalPlayerB.avatarEmoji} color={finalPlayerB.avatarColor} />
+              <motion.div layoutId={`player-card-${finalPlayerB.id}`} className="flex flex-col items-center gap-1.5">
+                <AvatarSVG type={finalPlayerB.avatar} size={70} emoji={finalPlayerB.avatarEmoji} color={finalPlayerB.avatarColor} />
                 <p className="text-white font-bold text-sm">{finalPlayerB.name}</p>
+                <p className="text-yellow-400 text-xs font-bold font-mono">
+                  {finalPendingScores.scoreB > 0 ? `${finalPendingScores.scoreB} pts` : "Finalist"}
+                </p>
               </motion.div>
             </div>
           </div>
         </div>
 
-        {/* Score entry */}
+        {/* Standings Table viewable while sheet is minimized */}
+        <div className="px-4 mb-2 flex items-center justify-between">
+          <p className="text-white/40 text-xs uppercase tracking-widest font-semibold">Tournament Standings</p>
+          <span className="text-[11px] text-gray-500">Tap match to view / edit</span>
+        </div>
+        <div className="flex-1 overflow-y-auto px-1">
+          <TournamentTable
+            rows={table}
+            players={players}
+            finalistIds={currentTournament.finalistIds}
+            tournament={currentTournament}
+            onSelectMatch={(m) => {
+              setActiveMatchId(m.id);
+              setIsEditingMatch(m.played);
+            }}
+          />
+        </div>
+
+        {/* Sticky floating bottom bar when sheet is hidden */}
+        {!isFinalSheetOpen && (
+          <div className="fixed bottom-20 inset-x-4 max-w-lg mx-auto z-30">
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              onClick={() => setIsFinalSheetOpen(true)}
+              className="p-3.5 bg-gradient-to-r from-amber-600 via-orange-600 to-yellow-600 rounded-2xl shadow-2xl shadow-amber-600/40 border border-amber-400/40 flex items-center justify-between gap-3 cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-xl flex-shrink-0">🏆</span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-amber-200 uppercase tracking-widest">Grand Final in Progress</p>
+                  <p className="text-xs text-white font-bold truncate">
+                    {finalPlayerA.name} <span className="font-mono text-amber-200 font-extrabold">{finalPendingScores.scoreA}</span> – <span className="font-mono text-amber-200 font-extrabold">{finalPendingScores.scoreB}</span> {finalPlayerB.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFinalSheetOpen(true);
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-white text-amber-900 font-black text-xs shadow-md hover:bg-amber-50 active:scale-95 transition-all flex-shrink-0"
+              >
+                Resume 🏸
+              </button>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Score entry sheet */}
         <ScoreInput
           match={final}
           playerA={finalPlayerA}
           playerB={finalPlayerB}
           isFinal={true}
-          open={true}
-          onClose={() => {}} // can't close final sheet
+          open={isFinalSheetOpen}
+          onClose={() => setIsFinalSheetOpen(false)}
+          onMinimize={() => setIsFinalSheetOpen(false)}
+          currentScores={finalPendingScores}
+          onScoresChange={(sA, sB) => setFinalPendingScores({ scoreA: sA, scoreB: sB })}
           onConfirm={(sA, sB) => {
             const margin = Math.abs(sA - sB);
             if (margin >= currentTournament.config.finalBonusMargin) setShowConfetti(true);

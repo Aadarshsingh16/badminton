@@ -376,8 +376,133 @@ export default function HistoryPage() {
     };
   }, [currentTournament, pastTournaments, dayTable, players, playerFilter, patternFilter]);
 
+  // Local fallback synthesis for Leaderboards if backend has no records yet
+  const localLeaderboardFallback = useMemo<LeaderboardEntry[]>(() => {
+    const allTourneys = [...pastTournaments];
+    if (currentTournament) allTourneys.push(currentTournament);
+
+    const allMatches: Array<{
+      playerA: string;
+      playerB: string;
+      scoreA: number;
+      scoreB: number;
+      played: boolean;
+    }> = [];
+
+    allTourneys.forEach((t) => {
+      t.matches.filter((m) => m.played).forEach((m) => {
+        allMatches.push({
+          playerA: m.playerA,
+          playerB: m.playerB,
+          scoreA: m.scoreA ?? 0,
+          scoreB: m.scoreB ?? 0,
+          played: true,
+        });
+      });
+      if (t.final && t.final.played) {
+        allMatches.push({
+          playerA: t.final.playerA,
+          playerB: t.final.playerB,
+          scoreA: t.final.scoreA ?? 0,
+          scoreB: t.final.scoreB ?? 0,
+          played: true,
+        });
+      }
+    });
+
+    const entries: LeaderboardEntry[] = players.map((p) => {
+      const pMatches = allMatches.filter((m) => m.playerA === p.id || m.playerB === p.id);
+      const wins = allMatches.filter(
+        (m) =>
+          (m.playerA === p.id && m.scoreA > m.scoreB) ||
+          (m.playerB === p.id && m.scoreB > m.scoreA)
+      ).length;
+      const totalPoints = dayTable.totals[p.id] ?? 0;
+      let pointDiff = 0;
+      pMatches.forEach((m) => {
+        if (m.playerA === p.id) pointDiff += m.scoreA - m.scoreB;
+        else pointDiff += m.scoreB - m.scoreA;
+      });
+      const matchesPlayed = pMatches.length;
+      const winRate = matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 1000) / 10 : 0;
+
+      return {
+        playerId: p.id,
+        name: p.name,
+        avatar: p.avatar,
+        avatarEmoji: p.avatarEmoji,
+        avatarColor: p.avatarColor,
+        matchesPlayed,
+        wins,
+        totalPoints,
+        pointDiff,
+        winRate,
+      };
+    }).filter((p) => p.matchesPlayed > 0 || p.totalPoints > 0);
+
+    if (sortBy === "matches") {
+      entries.sort((a, b) => b.matchesPlayed - a.matchesPlayed || b.totalPoints - a.totalPoints);
+    } else if (sortBy === "wins") {
+      entries.sort((a, b) => b.wins - a.wins || b.totalPoints - a.totalPoints);
+    } else {
+      entries.sort((a, b) => b.totalPoints - a.totalPoints || b.wins - a.wins || b.pointDiff - a.pointDiff);
+    }
+
+    return entries;
+  }, [pastTournaments, currentTournament, dayTable, players, sortBy]);
+
+  // Local fallback synthesis for Day Honors (Champion & Wooden Spoon)
+  const localDayHonorsFallback = useMemo<DayHonors>(() => {
+    const dayTotalsEntries = Object.entries(dayTable.totals).sort(([, a], [, b]) => b - a);
+
+    const dayChampions: Array<{ playerId: string; name: string; avatar: AvatarType; emoji?: string; color?: string; count: number }> = [];
+    const dayLastPlaces: Array<{ playerId: string; name: string; avatar: AvatarType; emoji?: string; color?: string; count: number }> = [];
+
+    if (dayTotalsEntries.length >= 2) {
+      const topId = dayTotalsEntries[0][0];
+      const botId = dayTotalsEntries[dayTotalsEntries.length - 1][0];
+      const topP = players.find((p) => p.id === topId);
+      const botP = players.find((p) => p.id === botId);
+
+      if (topP) {
+        dayChampions.push({
+          playerId: topP.id,
+          name: `${topP.name} (Today's Leader)`,
+          avatar: topP.avatar,
+          emoji: topP.avatarEmoji,
+          color: topP.avatarColor,
+          count: 1,
+        });
+      }
+      if (botP) {
+        dayLastPlaces.push({
+          playerId: botP.id,
+          name: `${botP.name} (Today's Spoon)`,
+          avatar: botP.avatar,
+          emoji: botP.avatarEmoji,
+          color: botP.avatarColor,
+          count: 1,
+        });
+      }
+    }
+
+    return {
+      dayChampions,
+      dayLastPlaces,
+      history: [],
+    };
+  }, [dayTable.totals, players]);
+
   const displayedHistory =
     historyData && historyData.days.length > 0 ? historyData : localHistoryFallback;
+
+  const displayedLeaderboard =
+    leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;
+
+  const displayedDayHonors =
+    dayHonors && (dayHonors.dayChampions?.length > 0 || dayHonors.dayLastPlaces?.length > 0)
+      ? dayHonors
+      : localDayHonorsFallback;
 
   const toggleTournament = (id: string) => {
     setExpandedTournaments((prev) => ({
@@ -786,17 +911,17 @@ export default function HistoryPage() {
                   <span>📊</span> Overall Standings ({rangeFilter.toUpperCase()})
                 </div>
                 <div className="text-[10px] text-gray-400">
-                  {leaderboardData.length > 0 ? leaderboardData.length : players.length} active players
+                  {displayedLeaderboard.length > 0 ? displayedLeaderboard.length : players.length} active players
                 </div>
               </div>
 
-              {leaderboardData.length === 0 ? (
+              {displayedLeaderboard.length === 0 ? (
                 <div className="text-center py-8 text-gray-400 text-xs">
                   No ranked matches recorded for this range.
                 </div>
               ) : (
                 <div className="divide-y divide-white/5">
-                  {leaderboardData.map((entry, index) => {
+                  {displayedLeaderboard.map((entry, index) => {
                     const isTop1 = index === 0;
                     const isTop2 = index === 1;
                     const isTop3 = index === 2;
@@ -851,7 +976,7 @@ export default function HistoryPage() {
                             <span
                               className={
                                 entry.pointDiff > 0
-                                  ? "text-emerald-400 font-semibold"
+                                   ? "text-emerald-400 font-semibold"
                                   : entry.pointDiff < 0
                                   ? "text-red-400 font-semibold"
                                   : "text-gray-400"
@@ -882,9 +1007,9 @@ export default function HistoryPage() {
                   </div>
                 </div>
 
-                {dayHonors?.dayChampions && dayHonors.dayChampions.length > 0 ? (
+                {displayedDayHonors?.dayChampions && displayedDayHonors.dayChampions.length > 0 ? (
                   <div className="space-y-2">
-                    {dayHonors.dayChampions.slice(0, 3).map((c) => (
+                    {displayedDayHonors.dayChampions.slice(0, 3).map((c) => (
                       <div
                         key={c.playerId}
                         className="flex items-center justify-between p-2 rounded-xl bg-slate-950/60 border border-white/5"
@@ -918,9 +1043,9 @@ export default function HistoryPage() {
                   </div>
                 </div>
 
-                {dayHonors?.dayLastPlaces && dayHonors.dayLastPlaces.length > 0 ? (
+                {displayedDayHonors?.dayLastPlaces && displayedDayHonors.dayLastPlaces.length > 0 ? (
                   <div className="space-y-2">
-                    {dayHonors.dayLastPlaces.slice(0, 3).map((c) => (
+                    {displayedDayHonors.dayLastPlaces.slice(0, 3).map((c) => (
                       <div
                         key={c.playerId}
                         className="flex items-center justify-between p-2 rounded-xl bg-slate-950/60 border border-white/5"

@@ -17,6 +17,9 @@ interface ScoreInputProps {
   onConfirm: (scoreA: number, scoreB: number) => void;
   onToggleCourtSide?: () => void;
   config?: TournamentConfig;
+  onMinimize?: () => void;
+  currentScores?: { scoreA: number; scoreB: number };
+  onScoresChange?: (scoreA: number, scoreB: number) => void;
 }
 
 function ScoreCounter({
@@ -116,19 +119,37 @@ export function ScoreInput({
   onConfirm,
   onToggleCourtSide,
   config = DEFAULT_CONFIG,
+  onMinimize,
+  currentScores,
+  onScoresChange,
 }: ScoreInputProps) {
   const maxScore = isFinal ? config.finalWinScore : config.winScore;
 
-  const [scoreA, setScoreA] = useState(() => match.scoreA ?? 0);
-  const [scoreB, setScoreB] = useState(() => match.scoreB ?? 0);
+  const [scoreA, setScoreA] = useState(() => currentScores?.scoreA ?? match.scoreA ?? 0);
+  const [scoreB, setScoreB] = useState(() => currentScores?.scoreB ?? match.scoreB ?? 0);
 
-  // Re-seed when sheet opens (e.g. re-opened to edit)
+  // Re-seed when sheet opens or match changes
   useEffect(() => {
     if (open) {
-      setScoreA(match.scoreA ?? 0);
-      setScoreB(match.scoreB ?? 0);
+      if (currentScores) {
+        setScoreA(currentScores.scoreA);
+        setScoreB(currentScores.scoreB);
+      } else {
+        setScoreA(match.scoreA ?? 0);
+        setScoreB(match.scoreB ?? 0);
+      }
     }
   }, [open, match.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const updateScoreA = (v: number) => {
+    setScoreA(v);
+    onScoresChange?.(v, scoreB);
+  };
+
+  const updateScoreB = (v: number) => {
+    setScoreB(v);
+    onScoresChange?.(scoreA, v);
+  };
 
   const canConfirm =
     (scoreA === maxScore || scoreB === maxScore) && scoreA !== scoreB;
@@ -136,6 +157,7 @@ export function ScoreInput({
   const reset = () => {
     setScoreA(0);
     setScoreB(0);
+    onScoresChange?.(0, 0);
   };
 
   const handleConfirm = () => {
@@ -171,7 +193,7 @@ export function ScoreInput({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/70 z-40 backdrop-blur-sm"
-            onClick={handleClose}
+            onClick={onMinimize ? onMinimize : handleClose}
           />
 
           {/* Sheet */}
@@ -182,8 +204,23 @@ export function ScoreInput({
             transition={{ type: "spring", damping: 28, stiffness: 350 }}
             className="fixed bottom-0 inset-x-0 z-50 bg-slate-900 border-t border-white/10 rounded-t-3xl pb-8 pt-4 px-4 max-w-lg mx-auto"
           >
-            {/* Handle */}
-            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-5" />
+            {/* Header with drag handle and Minimize button */}
+            <div className="flex items-center justify-between px-1 mb-3">
+              <div className="w-16" />
+              <div className="w-10 h-1 bg-white/20 rounded-full" />
+              <div className="w-16 flex justify-end">
+                {onMinimize && (
+                  <button
+                    type="button"
+                    onClick={onMinimize}
+                    className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-[11px] font-bold text-white/80 transition-colors flex items-center gap-1 active:scale-95 shadow-sm"
+                  >
+                    <span>⌄</span>
+                    <span>Hide</span>
+                  </button>
+                )}
+              </div>
+            </div>
 
             {/* Match label */}
             <p className="text-center text-white/50 text-xs uppercase tracking-widest mb-1">
@@ -221,7 +258,7 @@ export function ScoreInput({
                 <p className="text-white font-semibold text-sm text-center truncate w-full">{playerA.name}</p>
                 <ScoreCounter
                   value={scoreA}
-                  onChange={setScoreA}
+                  onChange={updateScoreA}
                   maxScore={maxScore}
                   highlight={aWins}
                   label={playerA.name}
@@ -244,7 +281,7 @@ export function ScoreInput({
                 <p className="text-white font-semibold text-sm text-center truncate w-full">{playerB.name}</p>
                 <ScoreCounter
                   value={scoreB}
-                  onChange={setScoreB}
+                  onChange={updateScoreB}
                   maxScore={maxScore}
                   highlight={bWins}
                   label={playerB.name}
