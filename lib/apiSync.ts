@@ -108,6 +108,19 @@ class ApiSyncService {
   }
 
   /**
+   * Purge all queued mutation requests for a specific tournament
+   * so deleted tournaments are never retried or resurrected.
+   */
+  public purgeTournament(tournamentId: string) {
+    this.queue = this.queue.filter(
+      (item) =>
+        !item.url.includes(`/tournaments/${tournamentId}`) &&
+        !(item.body && item.body.id === tournamentId)
+    );
+    this.saveQueue();
+  }
+
+  /**
    * Queue a backend mutation. Tries immediately; if backend is sleeping or offline,
    * will retry in background with exponential backoff.
    */

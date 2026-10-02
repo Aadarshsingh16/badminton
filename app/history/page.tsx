@@ -7,6 +7,7 @@ import {
   useStore,
   recoverTournamentsFromSyncQueue,
   recoverCompletedDaysFromSyncQueue,
+  getDeletedTournamentIds,
 } from "@/lib/store";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
@@ -136,6 +137,33 @@ export default function HistoryPage() {
     }
 
     setIsDeleting(true);
+
+    // 1. Immediately delete locally in Zustand store, permanent archive, and purge from sync queue
+    useStore.getState().deleteTournament(tId);
+
+    // 2. Immediately purge from local historyData state for instantaneous UI removal
+    setHistoryData((prev) => {
+      if (!prev) return null;
+      const updatedDays = prev.days
+        .map((day) => ({
+          ...day,
+          tournaments: day.tournaments.filter((t) => t.tournamentId !== tId),
+        }))
+        .filter((day) => day.tournaments.length > 0);
+
+      const remainingMatches = updatedDays.flatMap((d) => d.tournaments.flatMap((t) => t.matches));
+
+      return {
+        ...prev,
+        days: updatedDays,
+        totalMatches: remainingMatches.length,
+        totalPoints: remainingMatches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
+      };
+    });
+
+    setTournamentToDelete(null);
+
+    // 3. Delete from backend database
     try {
       const res = await fetch(`${backendUrl}/tournaments/${tId}`, {
         method: "DELETE",
@@ -145,18 +173,13 @@ export default function HistoryPage() {
         },
       });
 
-      if (res.ok || res.status === 404) {
-        useStore.getState().deleteTournament(tId);
-        setTournamentToDelete(null);
-        await Promise.all([fetchHistory(), fetchLeaderboards()]);
-      } else if (res.status === 401) {
+      if (res.status === 401) {
         setShowPinModal(true);
+      } else {
+        await Promise.all([fetchHistory(), fetchLeaderboards()]);
       }
     } catch (e) {
-      console.warn("Failed to delete tournament on backend, deleting locally:", e);
-      useStore.getState().deleteTournament(tId);
-      setTournamentToDelete(null);
-      await fetchHistory();
+      console.warn("Failed to delete tournament on backend, preserved local deletion:", e);
     } finally {
       setIsDeleting(false);
     }
@@ -601,8 +624,27 @@ export default function HistoryPage() {
     };
   }, [completedDays, dayTable.totals, dayTable.date, players]);
 
-  const displayedHistory =
-    historyData && historyData.days.length > 0 ? historyData : localHistoryFallback;
+  const displayedHistory = useMemo(() => {
+    const deletedIds = getDeletedTournamentIds();
+    const source = historyData && historyData.days.length > 0 ? historyData : localHistoryFallback;
+    if (!source || !source.days) return source;
+
+    const filteredDays = source.days
+      .map((day) => ({
+        ...day,
+        tournaments: day.tournaments.filter((t) => !deletedIds.has(t.tournamentId)),
+      }))
+      .filter((day) => day.tournaments.length > 0);
+
+    const filteredMatches = filteredDays.flatMap((d) => d.tournaments.flatMap((t) => t.matches));
+
+    return {
+      ...source,
+      days: filteredDays,
+      totalMatches: filteredMatches.length,
+      totalPoints: filteredMatches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
+    };
+  }, [historyData, localHistoryFallback]);
 
   const displayedLeaderboard =
     leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;

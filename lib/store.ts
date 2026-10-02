@@ -101,12 +101,37 @@ function computeMatchPoints(
   };
 }
 
+const DELETED_TOURNAMENTS_KEY = "badminton_deleted_tournaments_v1";
+
+export function getDeletedTournamentIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(DELETED_TOURNAMENTS_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function markTournamentDeleted(id: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const set = getDeletedTournamentIds();
+    set.add(id);
+    localStorage.setItem(DELETED_TOURNAMENTS_KEY, JSON.stringify(Array.from(set)));
+  } catch {}
+}
+
 /**
  * Recovers tournaments from both permanent local archive and the pending sync queue.
  * Ensures data is never lost even if the store is wiped or page reloads offline.
+ * Respects deleted tournament tombstones so deleted items are NEVER resurrected.
  */
 export function recoverTournamentsFromSyncQueue(): Tournament[] {
   if (typeof window === "undefined") return [];
+  const deletedIds = getDeletedTournamentIds();
   const tournamentsMap: { [id: string]: Tournament } = {};
 
   // 1. Read from permanent local archive if available
@@ -116,7 +141,9 @@ export function recoverTournamentsFromSyncQueue(): Tournament[] {
       const archived = JSON.parse(rawArchive);
       if (Array.isArray(archived)) {
         for (const t of archived) {
-          if (t && t.id) tournamentsMap[t.id] = t;
+          if (t && t.id && !deletedIds.has(t.id)) {
+            tournamentsMap[t.id] = t;
+          }
         }
       }
     }
@@ -133,7 +160,7 @@ export function recoverTournamentsFromSyncQueue(): Tournament[] {
         for (const item of queue) {
           if (item.method === "POST" && item.url.includes("/tournaments") && item.body) {
             const b = item.body;
-            if (b.id && !tournamentsMap[b.id]) {
+            if (b.id && !deletedIds.has(b.id) && !tournamentsMap[b.id]) {
               tournamentsMap[b.id] = {
                 id: b.id,
                 createdAt: Date.now(),
@@ -634,7 +661,14 @@ export const useStore = create<AppState>()(
       },
 
       deleteTournament: (id: string, skipSync?: boolean) => {
-        const { dayTable, pastTournaments } = get();
+        const { dayTable, pastTournaments, completedDays } = get();
+
+        // 1. Mark ID as permanently deleted so recovery never brings it back
+        markTournamentDeleted(id);
+
+        // 2. Purge any pending creation/update items from the offline sync queue
+        apiSync.purgeTournament(id);
+
         const updatedPast = pastTournaments.filter((t) => t.id !== id);
         const updatedDayTournaments = dayTable.tournaments.filter((tId) => tId !== id);
 
@@ -653,8 +687,20 @@ export const useStore = create<AppState>()(
           }
         } catch {}
 
+        // If no tournaments remain, clean up completed days associated with this session
+        const updatedCompletedDays = (completedDays || []).filter((cd) => {
+          return updatedPast.length > 0 || (cd.tournamentIds && cd.tournamentIds.some((tId) => tId !== id));
+        });
+
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("badminton_completed_days_v1", JSON.stringify(updatedCompletedDays));
+          }
+        } catch {}
+
         set({
           pastTournaments: updatedPast,
+          completedDays: updatedCompletedDays,
           dayTable: {
             ...dayTable,
             tournaments: updatedDayTournaments,
