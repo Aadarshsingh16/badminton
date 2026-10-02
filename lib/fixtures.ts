@@ -20,50 +20,55 @@ function makeMatch(round: number, playerA: string, playerB: string, matchIndex: 
 
 /**
  * Generate a full round-robin schedule using the circle method.
- * Supports odd player counts via a rotating BYE slot.
- * Returns { matches, byes } where byes[round] = playerId or null.
+ * Guarantees every player plays every other player exactly once: N * (N - 1) / 2 matches.
+ * No player gets a bye — all matches are scheduled sequentially for single-court play.
  */
 export function generateRoundRobin(playerIds: string[]): {
   matches: Match[];
   byes: { [round: number]: string | null };
 } {
   const ids = [...playerIds];
-  const hasBye = ids.length % 2 !== 0;
-  if (hasBye) ids.push("BYE");
+  const hasDummy = ids.length % 2 !== 0;
+  if (hasDummy) ids.push("__DUMMY__");
 
   const n = ids.length;
   const rounds = n - 1;
   const half = n / 2;
 
-  // Circle method: fix ids[0], rotate the rest
   let arr = [...ids];
-  const matches: Match[] = [];
-  const byes: { [round: number]: string | null } = {};
+  const rawMatches: { a: string; b: string }[] = [];
 
   for (let r = 0; r < rounds; r++) {
-    let matchIndex = 0;
-    byes[r] = null;
-
     for (let i = 0; i < half; i++) {
       const a = arr[i];
       const b = arr[n - 1 - i];
 
-      if (a === "BYE") {
-        byes[r] = b;
-      } else if (b === "BYE") {
-        byes[r] = a;
-      } else {
-        matches.push(makeMatch(r, a, b, matchIndex));
-        matchIndex++;
+      if (a !== "__DUMMY__" && b !== "__DUMMY__") {
+        rawMatches.push({ a, b });
       }
     }
 
     // Rotate: keep arr[0] fixed, rotate the rest clockwise
-    // [fixed, a, b, c, d, e] → [fixed, e, a, b, c, d]
     arr = [arr[0], arr[n - 1], ...arr.slice(1, n - 1)];
   }
 
-  return { matches, byes };
+  // Number matches sequentially 0..total-1 with alternating court sides
+  const matches: Match[] = rawMatches.map((pair, idx) => {
+    const flip = idx % 2 === 0;
+    return {
+      id: `m${idx + 1}-${pair.a}-${pair.b}`,
+      round: idx,
+      playerA: pair.a,
+      playerB: pair.b,
+      courtSide: {
+        [pair.a]: flip ? 1 : 2,
+        [pair.b]: flip ? 2 : 1,
+      },
+      played: false,
+    };
+  });
+
+  return { matches, byes: {} };
 }
 
 /**

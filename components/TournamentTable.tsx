@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { TournamentRow, Player, Tournament } from "@/lib/types";
+import { TournamentRow, Player, Tournament, Match } from "@/lib/types";
 import { AvatarSVG } from "./avatars/AvatarSVG";
 
 interface TournamentTableProps {
@@ -12,12 +12,13 @@ interface TournamentTableProps {
   finalistIds?: [string, string];
   showFinalLabel?: boolean;
   tournament?: Tournament;   // when provided, player rows expand to show match history
+  onSelectMatch?: (match: Match) => void; // when provided, matches in history can be tapped to edit score
 }
 
 const RANK_COLORS = ["#FFD166", "#A8DADC", "#FF6B35", "#9B9B9B"];
 const RANK_LABELS = ["🥇", "🥈", "🥉", "4th", "5th", "6th", "7th"];
 
-export function TournamentTable({ rows, players, finalistIds, showFinalLabel, tournament }: TournamentTableProps) {
+export function TournamentTable({ rows, players, finalistIds, showFinalLabel, tournament, onSelectMatch }: TournamentTableProps) {
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
 
   const getPlayer = (id: string) => players.find((p) => p.id === id);
@@ -46,6 +47,13 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
       )}
 
       {/* Header */}
+      {tournament && onSelectMatch && (
+        <div className="text-center mb-2">
+          <span className="text-[11px] text-white/40 bg-white/5 border border-white/5 px-2.5 py-1 rounded-full">
+            💡 Tap any player to view &amp; edit match scores ✏️
+          </span>
+        </div>
+      )}
       <div className="flex items-center px-3 py-2 mb-1">
         <span className="text-white/30 text-xs w-6 text-center">#</span>
         <span className="text-white/30 text-xs flex-1 pl-2">Player</span>
@@ -146,7 +154,7 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden border-t border-white/5"
                   >
-                    <div className="px-3 py-2 space-y-1">
+                    <div className="px-3 py-2 space-y-1.5">
                       {playerMatches.length === 0 ? (
                         <p className="text-white/30 text-xs text-center py-2">No matches yet</p>
                       ) : (
@@ -161,14 +169,23 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                           const lost = m.played && myScore !== undefined && oppScore !== undefined && myScore < oppScore;
 
                           return (
-                            <div
+                            <button
                               key={m.id}
-                              className={`flex items-center gap-2 px-2 py-1.5 rounded-lg ${
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onSelectMatch) onSelectMatch(m);
+                              }}
+                              disabled={!onSelectMatch}
+                              className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all text-left ${
+                                onSelectMatch
+                                  ? "cursor-pointer active:scale-[0.99] hover:bg-white/10"
+                                  : "cursor-default"
+                              } ${
                                 !m.played
-                                  ? "bg-white/3"
+                                  ? "bg-white/5 border border-white/5 hover:border-purple-500/30"
                                   : won
-                                  ? "bg-green-500/10"
-                                  : "bg-white/3"
+                                  ? "bg-green-500/10 border border-green-500/20 hover:border-green-400/40"
+                                  : "bg-white/5 border border-white/5 hover:border-orange-500/30"
                               }`}
                             >
                               {/* Match type tag */}
@@ -177,26 +194,26 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                                   ? "bg-yellow-500/20 text-yellow-300"
                                   : "bg-white/10 text-white/40"
                               }`}>
-                                {isFinalMatch ? "🏆" : `R${m.round + 1}`}
+                                {isFinalMatch ? "🏆 Final" : `M${m.round + 1}`}
                               </span>
 
                               {/* Opponent avatar + name */}
                               {opponent && (
                                 <AvatarSVG
                                   type={opponent.avatar}
-                                  size={20}
+                                  size={22}
                                   emoji={opponent.avatarEmoji}
                                   color={opponent.avatarColor}
                                   className="flex-shrink-0"
                                 />
                               )}
-                              <span className="text-white/60 text-xs flex-1 truncate">
+                              <span className="text-white/70 text-xs flex-1 truncate font-medium">
                                 vs {opponent?.name ?? "?"}
                               </span>
 
-                              {/* Score */}
+                              {/* Score & Points */}
                               {m.played && myScore !== undefined && oppScore !== undefined ? (
-                                <>
+                                <div className="flex items-center gap-2 flex-shrink-0">
                                   <span className={`text-sm font-black tabular-nums ${won ? "text-green-400" : lost ? "text-white/40" : "text-white/60"}`}>
                                     {myScore}–{oppScore}
                                   </span>
@@ -209,11 +226,23 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                                       {myPts > 0 ? "+" : ""}{myPts}
                                     </span>
                                   )}
-                                </>
+                                  {onSelectMatch && (
+                                    <span className="text-[10px] font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                      ✏️ Edit
+                                    </span>
+                                  )}
+                                </div>
                               ) : (
-                                <span className="text-white/25 text-xs">pending</span>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <span className="text-white/25 text-xs">pending</span>
+                                  {onSelectMatch && (
+                                    <span className="text-[10px] font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                      ▶ Score
+                                    </span>
+                                  )}
+                                </div>
                               )}
-                            </div>
+                            </button>
                           );
                         })
                       )}

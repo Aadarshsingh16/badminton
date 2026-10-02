@@ -48,7 +48,7 @@ export const DEFAULT_CONFIG: TournamentConfig = {
   finalWinScore: 6,
   finalBonusMargin: 4,
   finalWinBase: 2,
-  finalWinBonus: 1,
+  finalWinBonus: 0,
   finalLoserPenalty: -1,
 };
 

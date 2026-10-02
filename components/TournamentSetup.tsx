@@ -166,24 +166,16 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
             max={21}
           />
           <Stepper
-            label="Final base win points"
-            hint="Points added on top of round-robin total for winner"
+            label="Winner reward points"
+            hint="Extra points awarded to winner for winning the final"
             value={cfg.finalWinBase}
             onChange={(v) => update("finalWinBase", v)}
             min={0}
             max={10}
           />
           <Stepper
-            label="Final win bonus"
-            hint={`Extra points for winning final with margin ≥ ${cfg.finalBonusMargin}`}
-            value={cfg.finalWinBonus}
-            onChange={(v) => update("finalWinBonus", v)}
-            min={0}
-            max={5}
-          />
-          <Stepper
             label="Loser penalty margin"
-            hint={`Loser gets penalty if winner's margin ≥ this value`}
+            hint={`Loser receives penalty if winner's margin ≥ this value (e.g. ${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin} or worse)`}
             value={cfg.finalBonusMargin}
             onChange={(v) => update("finalBonusMargin", v)}
             min={1}
@@ -191,7 +183,7 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           />
           <Stepper
             label="Loser penalty"
-            hint={`Points for loser when conceding big margin (currently: ${loserPts})`}
+            hint={`Points deducted from loser when conceding margin ≥ ${cfg.finalBonusMargin} (currently: ${loserPts})`}
             value={Math.abs(cfg.finalLoserPenalty)}
             onChange={(v) => update("finalLoserPenalty", -v)}
             min={0}
@@ -214,15 +206,15 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
               { score: `${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin + 1}`, margin: cfg.finalBonusMargin - 1 },
               { score: `${cfg.finalWinScore}–${cfg.finalWinScore - 1}`, margin: 1 },
             ].filter((v, i, arr) => arr.findIndex(x => x.score === v.score) === i).map(({ score, margin }) => {
-              const winnerPts = margin >= cfg.finalBonusMargin ? cfg.finalWinBase + cfg.finalWinBonus : cfg.finalWinBase;
+              const winnerPts = cfg.finalWinBase;
               const loserPtsVal = margin >= cfg.finalBonusMargin ? cfg.finalLoserPenalty : 0;
               return (
                 <div key={score} className="flex justify-between items-center bg-white/5 rounded-lg px-3 py-1">
                   <span className="text-white/50 font-mono">{score}</span>
                   <span className="text-white/60 text-xs">
-                    W: <span className="text-green-400 font-bold">+{winnerPts}</span>
+                    Winner: <span className="text-green-400 font-bold">+{winnerPts} pts</span>
                     {" · "}
-                    L: <span className={loserPtsVal < 0 ? "text-red-400 font-bold" : "text-white/40"}>{loserPtsVal}</span>
+                    Loser: <span className={loserPtsVal < 0 ? "text-red-400 font-bold" : "text-white/40"}>{loserPtsVal} pts</span>
                   </span>
                 </div>
               );

@@ -51,9 +51,9 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
         </div>
       )}
 
-      {/* Round label */}
+      {/* Match number label */}
       <div className={`text-center text-xs font-medium pt-3 pb-1 ${isUpNext && !played ? "text-purple-300" : "text-white/30"}`}>
-        Round {match.round + 1}
+        Match {index + 1}
       </div>
 
       <div className="flex items-center px-4 pb-3 gap-2">

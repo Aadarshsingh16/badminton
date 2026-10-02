@@ -230,7 +230,12 @@ export const useStore = create<AppState>()(
         if (!currentTournament) return;
 
         const matchIdx = currentTournament.matches.findIndex((m) => m.id === matchId);
-        if (matchIdx === -1) return;
+        if (matchIdx === -1) {
+          if (currentTournament.final && currentTournament.final.id === matchId) {
+            get().confirmFinalScore(scoreA, scoreB);
+          }
+          return;
+        }
 
         const match = currentTournament.matches[matchIdx];
         const config = currentTournament.config;

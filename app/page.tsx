@@ -62,6 +62,31 @@ export default function PlayPage() {
     return matches.length;
   })();
 
+  const activeMatch = currentTournament
+    ? (currentTournament.matches.find((m) => m.id === activeMatchId) ??
+       (currentTournament.final?.id === activeMatchId ? currentTournament.final : null))
+    : null;
+  const activePlayerA = activeMatch ? getPlayer(activeMatch.playerA) : null;
+  const activePlayerB = activeMatch ? getPlayer(activeMatch.playerB) : null;
+
+  const handleScoreConfirm = (sA: number, sB: number) => {
+    if (!currentTournament || !activeMatch) return;
+    const margin = Math.abs(sA - sB);
+    const isFinal = activeMatch.round === -1;
+    const bonusMargin = isFinal ? currentTournament.config.finalBonusMargin : currentTournament.config.bonusMargin;
+    if (margin >= bonusMargin) setShowConfetti(true);
+
+    if (isFinal) {
+      confirmFinalScore(sA, sB);
+    } else if (isEditingMatch) {
+      editMatchScore(activeMatch.id, sA, sB);
+    } else {
+      confirmMatchScore(activeMatch.id, sA, sB);
+    }
+    setActiveMatchId(null);
+    setIsEditingMatch(false);
+  };
+
   // ——— Player Select Screen ———
   if (phase === "player-select") {
     const canStart = selectedPlayerIds.length >= 3;
@@ -207,11 +232,6 @@ export default function PlayPage() {
     const playedMatches = currentTournament.matches.filter((m) => m.played);
     const unplayedMatches = currentTournament.matches.filter((m) => !m.played);
     const upNextMatch = unplayedMatches[0] ?? null;
-    const activeMatch = currentTournament.matches.find((m) => m.id === activeMatchId) ?? null;
-    const activePlayerA = activeMatch ? getPlayer(activeMatch.playerA) : null;
-    const activePlayerB = activeMatch ? getPlayer(activeMatch.playerB) : null;
-
-    const byeRounds = currentTournament.byes;
 
     return (
       <div className="min-h-full flex flex-col">
@@ -280,23 +300,10 @@ export default function PlayPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowShuffleConfirm(true)}
-                className="text-xs bg-orange-500/15 text-orange-400 border border-orange-500/20 px-3 py-1.5 rounded-full hover:bg-orange-500/25 transition-colors"
+                className="text-xs bg-orange-500/15 text-orange-400 border border-orange-500/20 px-3 py-1.5 rounded-full hover:bg-orange-500/25 transition-colors font-medium flex items-center gap-1"
               >
-                🔀 Shuffle
-              </button>
-              {playedMatches.length > 0 && (
-                <button
-                  onClick={undoLastMatch}
-                  className="text-xs bg-white/10 text-white/50 px-3 py-1.5 rounded-full hover:bg-white/15 transition-colors"
-                >
-                  ↩ Undo
-                </button>
-              )}
-              <button
-                onClick={() => setShowCancelConfirm(true)}
-                className="text-xs bg-red-500/15 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-full hover:bg-red-500/25 transition-colors"
-              >
-                ✕ Cancel
+                <span>🔀</span>
+                <span>Shuffle</span>
               </button>
             </div>
           </div>
@@ -350,17 +357,6 @@ export default function PlayPage() {
                     />
                   );
                 })}
-
-                {/* Bye display */}
-                {Object.entries(byeRounds).map(([round, byeId]) =>
-                  byeId ? (
-                    <div key={round} className="mb-3 px-3 py-2 bg-white/3 border border-white/5 rounded-xl text-center">
-                      <p className="text-white/30 text-xs">
-                        Round {Number(round) + 1}: <span className="text-white/50">{getPlayer(byeId).name}</span> has a bye
-                      </p>
-                    </div>
-                  ) : null
-                )}
               </motion.div>
             ) : (
               <motion.div
@@ -374,10 +370,25 @@ export default function PlayPage() {
                   rows={table}
                   players={players}
                   tournament={currentTournament}
+                  onSelectMatch={(m) => {
+                    setActiveMatchId(m.id);
+                    setIsEditingMatch(m.played);
+                  }}
                 />
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Subtle Cancel Tournament link at bottom to prevent miss-clicks */}
+          <div className="pt-8 pb-14 flex justify-center">
+            <button
+              onClick={() => setShowCancelConfirm(true)}
+              className="text-white/20 hover:text-red-400 text-xs py-2 px-4 rounded-full border border-white/5 hover:border-red-500/20 hover:bg-red-500/5 transition-all flex items-center gap-1.5"
+            >
+              <span>✕</span>
+              <span>Cancel Tournament</span>
+            </button>
+          </div>
         </div>
 
         {/* Score input sheet */}
@@ -386,21 +397,11 @@ export default function PlayPage() {
             match={activeMatch}
             playerA={activePlayerA}
             playerB={activePlayerB}
-            isFinal={false}
+            isFinal={activeMatch.round === -1}
             isEditing={isEditingMatch}
             open={!!activeMatchId}
             onClose={() => { setActiveMatchId(null); setIsEditingMatch(false); }}
-            onConfirm={(sA, sB) => {
-              const margin = Math.abs(sA - sB);
-              if (margin >= (currentTournament.config.bonusMargin)) setShowConfetti(true);
-              if (isEditingMatch) {
-                editMatchScore(activeMatch.id, sA, sB);
-              } else {
-                confirmMatchScore(activeMatch.id, sA, sB);
-              }
-              setActiveMatchId(null);
-              setIsEditingMatch(false);
-            }}
+            onConfirm={handleScoreConfirm}
             onToggleCourtSide={isEditingMatch ? undefined : () => toggleCourtSide(activeMatch.id)}
             config={currentTournament.config}
           />
@@ -481,7 +482,16 @@ export default function PlayPage() {
 
           {/* Pre-final table */}
           <p className="px-4 text-white/40 text-xs uppercase tracking-widest mb-2">Standings before final</p>
-          <TournamentTable rows={table} players={players} finalistIds={finalistIds} tournament={currentTournament} />
+          <TournamentTable
+            rows={table}
+            players={players}
+            finalistIds={finalistIds}
+            tournament={currentTournament}
+            onSelectMatch={(m) => {
+              setActiveMatchId(m.id);
+              setIsEditingMatch(m.played);
+            }}
+          />
 
           {/* Start final button */}
           <div className="px-4 py-4 mt-auto">
@@ -492,6 +502,22 @@ export default function PlayPage() {
               🏆 Start Final Match
             </button>
           </div>
+
+          {/* Score input sheet for editing match from pre-final table */}
+          {activeMatch && activePlayerA && activePlayerB && (
+            <ScoreInput
+              match={activeMatch}
+              playerA={activePlayerA}
+              playerB={activePlayerB}
+              isFinal={activeMatch.round === -1}
+              isEditing={isEditingMatch}
+              open={!!activeMatchId}
+              onClose={() => { setActiveMatchId(null); setIsEditingMatch(false); }}
+              onConfirm={handleScoreConfirm}
+              onToggleCourtSide={undefined}
+              config={currentTournament.config}
+            />
+          )}
         </div>
       );
     }
@@ -597,6 +623,10 @@ export default function PlayPage() {
           players={players}
           showFinalLabel={true}
           tournament={currentTournament}
+          onSelectMatch={(m) => {
+            setActiveMatchId(m.id);
+            setIsEditingMatch(m.played);
+          }}
         />
 
         {/* Actions */}
@@ -608,6 +638,22 @@ export default function PlayPage() {
             Save &amp; Start Next Tournament 🏸
           </button>
         </div>
+
+        {/* Score input sheet for editing match from final standings table */}
+        {activeMatch && activePlayerA && activePlayerB && (
+          <ScoreInput
+            match={activeMatch}
+            playerA={activePlayerA}
+            playerB={activePlayerB}
+            isFinal={activeMatch.round === -1}
+            isEditing={isEditingMatch}
+            open={!!activeMatchId}
+            onClose={() => { setActiveMatchId(null); setIsEditingMatch(false); }}
+            onConfirm={handleScoreConfirm}
+            onToggleCourtSide={undefined}
+            config={currentTournament.config}
+          />
+        )}
       </div>
     );
   }

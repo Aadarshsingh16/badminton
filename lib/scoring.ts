@@ -19,8 +19,8 @@ export function pointsForMatch(
 
 /**
  * Final match scoring (config-driven).
- * Winner: winBase + winBonus if big margin, else just winBase
- * Loser:  finalLoserPenalty if big margin, else 0
+ * Winner: earns finalWinBase (+2 by default) as reward for winning the final.
+ * Loser:  finalLoserPenalty (-1 by default) if margin >= finalBonusMargin, else 0.
  */
 export function pointsForFinal(
   scoreWinner: number,
@@ -30,7 +30,7 @@ export function pointsForFinal(
 ): number {
   const margin = scoreWinner - scoreLoser;
   if (isWinner) {
-    return margin >= config.finalBonusMargin
+    return config.finalWinBonus > 0 && margin >= config.finalBonusMargin
       ? config.finalWinBase + config.finalWinBonus
       : config.finalWinBase;
   }
