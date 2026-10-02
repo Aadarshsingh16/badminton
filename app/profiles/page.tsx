@@ -500,18 +500,18 @@ export default function ProfilesPage() {
   }, [activeStats.h2h]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white pb-28 selection:bg-purple-500 selection:text-white">
+    <div className="min-h-screen bg-[#F7F9FD] text-slate-900 pb-32">
       {/* Spectator Mode Banner */}
       {isViewer && (
-        <div className="bg-purple-950/40 border-b border-purple-500/20 px-4 py-2 flex items-center justify-between text-xs sticky top-0 z-30 backdrop-blur-md">
-          <span className="text-purple-300 font-bold flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="bg-purple-100/90 border-b border-purple-200/80 px-4 py-2 flex items-center justify-between text-xs sticky top-0 z-30 backdrop-blur-md">
+          <span className="text-purple-900 font-bold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Spectator Mode · Squad Scouting
           </span>
           {viewerSlug && (
             <Link
               href={`/live/${viewerSlug}`}
-              className="text-white bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/40 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1 transition-colors"
+              className="text-purple-900 bg-white border border-purple-200 px-3 py-1 rounded-full font-bold flex items-center gap-1 transition-all shadow-xs hover:bg-purple-50"
             >
               <span>🏸 Live Court</span>
             </Link>
@@ -520,28 +520,28 @@ export default function ProfilesPage() {
       )}
 
       {/* Top Header */}
-      <div className="px-4 pt-6 pb-4 border-b border-white/10 bg-slate-900/60 backdrop-blur-md sticky top-0 z-20">
+      <div className="px-4 pt-6 pb-4 border-b border-slate-200/60 bg-[#F7F9FD]/90 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xl">🏸</span>
-              <h1 className="text-white font-black text-2xl tracking-tight">The 6 Legends</h1>
+              <h1 className="text-slate-900 font-black text-2xl tracking-tight">The 6 Legends</h1>
             </div>
-            <p className="text-white/40 text-xs mt-0.5">
-              Player scouting reports, personality roasts &amp; career stats
+            <p className="text-slate-500 text-xs mt-0.5 font-medium">
+              Scouting reports, personality roasts &amp; career stats
             </p>
           </div>
           {isViewer && viewerSlug ? (
             <Link
               href={`/live/${viewerSlug}`}
-              className="text-xs bg-purple-600/30 border border-purple-500/40 text-purple-200 font-bold px-3 py-1.5 rounded-full hover:bg-purple-600/50 transition-all flex items-center gap-1.5 shadow-sm"
+              className="text-xs bg-slate-950 text-white font-bold px-3.5 py-1.5 rounded-full hover:bg-slate-800 transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <span>🏸 Match Stream</span>
+              <span>🏸 Stream</span>
             </Link>
           ) : (
             <Link
               href="/history"
-              className="text-xs bg-purple-500/10 border border-purple-500/30 text-purple-300 font-bold px-3 py-1.5 rounded-full hover:bg-purple-500/20 transition-all flex items-center gap-1.5"
+              className="text-xs bg-white border border-slate-200/90 text-slate-700 font-bold px-3 py-1.5 rounded-full hover:bg-slate-50 transition-all flex items-center gap-1.5 shadow-xs"
             >
               <span>📊</span>
               <span>Logs</span>
@@ -551,16 +551,16 @@ export default function ProfilesPage() {
       </div>
 
       {/* Interactive Avatar Stage / Lineup */}
-      <div className="px-4 pt-5 pb-3">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[11px] font-black uppercase tracking-wider text-purple-400/80">
-            Tap a Player to Inspect
+      <div className="px-4 pt-5 pb-2">
+        <div className="flex items-center justify-between mb-2.5 px-0.5">
+          <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+            Tap to Scout Player
           </p>
-          <span className="text-[11px] text-white/40">6 of 6 Active</span>
+          <span className="text-[11px] font-bold text-slate-400">6 of 6 Active</span>
         </div>
 
         {/* Horizontal avatar carousel */}
-        <div className="flex gap-2.5 overflow-x-auto pb-3 pt-1 scrollbar-none snap-x">
+        <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x -mx-1 px-1">
           {FIXED_PLAYERS.map((player) => {
             const isSelected = player.id === selectedPlayerId;
             const lore = PLAYER_LORES[player.id];
@@ -574,40 +574,40 @@ export default function ProfilesPage() {
                   setSelectedPlayerId(player.id);
                   setShowSpeechBubble(true);
                 }}
-                className={`flex-shrink-0 snap-center flex flex-col items-center p-2.5 rounded-2xl border transition-all duration-200 relative ${
+                className={`flex-shrink-0 snap-center flex flex-col items-center py-2.5 px-2 rounded-[22px] border transition-all duration-200 relative ${
                   isSelected
-                    ? "bg-purple-600/20 border-purple-500 shadow-lg shadow-purple-500/20 -translate-y-1"
-                    : "bg-slate-900/80 border-white/10 hover:border-white/20 hover:bg-slate-800/60"
+                    ? "bg-white border-2 border-slate-950 shadow-md shadow-slate-950/10 -translate-y-1"
+                    : "bg-white/80 border border-slate-200/80 hover:border-slate-300 hover:bg-white text-slate-600 shadow-xs"
                 }`}
                 style={{ width: "72px" }}
               >
                 {/* Crown / Spoon Badge on avatar */}
                 {pStats?.tournamentsWon > 0 && (
-                  <div className="absolute -top-1.5 -right-1 bg-amber-500 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow">
+                  <div className="absolute -top-1.5 -right-1 bg-amber-400 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs border border-white">
                     🏆
                   </div>
                 )}
 
                 <div className="w-12 h-12 relative flex items-center justify-center">
-                  <AvatarSVG type={player.avatar} size={48} />
+                  <AvatarSVG type={player.avatar} size={46} />
                 </div>
 
                 <span
-                  className={`text-[11px] font-bold mt-1.5 truncate max-w-[64px] ${
-                    isSelected ? "text-purple-300 font-black" : "text-white/70"
+                  className={`text-[11px] mt-1.5 truncate max-w-[62px] ${
+                    isSelected ? "font-black text-slate-950" : "font-bold text-slate-600"
                   }`}
                 >
                   {player.name}
                 </span>
 
-                <span className="text-[9px] text-white/40 font-mono mt-0.5">
+                <span className="text-[10px] mt-0.5">
                   {lore?.badgeEmoji || "🏸"}
                 </span>
 
                 {isSelected && (
                   <motion.div
                     layoutId="active-indicator"
-                    className="absolute -bottom-1 w-6 h-1 bg-purple-400 rounded-full"
+                    className="absolute -bottom-1 w-6 h-1 bg-slate-950 rounded-full"
                   />
                 )}
               </motion.button>
@@ -623,24 +623,21 @@ export default function ProfilesPage() {
           {showSpeechBubble && (
             <motion.div
               key={selectedPlayerId + activeMoodTab}
-              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative p-4 rounded-3xl bg-gradient-to-br from-purple-900/40 via-slate-900/90 to-slate-950 border border-purple-500/30 shadow-xl overflow-hidden"
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="relative p-4 rounded-[28px] bg-gradient-to-br from-indigo-50/90 via-purple-50/60 to-white border border-indigo-100/90 shadow-sm overflow-hidden"
             >
-              {/* Decorative background glow */}
-              <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
-
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0 text-xl shadow-inner">
+                <div className="w-10 h-10 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center flex-shrink-0 text-xl shadow-xs">
                   {activeLore.badgeEmoji}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-purple-300">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-900/80">
                       {activeLore.name} speaks:
                     </span>
-                    <span className="text-[10px] text-white/40 font-mono">
+                    <span className="text-[10px] text-slate-400 font-bold">
                       {activeMoodTab === "courtMood"
                         ? "🏸 Court Vibe"
                         : activeMoodTab === "dailyRoast"
@@ -649,20 +646,20 @@ export default function ProfilesPage() {
                     </span>
                   </div>
 
-                  <p className="text-white text-sm font-semibold mt-1 leading-snug italic">
+                  <p className="text-slate-800 text-[13px] font-bold mt-1.5 leading-relaxed italic">
                     &ldquo;{activeLore.vibeQuotes[activeMoodTab]}&rdquo;
                   </p>
                 </div>
               </div>
 
               {/* Mood selector buttons */}
-              <div className="flex gap-1.5 mt-3 pt-2.5 border-t border-white/10">
+              <div className="flex gap-1.5 mt-3 pt-2.5 border-t border-indigo-100/60">
                 <button
                   onClick={() => setActiveMoodTab("courtMood")}
                   className={`flex-1 py-1.5 px-2 rounded-xl text-[10px] font-black transition-all ${
                     activeMoodTab === "courtMood"
-                      ? "bg-purple-500 text-white shadow-md shadow-purple-500/20"
-                      : "bg-white/5 hover:bg-white/10 text-white/60"
+                      ? "bg-slate-950 text-white shadow-sm"
+                      : "bg-white/80 hover:bg-white text-slate-600 border border-slate-200/60"
                   }`}
                 >
                   🏸 On Court
@@ -671,8 +668,8 @@ export default function ProfilesPage() {
                   onClick={() => setActiveMoodTab("dailyRoast")}
                   className={`flex-1 py-1.5 px-2 rounded-xl text-[10px] font-black transition-all ${
                     activeMoodTab === "dailyRoast"
-                      ? "bg-purple-500 text-white shadow-md shadow-purple-500/20"
-                      : "bg-white/5 hover:bg-white/10 text-white/60"
+                      ? "bg-slate-950 text-white shadow-sm"
+                      : "bg-white/80 hover:bg-white text-slate-600 border border-slate-200/60"
                   }`}
                 >
                   🍕 Daily Roast
@@ -681,8 +678,8 @@ export default function ProfilesPage() {
                   onClick={() => setActiveMoodTab("excuse")}
                   className={`flex-1 py-1.5 px-2 rounded-xl text-[10px] font-black transition-all ${
                     activeMoodTab === "excuse"
-                      ? "bg-purple-500 text-white shadow-md shadow-purple-500/20"
-                      : "bg-white/5 hover:bg-white/10 text-white/60"
+                      ? "bg-slate-950 text-white shadow-sm"
+                      : "bg-white/80 hover:bg-white text-slate-600 border border-slate-200/60"
                   }`}
                 >
                   😤 Excuse
@@ -693,33 +690,33 @@ export default function ProfilesPage() {
         </AnimatePresence>
 
         {/* Selected Player Profile Card */}
-        <div className="p-5 rounded-3xl bg-slate-900/90 border border-white/10 shadow-2xl space-y-5">
+        <div className="p-5 rounded-[32px] bg-white border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-5">
           {/* Card Header with Big Avatar */}
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-purple-500/20 to-blue-500/20 border border-purple-500/30 p-2 flex items-center justify-center flex-shrink-0 shadow-lg relative">
-              <AvatarSVG type={activeLore.avatar} size={70} />
-              <div className="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 rounded-full bg-slate-950 border border-purple-500/40 text-[10px] font-black text-purple-300">
+            <div className="w-20 h-20 rounded-[24px] bg-gradient-to-tr from-slate-100 to-indigo-50/70 border border-slate-200/80 p-2 flex items-center justify-center flex-shrink-0 shadow-inner relative">
+              <AvatarSVG type={activeLore.avatar} size={68} />
+              <div className="absolute -bottom-1.5 -right-1.5 px-2.5 py-0.5 rounded-full bg-slate-950 border border-white text-[10px] font-black text-white shadow-sm">
                 #{currentRank}
               </div>
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-white font-black text-2xl leading-none truncate">
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-slate-900 font-black text-2xl leading-none tracking-tight truncate">
                   {activeLore.name}
                 </h2>
-                <span className="text-sm">{activeLore.badgeEmoji}</span>
+                <span className="text-lg">{activeLore.badgeEmoji}</span>
               </div>
 
-              <p className="text-purple-300 font-bold text-xs mt-1 truncate">
+              <p className="text-indigo-600 font-extrabold text-xs mt-1.5 truncate">
                 {activeLore.title}
               </p>
 
               <div className="flex items-center gap-2 mt-2">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-semibold text-white/70">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200/60 text-[10px] font-bold text-slate-600">
                   {activeLore.origin}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-300">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-[10px] font-black text-amber-800">
                   🏆 {activeStats.tournamentsWon} Won
                 </span>
               </div>
@@ -727,112 +724,112 @@ export default function ProfilesPage() {
           </div>
 
           {/* Roast Bio Box */}
-          <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-1.5">
+          <div className="p-4 rounded-[22px] bg-amber-50/70 border border-amber-200/70 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
                 🔥 Scouting Dossier &amp; Roast
               </span>
-              <span className="text-[10px] text-white/40 italic font-mono">Confidential</span>
+              <span className="text-[10px] text-amber-700/60 italic font-mono">Confidential</span>
             </div>
-            <p className="text-white/80 text-xs leading-relaxed font-medium">
+            <p className="text-slate-700 text-xs leading-relaxed font-medium">
               {activeLore.roastBio}
             </p>
           </div>
 
-          {/* Quick Playstyle & Signature Move */}
+          {/* Quick Playstyle & Kryptonite */}
           <div className="grid grid-cols-2 gap-2.5">
-            <div className="p-3 rounded-2xl bg-slate-950/60 border border-white/5">
-              <p className="text-[10px] font-black text-purple-400 uppercase tracking-wider mb-1">
+            <div className="p-3.5 rounded-[22px] bg-indigo-50/60 border border-indigo-100/80">
+              <p className="text-[10px] font-black text-indigo-700 uppercase tracking-wider mb-1">
                 ⚡ Playstyle
               </p>
-              <p className="text-white font-bold text-xs leading-tight">{activeLore.playstyle}</p>
+              <p className="text-slate-900 font-black text-xs leading-snug">{activeLore.playstyle}</p>
             </div>
-            <div className="p-3 rounded-2xl bg-slate-950/60 border border-white/5">
-              <p className="text-[10px] font-black text-red-400 uppercase tracking-wider mb-1">
+            <div className="p-3.5 rounded-[22px] bg-rose-50/60 border border-rose-100/80">
+              <p className="text-[10px] font-black text-rose-700 uppercase tracking-wider mb-1">
                 🎯 Kryptonite
               </p>
-              <p className="text-white font-medium text-[11px] leading-tight text-white/70">
+              <p className="text-slate-700 font-semibold text-[11px] leading-snug">
                 {activeLore.weakness}
               </p>
             </div>
           </div>
 
           {/* Signature Move Callout */}
-          <div className="px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-transparent border border-purple-500/20 flex items-center gap-2.5">
-            <span className="text-lg flex-shrink-0">✨</span>
+          <div className="px-4 py-3 rounded-[22px] bg-gradient-to-r from-purple-50 via-pink-50 to-amber-50/50 border border-purple-100/80 flex items-center gap-3">
+            <span className="text-xl flex-shrink-0">✨</span>
             <div className="min-w-0">
-              <p className="text-[9px] uppercase font-black text-purple-300 tracking-wider">
+              <p className="text-[9px] uppercase font-black text-purple-700 tracking-wider">
                 Signature Technique
               </p>
-              <p className="text-xs font-bold text-white truncate">{activeLore.specialMove}</p>
+              <p className="text-xs font-black text-slate-900 truncate">{activeLore.specialMove}</p>
             </div>
           </div>
 
           {/* Career Stats Grid */}
           <div className="space-y-2 pt-1">
-            <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
               Career History &amp; Standing
             </p>
 
             <div className="grid grid-cols-3 gap-2">
-              <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-white/10 text-center">
-                <p className="text-amber-400 font-black text-lg leading-tight">
+              <div className="p-3 rounded-[20px] bg-amber-50/70 border border-amber-200/60 text-center">
+                <p className="text-amber-900 font-black text-lg leading-tight">
                   {activeStats.tournamentsWon}
                 </p>
-                <p className="text-[10px] text-white/50 font-semibold mt-0.5">🏆 Titles Won</p>
+                <p className="text-[10px] text-amber-700/80 font-bold mt-0.5">🏆 Titles Won</p>
               </div>
 
-              <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-white/10 text-center">
-                <p className="text-red-400 font-black text-lg leading-tight">
+              <div className="p-3 rounded-[20px] bg-rose-50/70 border border-rose-200/60 text-center">
+                <p className="text-rose-800 font-black text-lg leading-tight">
                   {activeStats.woodenSpoons}
                 </p>
-                <p className="text-[10px] text-white/50 font-semibold mt-0.5">🥄 Wooden Spoons</p>
+                <p className="text-[10px] text-rose-700/80 font-bold mt-0.5">🥄 Spoons</p>
               </div>
 
-              <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-white/10 text-center">
-                <p className="text-emerald-400 font-black text-lg leading-tight">
+              <div className="p-3 rounded-[20px] bg-emerald-50/70 border border-emerald-200/60 text-center">
+                <p className="text-emerald-800 font-black text-lg leading-tight">
                   {winRate}%
                 </p>
-                <p className="text-[10px] text-white/50 font-semibold mt-0.5">Win Rate</p>
+                <p className="text-[10px] text-emerald-700/80 font-bold mt-0.5">Win Rate</p>
               </div>
 
-              <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-white/10 text-center">
-                <p className="text-purple-400 font-black text-lg leading-tight">
+              <div className="p-3 rounded-[20px] bg-indigo-50/70 border border-indigo-200/60 text-center">
+                <p className="text-indigo-900 font-black text-lg leading-tight">
                   {activeStats.totalPoints}
                 </p>
-                <p className="text-[10px] text-white/50 font-semibold mt-0.5">Total Points</p>
+                <p className="text-[10px] text-indigo-700/80 font-bold mt-0.5">Total Points</p>
               </div>
 
-              <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-white/10 text-center">
-                <p className="text-blue-400 font-black text-lg leading-tight">
+              <div className="p-3 rounded-[20px] bg-slate-50 border border-slate-200/70 text-center">
+                <p className="text-slate-900 font-black text-lg leading-tight">
                   {activeStats.matchesPlayed}
                 </p>
-                <p className="text-[10px] text-white/50 font-semibold mt-0.5">Matches Played</p>
+                <p className="text-[10px] text-slate-500 font-bold mt-0.5">Matches</p>
               </div>
 
-              <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-white/10 text-center">
-                <p className="text-yellow-400 font-black text-lg leading-tight">
+              <div className="p-3 rounded-[20px] bg-slate-950 text-white text-center shadow-xs">
+                <p className="text-white font-black text-lg leading-tight">
                   #{currentRank}
                 </p>
-                <p className="text-[10px] text-white/50 font-semibold mt-0.5">Squad Rank</p>
+                <p className="text-[10px] text-slate-300 font-bold mt-0.5">Squad Rank</p>
               </div>
             </div>
           </div>
 
           {/* Funny Radar Attribute Bars */}
           <div className="space-y-2.5 pt-1">
-            <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
               Scouting Attributes (Certified 100% Accurate)
             </p>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5 p-3.5 rounded-[22px] bg-slate-50/80 border border-slate-200/70">
               {activeLore.funStats.map((stat, idx) => (
                 <div key={idx} className="space-y-1">
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-white/80">{stat.label}</span>
-                    <span className="text-white/50 font-mono text-[11px]">{stat.value}%</span>
+                  <div className="flex justify-between text-xs font-bold">
+                    <span className="text-slate-800">{stat.label}</span>
+                    <span className="text-slate-500 font-mono text-[11px]">{stat.value}%</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-slate-200/80 overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${stat.value}%` }}
@@ -846,41 +843,41 @@ export default function ProfilesPage() {
           </div>
 
           {/* Rivalry Dossier (Bunny & Nemesis) */}
-          <div className="space-y-2 pt-2 border-t border-white/10">
-            <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">
+          <div className="space-y-2 pt-2 border-t border-slate-200/70">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
               Rivalry &amp; Head-to-Head
             </p>
 
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                <p className="text-[9px] uppercase font-black text-emerald-400 tracking-wider">
+              <div className="p-3.5 rounded-[22px] bg-emerald-50/70 border border-emerald-200/70">
+                <p className="text-[9px] uppercase font-black text-emerald-800 tracking-wider">
                   🐰 Favorite Bunny
                 </p>
                 {bunny ? (
-                  <div>
-                    <p className="text-white font-bold text-xs mt-0.5">{bunny.name}</p>
-                    <p className="text-[10px] text-emerald-300 font-mono">
+                  <div className="mt-1">
+                    <p className="text-slate-900 font-black text-xs">{bunny.name}</p>
+                    <p className="text-[10px] text-emerald-700 font-bold font-mono mt-0.5">
                       {bunny.won} wins ({bunny.played} played)
                     </p>
                   </div>
                 ) : (
-                  <p className="text-white/40 text-[10px] mt-0.5 italic">No victims recorded yet</p>
+                  <p className="text-slate-400 text-[10px] mt-1 italic font-medium">No victims recorded yet</p>
                 )}
               </div>
 
-              <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20">
-                <p className="text-[9px] uppercase font-black text-red-400 tracking-wider">
+              <div className="p-3.5 rounded-[22px] bg-rose-50/70 border border-rose-200/70">
+                <p className="text-[9px] uppercase font-black text-rose-800 tracking-wider">
                   😈 Greatest Nemesis
                 </p>
                 {nemesis ? (
-                  <div>
-                    <p className="text-white font-bold text-xs mt-0.5">{nemesis.name}</p>
-                    <p className="text-[10px] text-red-300 font-mono">
+                  <div className="mt-1">
+                    <p className="text-slate-900 font-black text-xs">{nemesis.name}</p>
+                    <p className="text-[10px] text-rose-700 font-bold font-mono mt-0.5">
                       {nemesis.lost} losses ({nemesis.played} played)
                     </p>
                   </div>
                 ) : (
-                  <p className="text-white/40 text-[10px] mt-0.5 italic">Undefeated against all</p>
+                  <p className="text-slate-400 text-[10px] mt-1 italic font-medium">Undefeated against all</p>
                 )}
               </div>
             </div>
@@ -888,19 +885,19 @@ export default function ProfilesPage() {
         </div>
 
         {/* Squad Hall of Fame Quick Links */}
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-slate-900 to-slate-900 border border-purple-500/20 flex items-center justify-between">
+        <div className="p-4 rounded-[26px] bg-white border border-slate-200/80 shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-2xl">👑</span>
             <div>
-              <p className="text-xs font-black text-white">Looking for Match Records?</p>
-              <p className="text-[11px] text-white/50">Check game-by-game scores and standings</p>
+              <p className="text-xs font-black text-slate-900">Looking for Match Records?</p>
+              <p className="text-[11px] text-slate-500 font-medium">Check game scores &amp; standings</p>
             </div>
           </div>
           <Link
             href="/history"
-            className="px-3.5 py-1.5 rounded-full bg-purple-500 hover:bg-purple-400 text-white font-black text-xs shadow-md transition-all active:scale-95"
+            className="px-4 py-2 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-black text-xs shadow-xs transition-all active:scale-95 flex items-center gap-1"
           >
-            View History
+            <span>View History</span>
           </Link>
         </div>
       </div>
