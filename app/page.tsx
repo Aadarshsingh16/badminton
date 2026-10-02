@@ -194,50 +194,156 @@ export default function PlayPage() {
 
     // ——— Player Select Screen ———
     if (phase === "player-select") {
-    const canStart = selectedPlayerIds.length >= 3;
-    const hasPreviousTournament = dayTable.tournaments.length > 0;
+      const canStart = selectedPlayerIds.length >= 3;
+      const hasPreviousTournament = dayTable.tournaments.length > 0;
+      const progressPercent = Math.min(100, Math.round((selectedPlayerIds.length / 3) * 100));
 
-    return (
-      <div className="min-h-full flex flex-col">
-        <ConfettiBurst active={showConfetti} onComplete={() => setShowConfetti(false)} />
+      const PLAYER_BG_COLORS: Record<string, string> = {
+        adarsh: "bg-[#FFF2E8]",
+        akshat: "bg-[#EEF5FF]",
+        harsh: "bg-[#EAF8F0]",
+        udbhaw: "bg-[#FEF8E6]",
+        anirudh: "bg-[#FFF0F2]",
+        gautam: "bg-[#FFFDE6]",
+      };
 
-        {/* Header */}
-        <div className="px-4 pt-6 pb-4">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">🏸</span>
+      const selectedPlayersList = selectedPlayerIds
+        .map((id) => players.find((p) => p.id === id))
+        .filter(Boolean) as Player[];
+
+      return (
+        <div className="min-h-full flex flex-col px-4 pt-4 pb-6">
+          <ConfettiBurst active={showConfetti} onComplete={() => setShowConfetti(false)} />
+
+          {/* Top Bar (Inspiration Image 3) */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-xl select-none">
+                🏸
+              </div>
               <div>
-                <h1 className="text-white font-black text-2xl leading-tight">Badminton</h1>
-                <p className="text-white/40 text-xs">Round-robin tournament manager</p>
+                <h1 className="text-slate-900 font-extrabold text-base leading-tight">
+                  Badminton Club
+                </h1>
+                <p className="text-slate-400 text-xs font-medium">Round-Robin Manager</p>
               </div>
             </div>
+
             <button
               onClick={() => {
                 setPinIsInvalid(false);
                 setShowPinModal(true);
               }}
               title="Scorekeeper PIN"
-              className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all text-xs flex items-center gap-1.5"
+              className="w-10 h-10 rounded-full bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center text-slate-700 relative"
             >
-              <span>🔑</span>
-              <span className="text-[10px] font-semibold text-gray-300">PIN</span>
+              <span className="text-sm">🔑</span>
+              {apiSync.hasPin() && (
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+              )}
             </button>
           </div>
-          {hasPreviousTournament && (
-            <div className="mt-3 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-2">
-              <p className="text-blue-300 text-xs">
-                🌟 {dayTable.tournaments.length} tournament{dayTable.tournaments.length !== 1 ? "s" : ""} played today
+
+          {/* Featured Hero Bento Card (Inspiration Image 3 - UX Lab card) */}
+          <div className="mb-4 bg-gradient-to-br from-[#9BB8FF] to-[#7FA4FC] text-slate-950 rounded-[30px] p-5 shadow-xs relative overflow-hidden">
+            {/* Background subtle art curves */}
+            <div className="absolute -right-8 -bottom-8 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none" />
+
+            <div className="flex items-start justify-between mb-3 relative z-10">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg shadow-xs">
+                🏆
+              </div>
+
+              {/* Circular Progress Ring Tracker (like 2/3 ring in Image 3) */}
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    className="text-white/30"
+                    stroke="currentColor"
+                    strokeWidth="3.5"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className="text-slate-950 transition-all duration-300"
+                    stroke="currentColor"
+                    strokeWidth="3.5"
+                    strokeDasharray={`${progressPercent}, 100`}
+                    strokeLinecap="round"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <span className="absolute font-black text-[11px] text-slate-950">
+                  {selectedPlayerIds.length}/3
+                </span>
+              </div>
+            </div>
+
+            <div className="relative z-10 mb-4">
+              <h2 className="text-xl font-extrabold text-slate-950 tracking-tight">
+                Tournament Lineup
+              </h2>
+              <p className="text-slate-900/70 text-xs font-medium mt-0.5">
+                {hasPreviousTournament
+                  ? `🌟 ${dayTable.tournaments.length} tournament${dayTable.tournaments.length !== 1 ? "s" : ""} played today`
+                  : "Pick at least 3 players to generate round-robin court fixtures"}
               </p>
             </div>
-          )}
-        </div>
 
-        {/* Player grid */}
-        <div className="flex-1 px-4 pb-4">
-          <p className="text-white/50 text-xs uppercase tracking-widest mb-3">Select Players (min 3)</p>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            {players.map((player, idx) => {
+            {/* Bottom row of Hero Card */}
+            <div className="flex items-center justify-between gap-2 relative z-10">
+              <button
+                onClick={canStart ? goToSetup : undefined}
+                disabled={!canStart}
+                className={`py-2 px-4 rounded-full font-bold text-xs flex items-center gap-1.5 transition-all ${
+                  canStart
+                    ? "bg-slate-950 hover:bg-black text-white shadow-sm active:scale-95"
+                    : "bg-white/40 text-slate-800/80 cursor-not-allowed"
+                }`}
+              >
+                <span>{canStart ? "Start Setup" : `Need ${Math.max(0, 3 - selectedPlayerIds.length)} more`}</span>
+                <span>→</span>
+              </button>
+
+              {/* Selected Players Avatar Stack (like avatar bubbles in Image 3) */}
+              {selectedPlayersList.length > 0 && (
+                <div className="flex items-center -space-x-2 overflow-hidden py-1">
+                  {selectedPlayersList.slice(0, 4).map((p) => (
+                    <div
+                      key={p.id}
+                      className="w-7 h-7 rounded-full bg-white ring-2 ring-white/80 overflow-hidden flex items-center justify-center shadow-xs"
+                    >
+                      <AvatarSVG type={p.avatar} size={26} emoji={p.avatarEmoji} color={p.avatarColor} />
+                    </div>
+                  ))}
+                  {selectedPlayersList.length > 4 && (
+                    <div className="w-7 h-7 rounded-full bg-slate-900 text-white text-[9px] font-bold ring-2 ring-white flex items-center justify-center">
+                      +{selectedPlayersList.length - 4}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section Header & Count Chips (Inspiration Image 3) */}
+          <div className="flex items-center justify-between mb-3 px-1">
+            <p className="text-slate-900 font-extrabold text-sm">
+              Select Squad <span className="text-slate-400 font-medium text-xs">({selectedPlayerIds.length} selected)</span>
+            </p>
+            <span className="text-[11px] font-bold text-slate-500 bg-white border border-slate-200/80 px-2.5 py-1 rounded-full shadow-xs">
+              Min 3 required
+            </span>
+          </div>
+
+          {/* Player Grid (Inspiration Image 3 Bento Cards) */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            {players.map((player) => {
               const selected = selectedPlayerIds.includes(player.id);
+              const selectedIndex = selectedPlayerIds.indexOf(player.id);
+              const customBg = PLAYER_BG_COLORS[player.id] ?? "bg-white";
+
               return (
                 <motion.button
                   key={player.id}
@@ -245,89 +351,109 @@ export default function PlayPage() {
                   onClick={() => togglePlayerSelection(player.id)}
                   whileTap={{ scale: 0.95 }}
                   animate={{
-                    scale: selected ? 1.03 : 1,
-                    boxShadow: selected ? "0 8px 32px rgba(139, 92, 246, 0.3)" : "0 0 0 rgba(0,0,0,0)",
+                    scale: selected ? 1.02 : 1,
                   }}
-                  transition={{ type: "spring", damping: 18, stiffness: 300 }}
-                  className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-colors ${
+                  transition={{ type: "spring", damping: 20, stiffness: 320 }}
+                  className={`relative flex flex-col items-center justify-between p-4 rounded-[26px] border transition-all cursor-pointer text-left ${customBg} ${
                     selected
-                      ? "border-purple-500 bg-purple-500/15"
-                      : "border-white/10 bg-white/5"
+                      ? "border-slate-900 ring-2 ring-slate-900 shadow-md bg-white"
+                      : "border-slate-200/70 hover:border-slate-300 shadow-xs"
                   }`}
                 >
-                  {selected && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute top-2 right-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center"
-                    >
-                      <span className="text-white text-xs font-bold">
-                        {selectedPlayerIds.indexOf(player.id) + 1}
-                      </span>
-                    </motion.div>
-                  )}
-                  <AvatarSVG
-                    type={player.avatar}
-                    size={64}
-                    emoji={player.avatarEmoji}
-                    color={player.avatarColor}
-                  />
-                  <p className={`text-sm font-bold text-center ${selected ? "text-white" : "text-white/70"}`}>
-                    {player.name}
-                  </p>
+                  {/* Top-Right Badge: Numbered black pill when selected, empty ring when unselected */}
+                  <div className="w-full flex justify-end">
+                    {selected ? (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="w-6 h-6 rounded-full bg-slate-950 flex items-center justify-center shadow-xs"
+                      >
+                        <span className="text-white text-xs font-black">
+                          {selectedIndex + 1}
+                        </span>
+                      </motion.div>
+                    ) : (
+                      <div className="w-6 h-6 rounded-full border-2 border-slate-300/80 bg-white/50" />
+                    )}
+                  </div>
+
+                  {/* Avatar centered */}
+                  <div className="my-1.5 flex items-center justify-center">
+                    <AvatarSVG
+                      type={player.avatar}
+                      size={60}
+                      emoji={player.avatarEmoji}
+                      color={player.avatarColor}
+                    />
+                  </div>
+
+                  {/* Player Name */}
+                  <div className="w-full text-center">
+                    <p className="text-sm font-extrabold text-slate-900 truncate">
+                      {player.name}
+                    </p>
+                    <span className="text-[10px] font-semibold text-slate-400 capitalize">
+                      {player.avatar === "custom" ? "Custom Player" : player.avatar}
+                    </span>
+                  </div>
                 </motion.button>
               );
             })}
 
-            {/* Add player tile */}
+            {/* Add Player Bento Card */}
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowAvatarPicker(true)}
-              className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-white/20 bg-white/3 text-white/40 hover:border-white/40 hover:text-white/60 transition-colors"
+              className="flex flex-col items-center justify-center gap-2 p-5 rounded-[26px] border-2 border-dashed border-slate-300/90 bg-white/60 hover:bg-white text-slate-500 hover:text-slate-800 transition-all cursor-pointer shadow-xs min-h-[148px]"
             >
-              <span className="text-3xl">+</span>
-              <span className="text-xs">Add Player</span>
+              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 text-xl font-bold shadow-xs">
+                +
+              </div>
+              <span className="text-xs font-bold text-slate-600">Add Player</span>
             </motion.button>
           </div>
-        </div>
 
-        {/* Start Tournament CTA */}
-        <div className="px-4 pb-6">
-          <motion.button
-            onClick={goToSetup}
-            disabled={!canStart}
-            whileTap={canStart ? { scale: 0.97 } : undefined}
-            animate={{ opacity: canStart ? 1 : 0.4 }}
-            className={`w-full py-4 rounded-2xl font-black text-white text-lg transition-all ${
-              canStart
-                ? "bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg shadow-purple-500/30"
-                : "bg-white/10 cursor-not-allowed"
-            }`}
-          >
-            {canStart
-              ? `Setup Tournament (${selectedPlayerIds.length} players) →`
-              : `Select at least 3 players`}
-          </motion.button>
-        </div>
+          {/* Start Tournament CTA (Full Width Black Pill like Inspiration Image 2/3) */}
+          <div className="sticky bottom-0 inset-x-0 pt-3 pb-4 bg-gradient-to-t from-[#F7F9FD] via-[#F7F9FD]/95 to-transparent z-10 mt-2">
+            <motion.button
+              onClick={goToSetup}
+              disabled={!canStart}
+              whileTap={canStart ? { scale: 0.98 } : undefined}
+              className={`w-full py-4 rounded-full font-extrabold text-sm transition-all flex items-center justify-center gap-2 ${
+                canStart
+                  ? "bg-slate-950 hover:bg-black text-white shadow-xl shadow-slate-950/20 cursor-pointer"
+                  : "bg-slate-200 text-slate-400 cursor-not-allowed"
+              }`}
+            >
+              {canStart ? (
+                <>
+                  <span>Setup Tournament ({selectedPlayerIds.length} Players)</span>
+                  <span>→</span>
+                </>
+              ) : (
+                <span>Select at least 3 players ({selectedPlayerIds.length}/3)</span>
+              )}
+            </motion.button>
+          </div>
 
-        {/* Avatar picker modal */}
-        <AvatarPicker
-          open={showAvatarPicker}
-          onClose={() => setShowAvatarPicker(false)}
-          onConfirm={(emoji, color, name) => {
-            addPlayer({
-              id: `custom-${Date.now()}`,
-              name,
-              avatar: "custom",
-              avatarEmoji: emoji,
-              avatarColor: color,
-            });
-            setShowAvatarPicker(false);
-          }}
-        />
-      </div>
-    );
-  }
+          {/* Avatar picker modal */}
+          <AvatarPicker
+            open={showAvatarPicker}
+            onClose={() => setShowAvatarPicker(false)}
+            onConfirm={(emoji, color, name) => {
+              addPlayer({
+                id: `custom-${Date.now()}`,
+                name,
+                avatar: "custom",
+                avatarEmoji: emoji,
+                avatarColor: color,
+              });
+              setShowAvatarPicker(false);
+            }}
+          />
+        </div>
+      );
+    }
 
   // ——— Setup Screen ———
   if (phase === "setup") {

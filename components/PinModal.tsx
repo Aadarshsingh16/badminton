@@ -40,29 +40,29 @@ export function PinModal({ open, onClose, onSuccess, isInvalid = false }: PinMod
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="w-full max-w-sm bg-slate-900 border border-purple-500/30 rounded-3xl p-6 shadow-2xl space-y-4"
+            className="w-full max-w-sm bg-white border border-slate-200/80 rounded-[30px] p-6 shadow-2xl space-y-4 text-slate-900"
           >
             {/* Header */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-xl text-purple-300">
+              <div className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center text-xl text-slate-800 shadow-xs">
                 🔒
               </div>
               <div>
-                <h2 className="text-base font-bold text-white">Scorekeeper PIN</h2>
-                <p className="text-[11px] text-gray-400">One-time access for this device</p>
+                <h2 className="text-base font-extrabold text-slate-900">Scorekeeper PIN</h2>
+                <p className="text-[11px] text-slate-400 font-medium">One-time host access for this device</p>
               </div>
             </div>
 
-            <p className="text-xs text-gray-300 leading-relaxed">
-              Enter the scorekeeper PIN to record scores and sync tournaments. This PIN is stored securely in your browser&apos;s local storage and never exposed to spectators.
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Enter the scorekeeper PIN to record scores and sync tournaments. This PIN is stored securely in your browser&apos;s local storage.
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-3.5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <div className="relative">
                   <input
@@ -74,30 +74,30 @@ export function PinModal({ open, onClose, onSuccess, isInvalid = false }: PinMod
                     }}
                     placeholder="Enter scorekeeper PIN..."
                     autoFocus
-                    className="w-full bg-slate-950 border border-white/20 focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none pr-10 tracking-wider"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-slate-950 focus:ring-1 focus:ring-slate-950 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none pr-10 font-mono tracking-wider transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPin(!showPin)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-xs"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm"
                   >
                     {showPin ? "🙈" : "👁️"}
                   </button>
                 </div>
-                {error && <p className="text-[11px] text-red-400 mt-1.5 font-medium">{error}</p>}
+                {error && <p className="text-[11px] text-red-500 mt-1.5 font-bold">{error}</p>}
               </div>
 
               <div className="flex items-center gap-2 pt-1">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-xs font-semibold transition-all"
+                  className="flex-1 py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 transition-all"
+                  className="flex-1 py-3 rounded-full bg-slate-950 hover:bg-black text-white text-xs font-extrabold shadow-md active:scale-95 transition-all"
                 >
                   Save PIN
                 </button>
