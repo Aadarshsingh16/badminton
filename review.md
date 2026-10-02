@@ -83,10 +83,10 @@
 ---
 
 ## Phase 9 — Backend scaffold
-- **Built:** Express 4 + TypeScript + Socket.io 4 scaffold under `backend/`. Configured `tsconfig.json`, `package.json`, cross-platform build script with migration asset copy. Created Neon Postgres initial schema migration (`001_initial.sql`) supporting `players`, `day_tables`, `tournaments`, `matches`, and `day_results`. Implemented `db/client.ts` with pooled PG connection, auto-migration runner, and `/health` keep-alive endpoint with DB connectivity status. Socket.io rooms set up for `join:tournament` and `leave:tournament`.
-- **Verified:** `npm run build` compiled clean TS to `dist/`. Tested `node dist/index.js` locally — `/health` endpoint returned HTTP 200 with `{ status: "ok", version: "1.0.0" }`.
+- **Built:** Express 4 + TypeScript + Socket.io 4 scaffold under `backend/`. Configured `tsconfig.json`, `package.json`, and cross-platform build script with migration asset copy. Created Neon Postgres initial schema migration (`001_initial.sql`) creating all 5 tables: `players`, `day_tables`, `tournaments`, `matches`, and `day_results`. Implemented `db/client.ts` with pooled PG connection, auto-migration runner, and `/health` keep-alive endpoint. Socket.io rooms configured for realtime tournament subscriptions.
+- **Verified:** `/health` live on Render returning `{ status: "ok", version: "1.0.0" }`, all 5 tables present and verified in Neon, UptimeRobot monitoring active and pinging `/health` every 5 minutes.
 - **Deviations:** None.
-- **Open issues:** Connect Render Web Service and Neon DB instance via environment variables.
+- **Open issues:** None.
 
 ---
 
