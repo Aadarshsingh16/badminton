@@ -42,13 +42,14 @@ function computeTable(matches: any[], playerIds: string[]) {
 
 // POST /tournaments — create a new tournament (scorekeeper only)
 tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
-  const { playerIds, matches, config } = req.body;
+  const { id: customId, shareSlug: customSlug, playerIds, matches, config } = req.body;
 
   if (!Array.isArray(playerIds) || playerIds.length < 3) {
     return res.status(400).json({ error: "playerIds must be an array of at least 3 players" });
   }
 
-  const slug = nanoid(8);
+  const slug = customSlug || nanoid(8);
+  const tourneyId = customId || nanoid(10);
   const tournamentConfig: TournamentConfig = { ...DEFAULT_CONFIG, ...(config ?? {}) };
 
   try {
@@ -66,10 +67,11 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
 
     // Insert tournament
     const tourneyRes = await pool.query(
-      `INSERT INTO tournaments (share_slug, day_id, player_ids, status, config)
-       VALUES ($1, $2, $3, 'active', $4)
+      `INSERT INTO tournaments (id, share_slug, day_id, player_ids, status, config)
+       VALUES ($1, $2, $3, $4, 'active', $5)
+       ON CONFLICT (id) DO UPDATE SET player_ids = $4, config = $5
        RETURNING id, share_slug, day_id, player_ids, status, config, created_at`,
-      [slug, dayId, playerIds, JSON.stringify(tournamentConfig)]
+      [tourneyId, slug, dayId, playerIds, JSON.stringify(tournamentConfig)]
     );
     const tournament = tourneyRes.rows[0];
 
@@ -77,11 +79,13 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
     const insertedMatches: any[] = [];
     if (Array.isArray(matches)) {
       for (const m of matches) {
+        const matchId = m.id || nanoid(10);
         const mRes = await pool.query(
-          `INSERT INTO matches (tournament_id, round, is_final, player_a, player_b, court_side, played)
-           VALUES ($1, $2, $3, $4, $5, $6, false)
+          `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, court_side, played)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, false)
+           ON CONFLICT (id) DO UPDATE SET round = $3, court_side = $7
            RETURNING id, round, is_final, player_a AS "playerA", player_b AS "playerB", court_side AS "courtSide", played`,
-          [tournament.id, m.round ?? 0, !!m.isFinal, m.playerA, m.playerB, JSON.stringify(m.courtSide ?? {})]
+          [matchId, tournament.id, m.round ?? 0, !!m.isFinal, m.playerA, m.playerB, JSON.stringify(m.courtSide ?? {})]
         );
         insertedMatches.push(mRes.rows[0]);
       }

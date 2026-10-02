@@ -19,21 +19,29 @@ export async function runMigration() {
     return;
   }
 
-  // Look for migration file in src or dist
-  const candidates = [
-    path.join(__dirname, "migrations/001_initial.sql"),
-    path.join(__dirname, "../src/db/migrations/001_initial.sql"),
-    path.join(process.cwd(), "src/db/migrations/001_initial.sql"),
-    path.join(process.cwd(), "dist/db/migrations/001_initial.sql"),
+  // Look for migration directory in candidates
+  const dirCandidates = [
+    path.join(__dirname, "migrations"),
+    path.join(__dirname, "../src/db/migrations"),
+    path.join(process.cwd(), "src/db/migrations"),
+    path.join(process.cwd(), "dist/db/migrations"),
   ];
 
-  const migrationPath = candidates.find((p) => fs.existsSync(p));
-  if (!migrationPath) {
-    console.error("❌ Migration file 001_initial.sql not found in candidate paths:", candidates);
+  const migrationsDir = dirCandidates.find((d) => fs.existsSync(d));
+  if (!migrationsDir) {
+    console.error("❌ Migration directory not found in candidate paths:", dirCandidates);
     return;
   }
 
-  const sql = fs.readFileSync(migrationPath, "utf-8");
-  await pool.query(sql);
-  console.log("✅ Neon Postgres schema migration complete");
+  const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort();
+  for (const file of files) {
+    const filePath = path.join(migrationsDir, file);
+    const sql = fs.readFileSync(filePath, "utf-8");
+    try {
+      await pool.query(sql);
+      console.log(`✅ Migration applied: ${file}`);
+    } catch (err: any) {
+      console.error(`❌ Migration error on ${file}:`, err.message);
+    }
+  }
 }

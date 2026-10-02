@@ -163,6 +163,8 @@ export const useStore = create<AppState>()(
 
         if (!isPractice) {
           apiSync.enqueue("/tournaments", "POST", {
+            id: tournament.id,
+            shareSlug: tournament.shareSlug,
             playerIds: tournament.playerIds,
             matches: tournament.matches,
             config: tournament.config,

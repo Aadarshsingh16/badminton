@@ -107,7 +107,7 @@ interface DayHonors {
 }
 
 export default function HistoryPage() {
-  const { players, dayTable, currentTournament } = useStore();
+  const { players, dayTable, currentTournament, pastTournaments } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<"log" | "leaderboards">("log");
   const [rangeFilter, setRangeFilter] = useState<"day" | "week" | "month" | "all">("all");
   const [playerFilter, setPlayerFilter] = useState<string>("all");
@@ -223,20 +223,29 @@ export default function HistoryPage() {
 
   // Local fallback synthesis if backend returned no records or offline
   const localHistoryFallback = useMemo<HistoryData>(() => {
-    if (!currentTournament && dayTable.tournaments.length === 0) {
+    const allTourneys = [...pastTournaments];
+    if (currentTournament) {
+      allTourneys.push(currentTournament);
+    }
+
+    if (allTourneys.length === 0 && dayTable.tournaments.length === 0) {
       return { totalMatches: 0, totalPoints: 0, days: [], miniLeaderboard: [] };
     }
 
-    const matches: MatchHistoryItem[] = [];
-    if (currentTournament) {
-      currentTournament.matches
+    const allMatches: MatchHistoryItem[] = [];
+    const tournamentsList: TournamentGroup[] = [];
+
+    allTourneys.forEach((t) => {
+      const tourneyMatches: MatchHistoryItem[] = [];
+
+      t.matches
         .filter((m) => m.played)
         .forEach((m) => {
           const pa = players.find((p) => p.id === m.playerA);
           const pb = players.find((p) => p.id === m.playerB);
-          matches.push({
+          const item: MatchHistoryItem = {
             id: m.id,
-            tournamentId: currentTournament.id,
+            tournamentId: t.id,
             round: m.round,
             isFinal: !!m.isFinal,
             playerA: m.playerA,
@@ -254,18 +263,20 @@ export default function HistoryPage() {
             pointsA: m.pointsAwarded?.[m.playerA] ?? 0,
             pointsB: m.pointsAwarded?.[m.playerB] ?? 0,
             played: true,
-            shareSlug: currentTournament.shareSlug,
+            shareSlug: t.shareSlug,
             date: dayTable.date,
-          });
+          };
+          tourneyMatches.push(item);
+          allMatches.push(item);
         });
 
-      if (currentTournament.final && currentTournament.final.played) {
-        const m = currentTournament.final;
+      if (t.final && t.final.played) {
+        const m = t.final;
         const pa = players.find((p) => p.id === m.playerA);
         const pb = players.find((p) => p.id === m.playerB);
-        matches.push({
+        const item: MatchHistoryItem = {
           id: m.id,
-          tournamentId: currentTournament.id,
+          tournamentId: t.id,
           round: m.round,
           isFinal: true,
           playerA: m.playerA,
@@ -283,43 +294,87 @@ export default function HistoryPage() {
           pointsA: m.pointsAwarded?.[m.playerA] ?? 0,
           pointsB: m.pointsAwarded?.[m.playerB] ?? 0,
           played: true,
-          shareSlug: currentTournament.shareSlug,
+          shareSlug: t.shareSlug,
           date: dayTable.date,
+        };
+        tourneyMatches.push(item);
+        allMatches.push(item);
+      }
+
+      // Filter matches within tournament if filters are set
+      let filteredTourneyMatches = tourneyMatches;
+      if (playerFilter !== "all") {
+        filteredTourneyMatches = filteredTourneyMatches.filter(
+          (m) => m.playerA === playerFilter || m.playerB === playerFilter
+        );
+      }
+      if (patternFilter !== "all") {
+        if (patternFilter === "blowout") {
+          filteredTourneyMatches = filteredTourneyMatches.filter(
+            (m) => Math.abs(m.scoreA - m.scoreB) >= 4
+          );
+        } else if (patternFilter.includes("-")) {
+          const [s1, s2] = patternFilter.split("-").map((s) => parseInt(s.trim(), 10));
+          filteredTourneyMatches = filteredTourneyMatches.filter(
+            (m) => (m.scoreA === s1 && m.scoreB === s2) || (m.scoreA === s2 && m.scoreB === s1)
+          );
+        }
+      }
+
+      if (filteredTourneyMatches.length > 0 || (playerFilter === "all" && patternFilter === "all")) {
+        tournamentsList.push({
+          tournamentId: t.id,
+          shareSlug: t.shareSlug,
+          matches: filteredTourneyMatches,
         });
+      }
+    });
+
+    let displayMatches = allMatches;
+    if (playerFilter !== "all") {
+      displayMatches = displayMatches.filter(
+        (m) => m.playerA === playerFilter || m.playerB === playerFilter
+      );
+    }
+    if (patternFilter !== "all") {
+      if (patternFilter === "blowout") {
+        displayMatches = displayMatches.filter((m) => Math.abs(m.scoreA - m.scoreB) >= 4);
+      } else if (patternFilter.includes("-")) {
+        const [s1, s2] = patternFilter.split("-").map((s) => parseInt(s.trim(), 10));
+        displayMatches = displayMatches.filter(
+          (m) => (m.scoreA === s1 && m.scoreB === s2) || (m.scoreA === s2 && m.scoreB === s1)
+        );
       }
     }
 
     return {
-      totalMatches: matches.length,
-      totalPoints: matches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
-      days: [
-        {
-          date: dayTable.date,
-          tournaments: [
-            {
-              tournamentId: currentTournament?.id || "local-tournament",
-              shareSlug: currentTournament?.shareSlug,
-              matches,
-            },
-          ],
-        },
-      ],
+      totalMatches: displayMatches.length,
+      totalPoints: displayMatches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
+      days:
+        tournamentsList.length > 0
+          ? [
+              {
+                date: dayTable.date,
+                tournaments: tournamentsList,
+              },
+            ]
+          : [],
       miniLeaderboard: players
         .map((p) => ({
           playerId: p.id,
           name: p.name,
           points: dayTable.totals[p.id] || 0,
-          matches: matches.filter((m) => m.playerA === p.id || m.playerB === p.id).length,
-          wins: matches.filter(
+          matches: allMatches.filter((m) => m.playerA === p.id || m.playerB === p.id).length,
+          wins: allMatches.filter(
             (m) =>
               (m.playerA === p.id && m.scoreA > m.scoreB) ||
               (m.playerB === p.id && m.scoreB > m.scoreA)
           ).length,
         }))
-        .filter((p) => p.matches > 0)
+        .filter((p) => p.matches > 0 || (dayTable.totals[p.playerId] || 0) > 0)
         .sort((a, b) => b.points - a.points),
     };
-  }, [currentTournament, dayTable, players]);
+  }, [currentTournament, pastTournaments, dayTable, players, playerFilter, patternFilter]);
 
   const displayedHistory =
     historyData && historyData.days.length > 0 ? historyData : localHistoryFallback;
