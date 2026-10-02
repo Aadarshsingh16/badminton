@@ -1331,10 +1331,4 @@ export default function HistoryPage() {
       />
     </div>
   );
-}eleteTournament(tournamentToDelete);
-          }
-        }}
-      />
-    </div>
-  );
 }
