@@ -672,18 +672,18 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white pb-24 selection:bg-purple-500 selection:text-white">
+    <div className="min-h-full flex flex-col px-4 pt-4 pb-20">
       {/* Spectator Mode Banner */}
       {isViewer && (
-        <div className="bg-purple-950/40 border-b border-purple-500/20 px-4 py-2 flex items-center justify-between text-xs sticky top-0 z-30 backdrop-blur-md">
-          <span className="text-purple-300 font-bold flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="bg-purple-50 border border-purple-200/80 rounded-2xl px-3.5 py-2 mb-3 flex items-center justify-between text-xs text-purple-900 shadow-xs">
+          <span className="font-bold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Spectator Mode · Match History & Logs
           </span>
           {viewerSlug && (
             <Link
               href={`/live/${viewerSlug}`}
-              className="text-white bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/40 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1 transition-colors"
+              className="text-white bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-full font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
             >
               <span>🏸 Live Court</span>
             </Link>
@@ -692,608 +692,606 @@ export default function HistoryPage() {
       )}
 
       {/* Top Header */}
-      <header className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur-xl border-b border-white/10 px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-400">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 8v4l3 3"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-base font-bold tracking-tight text-white leading-tight">
-                History & Stats
-              </h1>
-              <p className="text-[11px] text-gray-400">Match logs, standings & day honors</p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              if (activeSubTab === "log") fetchHistory();
-              else fetchLeaderboards();
-            }}
-            disabled={loading}
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all text-xs flex items-center gap-1.5"
-            title="Refresh"
-          >
-            <svg
-              className={`w-3.5 h-3.5 ${loading ? "animate-spin text-purple-400" : ""}`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M21 12a9 9 0 00-9-9 9.75 9.75 0 00-6.74 2.74L3 8" />
-              <path d="M3 3v5h5" />
-              <path d="M3 12a9 9 0 009 9 9.75 9.75 0 006.74-2.74L21 16" />
-              <path d="M21 21v-5h-5" />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-slate-900 text-lg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 8v4l3 3"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
             </svg>
-            <span className="hidden sm:inline">Refresh</span>
+          </div>
+          <div>
+            <h1 className="text-base font-extrabold text-slate-900 leading-tight">
+              History & Stats
+            </h1>
+            <p className="text-xs text-slate-400 font-medium">Match logs, standings & day honors</p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            if (activeSubTab === "log") fetchHistory();
+            else fetchLeaderboards();
+          }}
+          disabled={loading}
+          className="w-10 h-10 rounded-full bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center text-slate-600"
+          title="Refresh"
+        >
+          <svg
+            className={`w-4 h-4 ${loading ? "animate-spin text-slate-950" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M21 12a9 9 0 00-9-9 9.75 9.75 0 00-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M3 12a9 9 0 009 9 9.75 9.75 0 006.74-2.74L21 16" />
+            <path d="M21 21v-5h-5" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Sub-tab segmented pill control (Inspiration Image 3) */}
+      <div className="p-1 bg-slate-200/70 rounded-full flex gap-1 mb-4">
+        <button
+          onClick={() => setActiveSubTab("log")}
+          className={`py-2 px-3 text-xs font-extrabold rounded-full flex-1 transition-all flex items-center justify-center gap-1.5 ${
+            activeSubTab === "log"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "text-slate-600 hover:text-slate-950"
+          }`}
+        >
+          <span>📜</span>
+          <span>Match Log</span>
+        </button>
+        <button
+          onClick={() => setActiveSubTab("leaderboards")}
+          className={`py-2 px-3 text-xs font-extrabold rounded-full flex-1 transition-all flex items-center justify-center gap-1.5 ${
+            activeSubTab === "leaderboards"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "text-slate-600 hover:text-slate-950"
+          }`}
+        >
+          <span>🏆</span>
+          <span>Leaderboards & Honors</span>
+        </button>
+      </div>
+
+      {/* Date Range Selector Pills */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-none">
+        {(
+          [
+            { key: "all", label: "All Time" },
+            { key: "month", label: "30 Days" },
+            { key: "week", label: "7 Days" },
+            { key: "day", label: "Today" },
+          ] as const
+        ).map((item) => (
+          <button
+            key={item.key}
+            onClick={() => setRangeFilter(item.key)}
+            className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 ${
+              rangeFilter === item.key
+                ? "bg-slate-950 text-white shadow-xs"
+                : "bg-white border border-slate-200/80 text-slate-600 hover:border-slate-300 shadow-xs"
+            }`}
+          >
+            {item.label}
           </button>
-        </div>
+        ))}
+      </div>
 
-        {/* Sub-tab segmented control */}
-        <div className="max-w-lg mx-auto mt-3">
-          <div className="grid grid-cols-2 p-1 bg-slate-950/60 rounded-xl border border-white/10">
-            <button
-              onClick={() => setActiveSubTab("log")}
-              className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                activeSubTab === "log"
-                  ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              📜 Match Log
-            </button>
-            <button
-              onClick={() => setActiveSubTab("leaderboards")}
-              className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                activeSubTab === "leaderboards"
-                  ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              🏆 Leaderboards & Honors
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="max-w-lg mx-auto px-4 pt-4 space-y-4">
-        {/* Date Range Selector Pills */}
-        <div className="flex items-center justify-between gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {(
-            [
-              { key: "all", label: "All Time" },
-              { key: "month", label: "30 Days" },
-              { key: "week", label: "7 Days" },
-              { key: "day", label: "Today" },
-            ] as const
-          ).map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setRangeFilter(item.key)}
-              className={`px-3 py-1 text-xs font-medium rounded-full border transition-all ${
-                rangeFilter === item.key
-                  ? "bg-purple-500/20 border-purple-500/60 text-purple-300 shadow-sm shadow-purple-500/10"
-                  : "bg-slate-900 border-white/10 text-gray-400 hover:border-white/20 hover:text-gray-300"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-
-        {/* SUB-TAB 1: MATCH LOG */}
-        {activeSubTab === "log" && (
-          <div className="space-y-4">
-            {/* Filter controls bar */}
-            <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-3 grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">
-                  Player Filter
-                </label>
-                <select
-                  value={playerFilter}
-                  onChange={(e) => setPlayerFilter(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/15 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-purple-500"
-                >
-                  <option value="all">All Players</option>
-                  {players.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">
-                  Score Pattern
-                </label>
-                <select
-                  value={patternFilter}
-                  onChange={(e) => setPatternFilter(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/15 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-purple-500"
-                >
-                  <option value="all">All Scores</option>
-                  <option value="blowout">Blowouts (Diff ≥ 4)</option>
-                  <option value="5-0">5 - 0 Shutouts</option>
-                  <option value="5-1">5 - 1 Matches</option>
-                  <option value="6-0">6 - 0 Final Blowout</option>
-                </select>
-              </div>
+      {/* SUB-TAB 1: MATCH LOG */}
+      {activeSubTab === "log" && (
+        <div className="space-y-4">
+          {/* Filter controls bento card */}
+          <div className="bg-white border border-slate-200/80 rounded-[24px] p-3.5 shadow-xs grid grid-cols-2 gap-2.5">
+            <div>
+              <label className="block text-[10px] uppercase font-extrabold text-slate-400 mb-1">
+                Player Filter
+              </label>
+              <select
+                value={playerFilter}
+                onChange={(e) => setPlayerFilter(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-950 transition-colors"
+              >
+                <option value="all">All Players</option>
+                {players.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Mini-Leaderboard Banner */}
-            {displayedHistory.miniLeaderboard.length > 0 && (
-              <div className="bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-slate-900 border border-purple-500/20 rounded-2xl p-3.5">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
-                    <span>⚡</span> Filter Summary
-                  </span>
-                  <div className="text-[11px] text-gray-400">
-                    <span className="text-white font-bold">{displayedHistory.totalMatches}</span> matches •{" "}
-                    <span className="text-white font-bold">{displayedHistory.totalPoints}</span> pts
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  {displayedHistory.miniLeaderboard.slice(0, 3).map((item, idx) => (
-                    <div
-                      key={item.playerId}
-                      className="bg-slate-900/80 border border-white/10 rounded-xl p-2 text-center"
-                    >
-                      <div className="text-[10px] font-bold text-purple-400 mb-0.5">
-                        {idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : "🥉 #3"}
-                      </div>
-                      <div className="text-xs font-bold text-white truncate">{item.name}</div>
-                      <div className="text-[10px] text-gray-400 mt-0.5">
-                        <span className="text-emerald-400 font-bold">{item.points} pts</span> • {item.wins}W
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Timeline days */}
-            {displayedHistory.days.length === 0 ? (
-              <div className="text-center py-12 bg-slate-900/30 border border-white/5 rounded-2xl">
-                <div className="text-3xl mb-2">🏸</div>
-                <div className="text-sm font-semibold text-gray-300">No match records found</div>
-                <p className="text-xs text-gray-500 mt-1">Play matches or adjust your date filter</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {displayedHistory.days.map((dayGroup) => (
-                  <div key={dayGroup.date} className="space-y-2.5">
-                    {/* Day date header */}
-                    <div className="flex items-center gap-2 px-1">
-                      <div className="h-px flex-1 bg-white/10" />
-                      <span className="text-xs font-bold text-purple-300 bg-slate-900 border border-white/10 px-3 py-1 rounded-full shadow-sm">
-                        📅 {dayGroup.date}
-                      </span>
-                      <div className="h-px flex-1 bg-white/10" />
-                    </div>
-
-                    {/* Tournaments for that day */}
-                    {dayGroup.tournaments.map((tourney, tIdx) => {
-                      const isExpanded = expandedTournaments[tourney.tournamentId] ?? true;
-                      const hasFinal = tourney.matches.some((m) => m.isFinal);
-
-                      return (
-                        <div
-                          key={tourney.tournamentId}
-                          className="bg-slate-900/70 border border-white/10 rounded-2xl overflow-hidden shadow-lg transition-all"
-                        >
-                          {/* Tournament header accordion button */}
-                          <div
-                            onClick={() => toggleTournament(tourney.tournamentId)}
-                            className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-850 cursor-pointer transition-colors"
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xs font-bold text-purple-300">
-                                #{tIdx + 1}
-                              </div>
-                              <div className="text-left">
-                                <div className="text-xs font-bold text-white flex items-center gap-2">
-                                  <span>Tournament #{tIdx + 1}</span>
-                                  {hasFinal && (
-                                    <span className="text-[10px] bg-amber-500/20 border border-amber-500/40 text-amber-300 px-1.5 py-0.5 rounded font-semibold">
-                                      🏆 Final Played
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] text-gray-400">
-                                  {tourney.matches.length} played matches
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              {tourney.shareSlug && (
-                                <Link
-                                  href={`/live/${tourney.shareSlug}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-[11px] px-2 py-1 rounded-md bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-300 font-semibold flex items-center gap-1"
-                                >
-                                  <span>👁️ Live</span>
-                                </Link>
-                              )}
-                              {!isViewer && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setTournamentToDelete(tourney.tournamentId);
-                                  }}
-                                  title="Delete Tournament"
-                                  className="text-[11px] p-1.5 rounded-md bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 text-red-400 hover:text-red-300 transition-colors"
-                                >
-                                  <span>🗑️</span>
-                                </button>
-                              )}
-                              <svg
-                                className={`w-4 h-4 text-gray-400 transition-transform ${
-                                  isExpanded ? "rotate-180" : ""
-                                }`}
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                              >
-                                <polyline points="6 9 12 15 18 9" />
-                              </svg>
-                            </div>
-                          </div>
-
-                          {/* Matches list */}
-                          {isExpanded && (
-                            <div className="divide-y divide-white/5 border-t border-white/5 p-2 space-y-1.5">
-                              {tourney.matches.map((m) => {
-                                const aWon = m.scoreA > m.scoreB;
-                                const bWon = m.scoreB > m.scoreA;
-                                const diff = Math.abs(m.scoreA - m.scoreB);
-                                const isBlowout = diff >= 4;
-
-                                return (
-                                  <div
-                                    key={m.id}
-                                    className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 ${
-                                      m.isFinal
-                                        ? "bg-gradient-to-r from-amber-950/20 via-slate-900 to-purple-950/20 border-amber-500/30"
-                                        : "bg-slate-950/50 border-white/5"
-                                    }`}
-                                  >
-                                    {/* Player A */}
-                                    <div className="flex-1 flex items-center gap-2 min-w-0">
-                                      <AvatarSVG
-                                        type={m.playerAAvatar}
-                                        size={32}
-                                        emoji={m.playerAAvatarEmoji}
-                                        color={m.playerAAvatarColor}
-                                      />
-                                      <div className="min-w-0">
-                                        <div
-                                          className={`text-xs truncate ${
-                                            aWon ? "font-bold text-white" : "text-gray-400 font-medium"
-                                          }`}
-                                        >
-                                          {m.playerAName}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500">
-                                          +{m.pointsA} pts {aWon && isBlowout && "🔥"}
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    {/* Score pill */}
-                                    <div className="flex flex-col items-center">
-                                      {m.isFinal && (
-                                        <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-400 mb-0.5">
-                                          Final
-                                        </span>
-                                      )}
-                                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 border border-white/10 rounded-full font-mono text-xs font-bold">
-                                        <span className={aWon ? "text-emerald-400 font-black" : "text-gray-400"}>
-                                          {m.scoreA}
-                                        </span>
-                                        <span className="text-gray-600">-</span>
-                                        <span className={bWon ? "text-emerald-400 font-black" : "text-gray-400"}>
-                                          {m.scoreB}
-                                        </span>
-                                      </div>
-                                      {isBlowout && (
-                                        <span className="text-[9px] text-purple-400 font-semibold mt-0.5">
-                                          +Bonus
-                                        </span>
-                                      )}
-                                    </div>
-
-                                    {/* Player B */}
-                                    <div className="flex-1 flex items-center justify-end gap-2 min-w-0 text-right">
-                                      <div className="min-w-0">
-                                        <div
-                                          className={`text-xs truncate ${
-                                            bWon ? "font-bold text-white" : "text-gray-400 font-medium"
-                                          }`}
-                                        >
-                                          {m.playerBName}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500">
-                                          +{m.pointsB} pts {bWon && isBlowout && "🔥"}
-                                        </div>
-                                      </div>
-                                      <AvatarSVG
-                                        type={m.playerBAvatar}
-                                        size={32}
-                                        emoji={m.playerBAvatarEmoji}
-                                        color={m.playerBAvatarColor}
-                                      />
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            )}
+            <div>
+              <label className="block text-[10px] uppercase font-extrabold text-slate-400 mb-1">
+                Score Pattern
+              </label>
+              <select
+                value={patternFilter}
+                onChange={(e) => setPatternFilter(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-950 transition-colors"
+              >
+                <option value="all">All Scores</option>
+                <option value="blowout">Blowouts (Diff ≥ 4)</option>
+                <option value="5-0">5 - 0 Shutouts</option>
+                <option value="5-1">5 - 1 Matches</option>
+                <option value="6-0">6 - 0 Final Blowout</option>
+              </select>
+            </div>
           </div>
-        )}
 
-        {/* SUB-TAB 2: LEADERBOARDS & DAY HONORS */}
-        {activeSubTab === "leaderboards" && (
-          <div className="space-y-5">
-            {/* Metric Switcher */}
-            <div className="bg-slate-900 border border-white/10 rounded-2xl p-2 flex items-center gap-1">
-              <span className="text-[11px] font-bold text-gray-400 px-2 uppercase">Rank by:</span>
-              <div className="flex-1 grid grid-cols-3 gap-1">
-                {(
-                  [
-                    { key: "points", label: "Points" },
-                    { key: "wins", label: "Wins" },
-                    { key: "matches", label: "Matches" },
-                  ] as const
-                ).map((m) => (
-                  <button
-                    key={m.key}
-                    onClick={() => setSortBy(m.key)}
-                    className={`py-1 text-xs font-bold rounded-lg transition-all ${
-                      sortBy === m.key
-                        ? "bg-purple-600 text-white shadow-sm"
-                        : "text-gray-400 hover:text-white bg-slate-950/40"
-                    }`}
+          {/* Mini-Leaderboard Hero Banner (Inspiration Image 3 - Bento Card) */}
+          {displayedHistory.miniLeaderboard.length > 0 && (
+            <div className="bg-gradient-to-br from-[#9BB8FF] to-[#7EA3FC] text-slate-950 rounded-[28px] p-4 shadow-xs">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-950 flex items-center gap-1.5">
+                  <span>⚡</span> Filter Summary
+                </span>
+                <div className="text-[11px] font-bold text-slate-900/80 bg-white/50 px-2.5 py-0.5 rounded-full">
+                  <span>{displayedHistory.totalMatches}</span> matches •{" "}
+                  <span>{displayedHistory.totalPoints}</span> pts
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {displayedHistory.miniLeaderboard.slice(0, 3).map((item, idx) => (
+                  <div
+                    key={item.playerId}
+                    className="bg-white/95 rounded-2xl p-2.5 text-center shadow-xs"
                   >
-                    {m.label}
-                  </button>
+                    <div className="text-[10px] font-black text-slate-900 mb-0.5">
+                      {idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : "🥉 #3"}
+                    </div>
+                    <div className="text-xs font-extrabold text-slate-900 truncate">{item.name}</div>
+                    <div className="text-[10px] text-slate-500 font-semibold mt-0.5">
+                      <span className="text-emerald-600 font-bold">{item.points} pts</span> • {item.wins}W
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
+          )}
 
-            {/* Standings Table Card */}
-            <div className="bg-slate-900/80 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
-              <div className="p-3.5 border-b border-white/10 bg-slate-900 flex items-center justify-between">
-                <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <span>📊</span> Overall Standings ({rangeFilter.toUpperCase()})
-                </div>
-                <div className="text-[10px] text-gray-400">
-                  {displayedLeaderboard.length > 0 ? displayedLeaderboard.length : players.length} active players
-                </div>
+          {/* Timeline days */}
+          {displayedHistory.days.length === 0 ? (
+            <div className="text-center py-12 px-6 bg-white border border-slate-200/80 rounded-[30px] shadow-xs flex flex-col items-center justify-center gap-2">
+              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-3xl mb-1 shadow-xs select-none">
+                🏸
               </div>
+              <div className="text-base font-extrabold text-slate-900">No match records found</div>
+              <p className="text-xs text-slate-400 font-medium max-w-xs">
+                Play matches or adjust your date filter
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {displayedHistory.days.map((dayGroup) => (
+                <div key={dayGroup.date} className="space-y-2.5">
+                  {/* Day date header */}
+                  <div className="flex items-center gap-2 px-1">
+                    <div className="h-px flex-1 bg-slate-200" />
+                    <span className="text-xs font-extrabold text-slate-700 bg-slate-200/70 border border-slate-200/80 px-3.5 py-1 rounded-full shadow-2xs">
+                      📅 {dayGroup.date}
+                    </span>
+                    <div className="h-px flex-1 bg-slate-200" />
+                  </div>
 
-              {displayedLeaderboard.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 text-xs">
-                  No ranked matches recorded for this range.
-                </div>
-              ) : (
-                <div className="divide-y divide-white/5">
-                  {displayedLeaderboard.map((entry, index) => {
-                    const isTop1 = index === 0;
-                    const isTop2 = index === 1;
-                    const isTop3 = index === 2;
+                  {/* Tournaments for that day */}
+                  {dayGroup.tournaments.map((tourney, tIdx) => {
+                    const isExpanded = expandedTournaments[tourney.tournamentId] ?? true;
+                    const hasFinal = tourney.matches.some((m) => m.isFinal);
 
                     return (
                       <div
-                        key={entry.playerId}
-                        className={`p-3 flex items-center justify-between gap-3 transition-colors ${
-                          isTop1
-                            ? "bg-amber-500/10"
-                            : isTop2
-                            ? "bg-slate-800/40"
-                            : isTop3
-                            ? "bg-orange-500/5"
-                            : "hover:bg-white/[0.02]"
-                        }`}
+                        key={tourney.tournamentId}
+                        className="bg-white border border-slate-200/80 rounded-[26px] overflow-hidden shadow-xs transition-all"
                       >
-                        {/* Rank & Avatar & Name */}
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-6 text-center font-bold text-xs">
-                            {isTop1 ? "🥇" : isTop2 ? "🥈" : isTop3 ? "🥉" : `#${index + 1}`}
-                          </div>
-                          <AvatarSVG
-                            type={entry.avatar}
-                            size={36}
-                            emoji={entry.avatarEmoji}
-                            color={entry.avatarColor}
-                          />
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-white truncate">{entry.name}</div>
-                            <div className="text-[10px] text-gray-400 flex items-center gap-1.5">
-                              <span>
-                                {entry.wins}W - {entry.matchesPlayed - entry.wins}L
-                              </span>
-                              <span>•</span>
-                              <span>{entry.winRate}% win</span>
+                        {/* Tournament header accordion button */}
+                        <div
+                          onClick={() => toggleTournament(tourney.tournamentId)}
+                          className="w-full flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-800">
+                              #{tIdx + 1}
                             </div>
+                            <div className="text-left">
+                              <div className="text-xs font-extrabold text-slate-900 flex items-center gap-2">
+                                <span>Tournament #{tIdx + 1}</span>
+                                {hasFinal && (
+                                  <span className="text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-700 px-2 py-0.5 rounded-full font-bold">
+                                    🏆 Final
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-medium">
+                                {tourney.matches.length} played matches
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {tourney.shareSlug && (
+                              <Link
+                                href={`/live/${tourney.shareSlug}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-[11px] px-2.5 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold flex items-center gap-1 transition-colors"
+                              >
+                                <span>👁️ Live</span>
+                              </Link>
+                            )}
+                            {!isViewer && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTournamentToDelete(tourney.tournamentId);
+                                }}
+                                title="Delete Tournament"
+                                className="text-xs p-1.5 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                              >
+                                <span>🗑️</span>
+                              </button>
+                            )}
+                            <svg
+                              className={`w-4 h-4 text-slate-400 transition-transform ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <polyline points="6 9 12 15 18 9" />
+                            </svg>
                           </div>
                         </div>
 
-                        {/* Metric Highlights */}
-                        <div className="text-right">
-                          <div className="text-sm font-black text-purple-300">
-                            {sortBy === "points"
-                              ? `${entry.totalPoints} pts`
-                              : sortBy === "wins"
-                              ? `${entry.wins} wins`
-                              : `${entry.matchesPlayed} matches`}
+                        {/* Matches list */}
+                        {isExpanded && (
+                          <div className="divide-y divide-slate-100 border-t border-slate-100 p-2 space-y-1.5 bg-slate-50/40">
+                            {tourney.matches.map((m) => {
+                              const aWon = m.scoreA > m.scoreB;
+                              const bWon = m.scoreB > m.scoreA;
+                              const diff = Math.abs(m.scoreA - m.scoreB);
+                              const isBlowout = diff >= 4;
+
+                              return (
+                                <div
+                                  key={m.id}
+                                  className={`p-2.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                                    m.isFinal
+                                      ? "bg-gradient-to-r from-amber-500/10 via-white to-purple-500/10 border-amber-300"
+                                      : "bg-white border-slate-200/70 shadow-2xs"
+                                  }`}
+                                >
+                                  {/* Player A */}
+                                  <div className="flex-1 flex items-center gap-2 min-w-0">
+                                    <AvatarSVG
+                                      type={m.playerAAvatar}
+                                      size={32}
+                                      emoji={m.playerAAvatarEmoji}
+                                      color={m.playerAAvatarColor}
+                                    />
+                                    <div className="min-w-0">
+                                      <div
+                                        className={`text-xs truncate ${
+                                          aWon ? "font-extrabold text-slate-900" : "text-slate-500 font-medium"
+                                        }`}
+                                      >
+                                        {m.playerAName}
+                                      </div>
+                                      <div className="text-[10px] text-slate-400 font-medium">
+                                        +{m.pointsA} pts {aWon && isBlowout && "🔥"}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Score pill */}
+                                  <div className="flex flex-col items-center">
+                                    {m.isFinal && (
+                                      <span className="text-[9px] uppercase tracking-wider font-black text-amber-600 mb-0.5">
+                                        Final
+                                      </span>
+                                    )}
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-950 text-white rounded-full font-mono text-xs font-extrabold shadow-xs">
+                                      <span className={aWon ? "text-emerald-400" : "text-white/70"}>
+                                        {m.scoreA}
+                                      </span>
+                                      <span className="text-white/40">-</span>
+                                      <span className={bWon ? "text-emerald-400" : "text-white/70"}>
+                                        {m.scoreB}
+                                      </span>
+                                    </div>
+                                    {isBlowout && (
+                                      <span className="text-[9px] text-blue-600 font-bold mt-0.5">
+                                        +Bonus
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Player B */}
+                                  <div className="flex-1 flex items-center justify-end gap-2 min-w-0 text-right">
+                                    <div className="min-w-0">
+                                      <div
+                                        className={`text-xs truncate ${
+                                          bWon ? "font-extrabold text-slate-900" : "text-slate-500 font-medium"
+                                        }`}
+                                      >
+                                        {m.playerBName}
+                                      </div>
+                                      <div className="text-[10px] text-slate-400 font-medium">
+                                        +{m.pointsB} pts {bWon && isBlowout && "🔥"}
+                                      </div>
+                                    </div>
+                                    <AvatarSVG
+                                      type={m.playerBAvatar}
+                                      size={32}
+                                      emoji={m.playerBAvatarEmoji}
+                                      color={m.playerBAvatarColor}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
-                          <div className="text-[10px] text-gray-500">
-                            Diff:{" "}
-                            <span
-                              className={
-                                entry.pointDiff > 0
-                                   ? "text-emerald-400 font-semibold"
-                                  : entry.pointDiff < 0
-                                  ? "text-red-400 font-semibold"
-                                  : "text-gray-400"
-                              }
-                            >
-                              {entry.pointDiff > 0 ? `+${entry.pointDiff}` : entry.pointDiff}
-                            </span>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
-              )}
+              ))}
             </div>
+          )}
+        </div>
+      )}
 
-            {/* Day Champions & Day Last-Place Hall of Fame */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Day Champions Card */}
-              <div className="bg-slate-900/80 border border-amber-500/20 rounded-2xl p-3.5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-sm">
-                    👑
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-white">Day Champions</h3>
-                    <p className="text-[10px] text-amber-400/80">Most daily 1st place finishes</p>
-                  </div>
-                </div>
+      {/* SUB-TAB 2: LEADERBOARDS & DAY HONORS */}
+      {activeSubTab === "leaderboards" && (
+        <div className="space-y-4">
+          {/* Metric Switcher Pill Row */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-2 flex items-center gap-2 shadow-xs">
+            <span className="text-[10px] font-extrabold text-slate-400 px-2 uppercase tracking-wider">Rank by:</span>
+            <div className="flex-1 grid grid-cols-3 gap-1">
+              {(
+                [
+                  { key: "points", label: "Points" },
+                  { key: "wins", label: "Wins" },
+                  { key: "matches", label: "Matches" },
+                ] as const
+              ).map((m) => (
+                <button
+                  key={m.key}
+                  onClick={() => setSortBy(m.key)}
+                  className={`py-1.5 text-xs font-extrabold rounded-xl transition-all ${
+                    sortBy === m.key
+                      ? "bg-slate-950 text-white shadow-xs"
+                      : "text-slate-500 hover:text-slate-900 bg-slate-50"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                {displayedDayHonors?.dayChampions && displayedDayHonors.dayChampions.length > 0 ? (
-                  <div className="space-y-2">
-                    {displayedDayHonors.dayChampions.slice(0, 3).map((c) => (
-                      <div
-                        key={c.playerId}
-                        className="flex items-center justify-between p-2 rounded-xl bg-slate-950/60 border border-white/5"
-                      >
-                        <div className="flex items-center gap-2">
-                          <AvatarSVG type={c.avatar} size={28} emoji={c.emoji} color={c.color} />
-                          <span className="text-xs font-bold text-gray-200">{c.name}</span>
-                        </div>
-                        <div className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/40 rounded-full text-[10px] font-black text-amber-300">
-                          {c.count} {c.count === 1 ? "Day" : "Days"}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-[11px] text-gray-500 text-center py-4">
-                    Close a day table to crown day champions!
-                  </div>
-                )}
+          {/* Standings Table Card */}
+          <div className="bg-white border border-slate-200/80 rounded-[28px] overflow-hidden shadow-xs">
+            <div className="p-3.5 border-b border-slate-100 flex items-center justify-between">
+              <div className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+                <span>📊</span> Overall Standings ({rangeFilter.toUpperCase()})
               </div>
-
-              {/* Day Last Place Card */}
-              <div className="bg-slate-900/80 border border-red-500/20 rounded-2xl p-3.5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-red-500/20 border border-red-500/40 flex items-center justify-center text-sm">
-                    🥄
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-white">Wooden Spoon</h3>
-                    <p className="text-[10px] text-red-400/80">Most daily last-place finishes</p>
-                  </div>
-                </div>
-
-                {displayedDayHonors?.dayLastPlaces && displayedDayHonors.dayLastPlaces.length > 0 ? (
-                  <div className="space-y-2">
-                    {displayedDayHonors.dayLastPlaces.slice(0, 3).map((c) => (
-                      <div
-                        key={c.playerId}
-                        className="flex items-center justify-between p-2 rounded-xl bg-slate-950/60 border border-white/5"
-                      >
-                        <div className="flex items-center gap-2">
-                          <AvatarSVG type={c.avatar} size={28} emoji={c.emoji} color={c.color} />
-                          <span className="text-xs font-bold text-gray-200">{c.name}</span>
-                        </div>
-                        <div className="px-2 py-0.5 bg-red-500/20 border border-red-500/40 rounded-full text-[10px] font-black text-red-300">
-                          {c.count} {c.count === 1 ? "Day" : "Days"}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-[11px] text-gray-500 text-center py-4">
-                    No last place finishes recorded yet.
-                  </div>
-                )}
+              <div className="text-[10px] font-semibold text-slate-400">
+                {displayedLeaderboard.length > 0 ? displayedLeaderboard.length : players.length} active players
               </div>
             </div>
 
-            {/* Day by Day History */}
-            {dayHonors?.history && dayHonors.history.length > 0 && (
-              <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-3.5 space-y-2">
-                <h4 className="text-xs font-bold text-gray-300">📅 Day Results Archive</h4>
-                <div className="divide-y divide-white/5">
-                  {dayHonors.history.map((h) => (
-                    <div key={h.id} className="py-2 flex items-center justify-between text-xs">
-                      <span className="font-mono text-gray-400">{h.date}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-amber-300 font-semibold flex items-center gap-1">
-                          👑 {h.topPlayerName}
-                        </span>
-                        <span className="text-red-400 font-semibold flex items-center gap-1">
-                          🥄 {h.bottomPlayerName}
-                        </span>
+            {displayedLeaderboard.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-xs">
+                No ranked matches recorded for this range.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {displayedLeaderboard.map((entry, index) => {
+                  const isTop1 = index === 0;
+                  const isTop2 = index === 1;
+                  const isTop3 = index === 2;
+
+                  return (
+                    <div
+                      key={entry.playerId}
+                      className={`p-3 flex items-center justify-between gap-3 transition-colors ${
+                        isTop1
+                          ? "bg-amber-50/50"
+                          : isTop2
+                          ? "bg-slate-50/40"
+                          : isTop3
+                          ? "bg-orange-50/30"
+                          : "hover:bg-slate-50"
+                      }`}
+                    >
+                      {/* Rank & Avatar & Name */}
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-6 text-center font-bold text-xs">
+                          {isTop1 ? "🥇" : isTop2 ? "🥈" : isTop3 ? "🥉" : `#${index + 1}`}
+                        </div>
+                        <AvatarSVG
+                          type={entry.avatar}
+                          size={36}
+                          emoji={entry.avatarEmoji}
+                          color={entry.avatarColor}
+                        />
+                        <div className="min-w-0">
+                          <div className="text-xs font-extrabold text-slate-900 truncate">{entry.name}</div>
+                          <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
+                            <span>
+                              {entry.wins}W - {entry.matchesPlayed - entry.wins}L
+                            </span>
+                            <span>•</span>
+                            <span>{entry.winRate}% win</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Metric Highlights */}
+                      <div className="text-right">
+                        <div className="text-sm font-black text-slate-950">
+                          {sortBy === "points"
+                            ? `${entry.totalPoints} pts`
+                            : sortBy === "wins"
+                            ? `${entry.wins} wins`
+                            : `${entry.matchesPlayed} matches`}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-semibold">
+                          Diff:{" "}
+                          <span
+                            className={
+                              entry.pointDiff > 0
+                                ? "text-emerald-600 font-bold"
+                                : entry.pointDiff < 0
+                                ? "text-rose-500 font-bold"
+                                : "text-slate-400"
+                            }
+                          >
+                            {entry.pointDiff > 0 ? `+${entry.pointDiff}` : entry.pointDiff}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Day Champions & Day Last-Place Hall of Fame Bento Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Day Champions Card */}
+            <div className="bg-[#FFFBEB] border border-amber-200/80 rounded-[26px] p-4 space-y-3 shadow-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-sm shadow-2xs">
+                  👑
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900">Day Champions</h3>
+                  <p className="text-[10px] text-amber-700 font-semibold">Most daily 1st place finishes</p>
+                </div>
+              </div>
+
+              {displayedDayHonors?.dayChampions && displayedDayHonors.dayChampions.length > 0 ? (
+                <div className="space-y-2">
+                  {displayedDayHonors.dayChampions.slice(0, 3).map((c) => (
+                    <div
+                      key={c.playerId}
+                      className="flex items-center justify-between p-2 rounded-xl bg-white border border-amber-200/50 shadow-2xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <AvatarSVG type={c.avatar} size={28} emoji={c.emoji} color={c.color} />
+                        <span className="text-xs font-extrabold text-slate-900">{c.name}</span>
+                      </div>
+                      <div className="px-2.5 py-0.5 bg-amber-100 rounded-full text-[10px] font-extrabold text-amber-800">
+                        {c.count} {c.count === 1 ? "Day" : "Days"}
                       </div>
                     </div>
                   ))}
                 </div>
+              ) : (
+                <div className="text-[11px] text-slate-400 text-center py-4">
+                  Close a day table to crown day champions!
+                </div>
+              )}
+            </div>
+
+            {/* Day Last Place Card */}
+            <div className="bg-[#FFF1F2] border border-rose-200/80 rounded-[26px] p-4 space-y-3 shadow-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/20 flex items-center justify-center text-sm shadow-2xs">
+                  🥄
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900">Wooden Spoon</h3>
+                  <p className="text-[10px] text-rose-700 font-semibold">Most daily last-place finishes</p>
+                </div>
               </div>
-            )}
+
+              {displayedDayHonors?.dayLastPlaces && displayedDayHonors.dayLastPlaces.length > 0 ? (
+                <div className="space-y-2">
+                  {displayedDayHonors.dayLastPlaces.slice(0, 3).map((c) => (
+                    <div
+                      key={c.playerId}
+                      className="flex items-center justify-between p-2 rounded-xl bg-white border border-rose-200/50 shadow-2xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <AvatarSVG type={c.avatar} size={28} emoji={c.emoji} color={c.color} />
+                        <span className="text-xs font-extrabold text-slate-900">{c.name}</span>
+                      </div>
+                      <div className="px-2.5 py-0.5 bg-rose-100 rounded-full text-[10px] font-extrabold text-rose-800">
+                        {c.count} {c.count === 1 ? "Day" : "Days"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[11px] text-slate-400 text-center py-4">
+                  No last place finishes recorded yet.
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </main>
+
+          {/* Day by Day History */}
+          {dayHonors?.history && dayHonors.history.length > 0 && (
+            <div className="bg-white border border-slate-200/80 rounded-[26px] p-4 space-y-2 shadow-xs">
+              <h4 className="text-xs font-extrabold text-slate-900">📅 Day Results Archive</h4>
+              <div className="divide-y divide-slate-100">
+                {dayHonors.history.map((h) => (
+                  <div key={h.id} className="py-2.5 flex items-center justify-between text-xs">
+                    <span className="font-mono text-slate-400 text-xs font-bold">{h.date}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-amber-700 font-bold flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full">
+                        👑 {h.topPlayerName}
+                      </span>
+                      <span className="text-rose-700 font-bold flex items-center gap-1 bg-rose-50 px-2 py-0.5 rounded-full">
+                        🥄 {h.bottomPlayerName}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {tournamentToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-sm bg-slate-900 border border-red-500/30 rounded-3xl p-6 shadow-2xl space-y-4"
+              className="w-full max-w-sm bg-white border border-slate-200/80 rounded-[32px] p-6 shadow-2xl space-y-4 text-slate-900"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-xl text-red-400">
+                <div className="w-11 h-11 rounded-2xl bg-red-50 flex items-center justify-center text-xl text-red-600 shadow-2xs">
                   🗑️
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white">Delete Tournament?</h2>
-                  <p className="text-[11px] text-gray-400">Remove accidental or test match</p>
+                  <h2 className="text-base font-extrabold text-slate-900">Delete Tournament?</h2>
+                  <p className="text-[11px] text-slate-400 font-medium">Remove accidental or test match</p>
                 </div>
               </div>
 
-              <p className="text-xs text-gray-300 leading-relaxed">
+              <p className="text-xs text-slate-500 leading-relaxed">
                 This will permanently delete this tournament and its matches, and automatically recalculate player points and day standings.
               </p>
 
@@ -1302,7 +1300,7 @@ export default function HistoryPage() {
                   type="button"
                   onClick={() => setTournamentToDelete(null)}
                   disabled={isDeleting}
-                  className="flex-1 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-gray-300 transition-colors"
+                  className="flex-1 py-3 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
                 >
                   Cancel
                 </button>
@@ -1310,9 +1308,9 @@ export default function HistoryPage() {
                   type="button"
                   onClick={() => handleDeleteTournament(tournamentToDelete)}
                   disabled={isDeleting}
-                  className="flex-1 py-3 px-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-xs font-bold text-white shadow-lg shadow-red-600/30 transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 py-3 px-4 rounded-full bg-red-600 hover:bg-red-700 active:scale-95 text-xs font-extrabold text-white shadow-md transition-all flex items-center justify-center gap-1.5"
                 >
-                  {isDeleting ? <span>Deleting...</span> : <span>Delete Permanently</span>}
+                  {isDeleting ? <span>Deleting...</span> : <span>Delete</span>}
                 </button>
               </div>
             </motion.div>
@@ -1328,6 +1326,12 @@ export default function HistoryPage() {
           setShowPinModal(false);
           if (tournamentToDelete) {
             handleDeleteTournament(tournamentToDelete);
+          }
+        }}
+      />
+    </div>
+  );
+}eleteTournament(tournamentToDelete);
           }
         }}
       />
