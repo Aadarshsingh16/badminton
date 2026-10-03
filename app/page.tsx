@@ -492,22 +492,24 @@ export default function PlayPage() {
           {showCancelConfirm && (
             <>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/70 z-50" onClick={() => setShowCancelConfirm(false)} />
+                className="fixed inset-0 bg-slate-950/60 z-50 backdrop-blur-sm" onClick={() => setShowCancelConfirm(false)} />
               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-50 bg-slate-900 border border-red-500/30 rounded-2xl p-6 text-center">
-                <div className="text-4xl mb-3">🚫</div>
-                <h3 className="text-white font-black text-xl mb-2">Cancel Tournament?</h3>
-                <p className="text-white/50 text-sm mb-6">
+                className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-50 bg-white border border-slate-200/80 rounded-[32px] p-6 text-center max-w-sm mx-auto shadow-2xl space-y-2">
+                <div className="w-14 h-14 rounded-full bg-rose-50 border border-rose-200 text-3xl flex items-center justify-center mx-auto mb-2 shadow-xs">
+                  🚫
+                </div>
+                <h3 className="text-slate-900 font-black text-xl">Cancel Tournament?</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-medium pb-2">
                   {playedMatches.length > 0
                     ? `${playedMatches.length} match${playedMatches.length !== 1 ? "es" : ""} will be lost. This cannot be undone.`
                     : "This will discard the current fixtures and return to player select."}
                 </p>
-                <div className="flex gap-3">
+                <div className="flex gap-2.5 pt-2">
                   <button onClick={() => setShowCancelConfirm(false)}
-                    className="flex-1 py-3 rounded-xl bg-white/10 text-white/70 font-semibold">Keep Playing</button>
+                    className="flex-1 py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors">Keep Playing</button>
                   <button onClick={() => { cancelTournament(); setShowCancelConfirm(false); }}
-                    className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold">Cancel</button>
+                    className="flex-1 py-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md active:scale-95 transition-all">Cancel</button>
                 </div>
               </motion.div>
             </>
@@ -515,22 +517,24 @@ export default function PlayPage() {
           {showShuffleConfirm && (
             <>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/70 z-50" onClick={() => setShowShuffleConfirm(false)} />
+                className="fixed inset-0 bg-slate-950/60 z-50 backdrop-blur-sm" onClick={() => setShowShuffleConfirm(false)} />
               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-50 bg-slate-900 border border-orange-500/30 rounded-2xl p-6 text-center">
-                <div className="text-4xl mb-3">🔀</div>
-                <h3 className="text-white font-black text-xl mb-2">Shuffle Fixtures?</h3>
-                <p className="text-white/50 text-sm mb-6">
+                className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-50 bg-white border border-slate-200/80 rounded-[32px] p-6 text-center max-w-sm mx-auto shadow-2xl space-y-2">
+                <div className="w-14 h-14 rounded-full bg-indigo-50 border border-indigo-200 text-3xl flex items-center justify-center mx-auto mb-2 shadow-xs">
+                  🔀
+                </div>
+                <h3 className="text-slate-900 font-black text-xl">Shuffle Fixtures?</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-medium pb-2">
                   {playedMatches.length > 0
                     ? `${playedMatches.length} match${playedMatches.length !== 1 ? "es" : ""} already played will be lost.`
                     : "Regenerate the match schedule in a new random order — same players, different fixtures."}
                 </p>
-                <div className="flex gap-3">
+                <div className="flex gap-2.5 pt-2">
                   <button onClick={() => setShowShuffleConfirm(false)}
-                    className="flex-1 py-3 rounded-xl bg-white/10 text-white/70 font-semibold">Keep Current</button>
+                    className="flex-1 py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors">Keep Current</button>
                   <button onClick={() => { shuffleFixtures(); setShowShuffleConfirm(false); }}
-                    className="flex-1 py-3 rounded-xl bg-orange-500 text-white font-bold">🔀 Shuffle</button>
+                    className="flex-1 py-3 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-black text-xs shadow-md active:scale-95 transition-all">🔀 Shuffle</button>
                 </div>
               </motion.div>
             </>
@@ -538,22 +542,22 @@ export default function PlayPage() {
         </AnimatePresence>
 
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-slate-950/90 backdrop-blur border-b border-white/5 px-4 pt-4 pb-0">
+        <div className="sticky top-0 z-10 bg-[#F7F9FD]/90 backdrop-blur-md border-b border-slate-200/60 px-5 pt-5 pb-0 text-slate-900">
           <div className="flex items-center justify-between mb-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-white font-black text-lg">Tournament</h2>
+                <h2 className="text-slate-900 font-black text-xl tracking-tight">Tournament</h2>
                 {currentTournament.isPractice ? (
-                  <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/40 flex items-center gap-1 shadow-sm">
+                  <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-2.5 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-2xs">
                     <span>🧪</span>
-                    <span>Practice Mode (Unranked)</span>
+                    <span>Practice Mode</span>
                   </span>
                 ) : (
                   <SyncStatusBadge />
                 )}
               </div>
-              <p className="text-white/40 text-xs">
-                {playedMatches.length}/{currentTournament.matches.length} matches played · First to {currentTournament.config.winScore}
+              <p className="text-slate-500 text-xs font-medium mt-0.5">
+                {playedMatches.length}/{currentTournament.matches.length} played · First to {currentTournament.config.winScore}
               </p>
             </div>
             <div className="flex items-center gap-1.5">
@@ -563,20 +567,20 @@ export default function PlayPage() {
                   setShowPinModal(true);
                 }}
                 title="Scorekeeper PIN"
-                className="text-xs bg-white/10 text-gray-300 border border-white/15 px-2.5 py-1.5 rounded-full hover:bg-white/20 transition-colors font-medium flex items-center gap-1"
+                className="w-8 h-8 rounded-full bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs flex items-center justify-center text-xs"
               >
                 <span>🔑</span>
               </button>
               <button
                 onClick={() => setShowShareModal(true)}
-                className="text-xs bg-purple-500/15 text-purple-300 border border-purple-500/25 px-3 py-1.5 rounded-full hover:bg-purple-500/25 transition-colors font-medium flex items-center gap-1 shadow-sm"
+                className="text-xs bg-white border border-slate-200/80 text-slate-700 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors font-bold flex items-center gap-1 shadow-2xs"
               >
                 <span>📡</span>
                 <span>Share</span>
               </button>
               <button
                 onClick={() => setShowShuffleConfirm(true)}
-                className="text-xs bg-orange-500/15 text-orange-400 border border-orange-500/20 px-3 py-1.5 rounded-full hover:bg-orange-500/25 transition-colors font-medium flex items-center gap-1"
+                className="text-xs bg-white border border-slate-200/80 text-slate-700 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors font-bold flex items-center gap-1 shadow-2xs"
               >
                 <span>🔀</span>
                 <span>Shuffle</span>
@@ -585,38 +589,38 @@ export default function PlayPage() {
           </div>
 
           {/* Segmented control */}
-          <div className="flex gap-1 bg-white/5 rounded-xl p-1 mb-0">
+          <div className="flex gap-1.5 bg-white rounded-full p-1 border border-slate-200/80 shadow-2xs mb-2.5">
             {(["fixtures", "table"] as FixtureTab[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setFixtureTab(tab)}
-                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all capitalize ${
+                className={`flex-1 py-1.5 rounded-full text-xs font-black transition-all capitalize ${
                   fixtureTab === tab
-                    ? "bg-white/15 text-white"
-                    : "text-white/40 hover:text-white/60"
+                    ? "bg-slate-950 text-white shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
                 }`}
               >
-                {tab === "fixtures" ? "📋 Fixtures" : "📊 Table"}
+                {tab === "fixtures" ? "📋 Fixtures" : "📊 Standings"}
               </button>
             ))}
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto pt-4">
+        <div className="flex-1 overflow-y-auto pt-3">
           {playedMatches.length === currentTournament.matches.length && (
-            <div className="mx-4 mb-3 p-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-2xl flex items-center justify-between gap-3 shadow-lg shadow-yellow-500/10">
+            <div className="mx-4 mb-3.5 p-4 bg-gradient-to-br from-amber-50/90 via-orange-50/50 to-white border border-amber-200/80 rounded-[26px] flex items-center justify-between gap-3 shadow-xs">
               <div>
-                <p className="text-yellow-300 font-bold text-xs uppercase tracking-wide">
+                <p className="text-amber-900 font-black text-xs uppercase tracking-wider">
                   {currentTournament.final?.played ? "🏆 Tournament Finished" : "🏆 All Matches Complete"}
                 </p>
-                <p className="text-white/60 text-xs">
+                <p className="text-amber-700 text-xs font-medium mt-0.5">
                   {currentTournament.final?.played ? "Reviewing past fixtures" : "Ready for the Grand Final"}
                 </p>
               </div>
               <button
                 onClick={() => setPhase(currentTournament.final?.played ? "tournament-summary" : "final")}
-                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold text-xs shadow-md shadow-yellow-500/20 flex-shrink-0 hover:brightness-110 active:scale-95 transition-all"
+                className="px-4 py-2 rounded-full bg-slate-950 text-white font-black text-xs shadow-md flex-shrink-0 hover:bg-slate-800 active:scale-95 transition-all"
               >
                 {currentTournament.final?.played ? "Back to Summary →" : "Proceed to Final →"}
               </button>
@@ -678,7 +682,7 @@ export default function PlayPage() {
           <div className="pt-8 pb-14 flex justify-center">
             <button
               onClick={() => setShowCancelConfirm(true)}
-              className="text-white/20 hover:text-red-400 text-xs py-2 px-4 rounded-full border border-white/5 hover:border-red-500/20 hover:bg-red-500/5 transition-all flex items-center gap-1.5"
+              className="text-slate-400 hover:text-rose-600 text-xs py-2 px-4 rounded-full border border-slate-200 hover:border-rose-200 hover:bg-rose-50 font-bold transition-all flex items-center gap-1.5"
             >
               <span>✕</span>
               <span>Cancel Tournament</span>
@@ -727,14 +731,14 @@ export default function PlayPage() {
       return (
         <div className="min-h-full flex flex-col items-center justify-center px-6 text-center gap-6">
           <div className="text-6xl">🪙</div>
-          <h2 className="text-white font-black text-2xl">It&apos;s a Tie!</h2>
-          <p className="text-white/50 text-sm">Tiebreak couldn&apos;t be resolved — tap to flip a coin and decide who goes first</p>
+          <h2 className="text-slate-900 font-black text-2xl tracking-tight">It&apos;s a Tie!</h2>
+          <p className="text-slate-500 text-sm font-medium">Tiebreak couldn&apos;t be resolved — tap to flip a coin and decide who goes first</p>
           <div className="flex flex-col items-center gap-3 w-full">
             {[finalistA, finalistB].map((p) => (
               <button
                 key={p.id}
                 onClick={() => { startFinal(p.id); setCoinFlipVisible(false); }}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-lg"
+                className="w-full py-4 rounded-2xl bg-slate-950 hover:bg-slate-800 text-white font-black text-base shadow-md active:scale-98 transition-all"
               >
                 {p.name} wins the flip
               </button>
@@ -748,44 +752,44 @@ export default function PlayPage() {
     if (!final) {
       const cfg = currentTournament.config;
       return (
-        <div className="min-h-full flex flex-col">
-          <div className="px-4 pt-6 pb-3">
+        <div className="min-h-full flex flex-col pb-10">
+          <div className="px-5 pt-6 pb-3">
             <div className="flex items-center justify-between mb-3">
               <button
                 onClick={() => setPhase("fixtures")}
-                className="text-xs bg-white/10 hover:bg-white/15 text-white/70 border border-white/10 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+                className="text-xs bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 px-3.5 py-1.5 rounded-full font-bold shadow-2xs transition-colors flex items-center gap-1.5"
               >
                 <span>←</span>
                 <span>Review / Edit Matches</span>
               </button>
-              <span className="text-[11px] text-yellow-400 font-medium bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-full">
+              <span className="text-[11px] text-amber-900 font-black bg-amber-100 border border-amber-200 px-3 py-1 rounded-full shadow-2xs">
                 Pre-Final Standings
               </span>
             </div>
-            <h2 className="text-white font-black text-2xl mb-0.5">🏆 Grand Final</h2>
-            <p className="text-white/40 text-xs">Round-robin complete! First to {cfg.finalWinScore} wins the tournament.</p>
+            <h2 className="text-slate-900 font-black text-2xl mb-0.5 tracking-tight">🏆 Grand Final</h2>
+            <p className="text-slate-500 text-xs font-medium">Round-robin complete! First to {cfg.finalWinScore} wins the tournament.</p>
           </div>
 
           {/* Finalists head-to-head */}
-          <div className="px-4 mb-6">
-            <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/20 border border-yellow-500/30 rounded-2xl p-6">
-              <p className="text-yellow-400 text-xs text-center uppercase tracking-widest mb-4">Finalists</p>
+          <div className="px-5 mb-5">
+            <div className="bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white border border-amber-200/90 rounded-[28px] p-6 shadow-xs">
+              <p className="text-amber-800 text-[10px] font-black uppercase tracking-wider text-center mb-4">Finalists</p>
               <div className="flex items-center justify-around">
                 <div className="flex flex-col items-center gap-2">
                   <AvatarSVG type={finalistA.avatar} size={72} emoji={finalistA.avatarEmoji} color={finalistA.avatarColor} />
-                  <p className="text-white font-bold text-sm">{finalistA.name}</p>
-                  <p className="text-yellow-400 text-xs font-bold">
+                  <p className="text-slate-900 font-black text-sm">{finalistA.name}</p>
+                  <p className="text-amber-900 text-xs font-black">
                     {table.find(r => r.playerId === idA)?.points ?? 0} pts
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-white/30 text-2xl font-black">VS</span>
-                  <span className="text-yellow-400 text-xs">First to {cfg.finalWinScore}</span>
+                  <span className="text-slate-300 text-2xl font-black">VS</span>
+                  <span className="text-amber-800 text-xs font-bold">First to {cfg.finalWinScore}</span>
                 </div>
                 <div className="flex flex-col items-center gap-2">
                   <AvatarSVG type={finalistB.avatar} size={72} emoji={finalistB.avatarEmoji} color={finalistB.avatarColor} />
-                  <p className="text-white font-bold text-sm">{finalistB.name}</p>
-                  <p className="text-yellow-400 text-xs font-bold">
+                  <p className="text-slate-900 font-black text-sm">{finalistB.name}</p>
+                  <p className="text-amber-900 text-xs font-black">
                     {table.find(r => r.playerId === idB)?.points ?? 0} pts
                   </p>
                 </div>
@@ -794,7 +798,7 @@ export default function PlayPage() {
           </div>
 
           {/* Pre-final table */}
-          <p className="px-4 text-white/40 text-xs uppercase tracking-widest mb-2">Standings before final</p>
+          <p className="px-5 text-slate-400 text-xs uppercase tracking-wider font-extrabold mb-2">Standings before final</p>
           <TournamentTable
             rows={table}
             players={players}
@@ -807,10 +811,10 @@ export default function PlayPage() {
           />
 
           {/* Start final button */}
-          <div className="px-4 py-4 mt-auto">
+          <div className="px-5 py-4 mt-auto">
             <button
               onClick={() => ensurePin(() => startFinal())}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-yellow-500 to-orange-500 font-black text-white text-lg shadow-lg shadow-yellow-500/30"
+              className="w-full py-4 rounded-2xl bg-slate-950 hover:bg-slate-800 font-black text-white text-base shadow-xl shadow-slate-950/20 active:scale-98 transition-all"
             >
               🏆 Start Final Match
             </button>
@@ -843,15 +847,15 @@ export default function PlayPage() {
       <div className="min-h-full flex flex-col relative pb-20">
         <ConfettiBurst active={showConfetti} onComplete={() => setShowConfetti(false)} />
 
-        <div className="px-4 pt-6 pb-3 flex items-center justify-between">
+        <div className="px-5 pt-6 pb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-white font-black text-2xl mb-0.5">🏆 Grand Final</h2>
-            <p className="text-white/40 text-xs">First to {currentTournament.config.finalWinScore} points wins the tournament</p>
+            <h2 className="text-slate-900 font-black text-2xl mb-0.5 tracking-tight">🏆 Grand Final</h2>
+            <p className="text-slate-500 text-xs font-medium">First to {currentTournament.config.finalWinScore} points wins the tournament</p>
           </div>
           {!isFinalSheetOpen && (
             <button
               onClick={() => setIsFinalSheetOpen(true)}
-              className="text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+              className="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-3.5 py-1.5 rounded-full font-black transition-all flex items-center gap-1.5 shadow-2xs active:scale-95"
             >
               <span>🏸 Enter Score</span>
             </button>
@@ -859,24 +863,24 @@ export default function PlayPage() {
         </div>
 
         {/* Head-to-head display */}
-        <div className="px-4 mb-4">
-          <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/20 border border-yellow-500/30 rounded-2xl p-5">
+        <div className="px-5 mb-4">
+          <div className="bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white border border-amber-200/90 rounded-[28px] p-5 shadow-xs">
             <div className="flex items-center justify-around">
               <motion.div layoutId={`player-card-${finalPlayerA.id}`} className="flex flex-col items-center gap-1.5">
                 <AvatarSVG type={finalPlayerA.avatar} size={70} emoji={finalPlayerA.avatarEmoji} color={finalPlayerA.avatarColor} />
-                <p className="text-white font-bold text-sm">{finalPlayerA.name}</p>
-                <p className="text-yellow-400 text-xs font-bold font-mono">
+                <p className="text-slate-900 font-black text-sm">{finalPlayerA.name}</p>
+                <p className="text-amber-900 text-xs font-black font-mono">
                   {finalPendingScores.scoreA > 0 ? `${finalPendingScores.scoreA} pts` : "Finalist"}
                 </p>
               </motion.div>
               <div className="flex flex-col items-center">
-                <span className="text-white/30 text-xl font-black">VS</span>
-                <span className="text-[10px] text-yellow-400/80 font-semibold mt-1">First to {currentTournament.config.finalWinScore}</span>
+                <span className="text-slate-300 text-xl font-black">VS</span>
+                <span className="text-[10px] text-amber-800 font-bold mt-1">First to {currentTournament.config.finalWinScore}</span>
               </div>
               <motion.div layoutId={`player-card-${finalPlayerB.id}`} className="flex flex-col items-center gap-1.5">
                 <AvatarSVG type={finalPlayerB.avatar} size={70} emoji={finalPlayerB.avatarEmoji} color={finalPlayerB.avatarColor} />
-                <p className="text-white font-bold text-sm">{finalPlayerB.name}</p>
-                <p className="text-yellow-400 text-xs font-bold font-mono">
+                <p className="text-slate-900 font-black text-sm">{finalPlayerB.name}</p>
+                <p className="text-amber-900 text-xs font-black font-mono">
                   {finalPendingScores.scoreB > 0 ? `${finalPendingScores.scoreB} pts` : "Finalist"}
                 </p>
               </motion.div>
@@ -885,9 +889,9 @@ export default function PlayPage() {
         </div>
 
         {/* Standings Table viewable while sheet is minimized */}
-        <div className="px-4 mb-2 flex items-center justify-between">
-          <p className="text-white/40 text-xs uppercase tracking-widest font-semibold">Tournament Standings</p>
-          <span className="text-[11px] text-gray-500">Tap match to view / edit</span>
+        <div className="px-5 mb-2 flex items-center justify-between">
+          <p className="text-slate-400 text-xs uppercase tracking-wider font-extrabold">Tournament Standings</p>
+          <span className="text-[11px] text-slate-400 font-medium">Tap match to view / edit</span>
         </div>
         <div className="flex-1 overflow-y-auto px-1">
           <TournamentTable
@@ -910,14 +914,14 @@ export default function PlayPage() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               onClick={() => setIsFinalSheetOpen(true)}
-              className="p-3.5 bg-gradient-to-r from-amber-600 via-orange-600 to-yellow-600 rounded-2xl shadow-2xl shadow-amber-600/40 border border-amber-400/40 flex items-center justify-between gap-3 cursor-pointer"
+              className="p-4 bg-slate-950 rounded-[24px] shadow-2xl border border-slate-800 flex items-center justify-between gap-3 cursor-pointer text-white"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="text-xl flex-shrink-0">🏆</span>
+                <span className="text-2xl flex-shrink-0">🏆</span>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black text-amber-200 uppercase tracking-widest">Grand Final in Progress</p>
+                  <p className="text-[10px] font-black text-amber-300 uppercase tracking-wider">Grand Final in Progress</p>
                   <p className="text-xs text-white font-bold truncate">
-                    {finalPlayerA.name} <span className="font-mono text-amber-200 font-extrabold">{finalPendingScores.scoreA}</span> – <span className="font-mono text-amber-200 font-extrabold">{finalPendingScores.scoreB}</span> {finalPlayerB.name}
+                    {finalPlayerA.name} <span className="font-mono text-amber-300 font-black">{finalPendingScores.scoreA}</span> – <span className="font-mono text-amber-300 font-black">{finalPendingScores.scoreB}</span> {finalPlayerB.name}
                   </p>
                 </div>
               </div>
@@ -927,7 +931,7 @@ export default function PlayPage() {
                   e.stopPropagation();
                   setIsFinalSheetOpen(true);
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-white text-amber-900 font-black text-xs shadow-md hover:bg-amber-50 active:scale-95 transition-all flex-shrink-0"
+                className="px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md active:scale-95 transition-all flex-shrink-0"
               >
                 Resume 🏸
               </button>
@@ -966,18 +970,18 @@ export default function PlayPage() {
     const final = currentTournament.final;
 
     return (
-      <div className="min-h-full flex flex-col">
+      <div className="min-h-full flex flex-col pb-10">
         <ConfettiBurst active={true} onComplete={() => {}} />
 
         {/* Winner celebration */}
-        <div className="px-4 pt-8 pb-6 text-center">
+        <div className="px-5 pt-8 pb-6 text-center">
           {currentTournament.isPractice ? (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold mb-3 shadow-sm">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold mb-3 shadow-2xs">
               <span>🧪</span>
               <span>Practice Match Complete (Unranked — not saved)</span>
             </div>
           ) : (
-            <p className="text-yellow-400 text-xs uppercase tracking-widest mb-2">Tournament Winner</p>
+            <p className="text-amber-800 text-xs uppercase tracking-wider font-black mb-2">Tournament Winner</p>
           )}
           {winnerPlayer && (
             <motion.div
@@ -990,8 +994,8 @@ export default function PlayPage() {
                 <AvatarSVG type={winnerPlayer.avatar} size={100} emoji={winnerPlayer.avatarEmoji} color={winnerPlayer.avatarColor} />
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-4xl">🏆</div>
               </div>
-              <h2 className="text-white font-black text-3xl">{winnerPlayer.name}!</h2>
-              <p className="text-yellow-400 font-bold text-lg">{winner.points} pts</p>
+              <h2 className="text-slate-900 font-black text-3xl tracking-tight">{winnerPlayer.name}!</h2>
+              <p className="text-amber-600 font-black text-lg">{winner.points} pts</p>
             </motion.div>
           )}
 
@@ -1002,14 +1006,14 @@ export default function PlayPage() {
                 setActiveMatchId(final.id);
                 setIsEditingMatch(true);
               }}
-              className="mt-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-yellow-500/40 rounded-xl px-5 py-2.5 inline-flex items-center gap-3 cursor-pointer transition-all active:scale-[0.99]"
+              className="mt-4 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-2xl px-5 py-2.5 inline-flex items-center gap-3 cursor-pointer transition-all active:scale-[0.99] shadow-xs"
             >
-              <span className="text-white font-bold">{getPlayer(final.playerA).name}</span>
-              <span className="text-yellow-400 font-bold text-base">
+              <span className="text-slate-900 font-bold">{getPlayer(final.playerA).name}</span>
+              <span className="text-amber-600 font-black text-base">
                 {final.scoreA} – {final.scoreB}
               </span>
-              <span className="text-white font-bold">{getPlayer(final.playerB).name}</span>
-              <span className="text-[10px] font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 ml-1">
+              <span className="text-slate-900 font-bold">{getPlayer(final.playerB).name}</span>
+              <span className="text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded-full flex items-center gap-1 ml-1">
                 ✏️ Edit Final Score
               </span>
             </button>
@@ -1017,11 +1021,11 @@ export default function PlayPage() {
         </div>
 
         {/* Final standings */}
-        <div className="px-4 flex items-center justify-between mb-2">
-          <p className="text-white/40 text-xs uppercase tracking-widest">Final Standings</p>
+        <div className="px-5 flex items-center justify-between mb-2">
+          <p className="text-slate-400 text-xs uppercase font-extrabold tracking-wider">Final Standings</p>
           <button
             onClick={() => setPhase("fixtures")}
-            className="text-xs bg-white/10 hover:bg-white/15 text-white/70 border border-white/10 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
+            className="text-xs bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 px-3 py-1 rounded-full transition-colors flex items-center gap-1 font-bold shadow-2xs"
           >
             <span>📋</span>
             <span>View All Fixture Cards</span>
@@ -1039,7 +1043,7 @@ export default function PlayPage() {
         />
 
         {/* Actions */}
-        <div className="px-4 py-6 flex flex-col gap-3">
+        <div className="px-5 py-6 flex flex-col gap-3">
           <button
             onClick={() => {
               if (currentTournament.isPractice) {
@@ -1048,11 +1052,7 @@ export default function PlayPage() {
                 ensurePin(() => closeTournament());
               }
             }}
-            className={`w-full py-4 rounded-2xl font-black text-white text-lg shadow-lg transition-all ${
-              currentTournament.isPractice
-                ? "bg-gradient-to-r from-amber-600 to-orange-600 shadow-amber-500/30"
-                : "bg-gradient-to-r from-purple-600 to-blue-600 shadow-purple-500/30"
-            }`}
+            className="w-full py-4 rounded-2xl font-black text-white text-base shadow-xl shadow-slate-950/20 active:scale-98 transition-all bg-slate-950 hover:bg-slate-800"
           >
             {currentTournament.isPractice
               ? "Finish Practice & Exit 🧪"
