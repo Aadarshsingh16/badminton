@@ -72,6 +72,9 @@ interface AppState {
   deleteTournament: (id: string, skipSync?: boolean) => void;
   startNextTournament: () => void;
   startNewDay: () => void;
+  // UI state
+  isScoreSheetOpen: boolean;
+  setIsScoreSheetOpen: (open: boolean) => void;
 
   setPhase: (phase: PlayPhase) => void;
 }
