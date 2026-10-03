@@ -10,7 +10,7 @@ import { getViewerSlug, isViewerMode } from "@/lib/viewerMode";
 
 export function BottomTabBar() {
   const pathname = usePathname();
-  const { dayTable, currentTournament, phase } = useStore();
+  const { dayTable, currentTournament, phase, isScoreSheetOpen } = useStore();
   const [viewerSlug, setViewerSlug] = useState<string | null>(null);
 
   useEffect(() => {
@@ -121,7 +121,21 @@ export function BottomTabBar() {
   const dayBadge = dayTable.tournaments.length > 0 ? dayTable.tournaments.length : null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto">
+    <motion.div
+      initial={false}
+      animate={{
+        y: isScoreSheetOpen ? 120 : 0,
+        opacity: isScoreSheetOpen ? 0 : 1,
+      }}
+      transition={{
+        type: "spring",
+        damping: 28,
+        stiffness: 350,
+      }}
+      className={`fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto ${
+        isScoreSheetOpen ? "pointer-events-none" : ""
+      }`}
+    >
       {/* Frosted clean white bottom navigation */}
       <div className="bg-white/92 backdrop-blur-xl border-t border-slate-200/70 shadow-[0_-4px_24px_rgba(0,0,0,0.04)] px-4 pb-safe">
         <div className="flex items-center pt-2.5 pb-2">
@@ -178,6 +192,6 @@ export function BottomTabBar() {
           })}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
