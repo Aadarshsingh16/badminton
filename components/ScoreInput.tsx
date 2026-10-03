@@ -133,6 +133,16 @@ export function ScoreInput({
   const [scoreA, setScoreA] = useState(() => currentScores?.scoreA ?? match.scoreA ?? 0);
   const [scoreB, setScoreB] = useState(() => currentScores?.scoreB ?? match.scoreB ?? 0);
 
+  // Sync sheet open state with global store so BottomTabBar smoothly hides/shows
+  const setIsScoreSheetOpen = useStore((s) => s.setIsScoreSheetOpen);
+
+  useEffect(() => {
+    setIsScoreSheetOpen(open);
+    return () => {
+      setIsScoreSheetOpen(false);
+    };
+  }, [open, setIsScoreSheetOpen]);
+
   // Re-seed when sheet opens or match changes
   useEffect(() => {
     if (open) {
@@ -167,14 +177,21 @@ export function ScoreInput({
 
   const handleConfirm = () => {
     if (!canConfirm) return;
+    setIsScoreSheetOpen(false);
     onConfirm(scoreA, scoreB);
     reset();
     onClose();
   };
 
   const handleClose = () => {
+    setIsScoreSheetOpen(false);
     reset();
     onClose();
+  };
+
+  const handleMinimize = () => {
+    setIsScoreSheetOpen(false);
+    onMinimize?.();
   };
 
   const sideA = match.courtSide[playerA.id];
@@ -198,7 +215,7 @@ export function ScoreInput({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-slate-950/60 z-40 backdrop-blur-sm"
-            onClick={onMinimize ? onMinimize : handleClose}
+            onClick={onMinimize ? handleMinimize : handleClose}
           />
 
           {/* Sheet */}
@@ -207,7 +224,7 @@ export function ScoreInput({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 350 }}
-            className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200/80 rounded-t-[36px] shadow-2xl pb-10 pt-4 px-5 max-w-md mx-auto"
+            className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200/80 rounded-t-[36px] shadow-2xl pb-8 pt-4 px-4 sm:px-5 max-w-md mx-auto"
           >
             {/* Header with drag handle and Minimize button */}
             <div className="flex items-center justify-between px-1 mb-3">
@@ -217,8 +234,8 @@ export function ScoreInput({
                 {onMinimize && (
                   <button
                     type="button"
-                    onClick={onMinimize}
-                    className="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 transition-colors flex items-center gap-1 active:scale-95 shadow-2xs"
+                    onClick={handleMinimize}
+                    className="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 transition-colors flex items-center gap-1 active:scale-95 shadow-2xs cursor-pointer"
                   >
                     <span>⌄</span>
                     <span>Hide</span>
@@ -245,7 +262,7 @@ export function ScoreInput({
               {onToggleCourtSide && (
                 <button
                   onClick={onToggleCourtSide}
-                  className="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 font-bold border border-slate-200 transition-colors"
+                  className="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 font-bold border border-slate-200 transition-colors cursor-pointer"
                 >
                   ⇄ Swap
                 </button>
@@ -255,12 +272,12 @@ export function ScoreInput({
               </div>
             </div>
 
-            {/* Score inputs */}
-            <div className="flex items-start justify-between gap-3 mb-3">
+            {/* Score inputs - symmetric 3-column grid */}
+            <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-1 sm:gap-2 mb-3">
               {/* Player A */}
-              <div className="flex-1 flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-2 min-w-0">
                 <AvatarSVG type={playerA.avatar} size={52} emoji={playerA.avatarEmoji} color={playerA.avatarColor} />
-                <p className="text-slate-900 font-black text-sm text-center truncate w-full">{playerA.name}</p>
+                <p className="text-slate-900 font-black text-sm text-center truncate w-full px-1">{playerA.name}</p>
                 <ScoreCounter
                   value={scoreA}
                   onChange={updateScoreA}
@@ -271,19 +288,19 @@ export function ScoreInput({
               </div>
 
               {/* VS divider */}
-              <div className="flex flex-col items-center gap-1 pt-14">
-                <span className="text-slate-300 font-black text-xl">VS</span>
+              <div className="flex flex-col items-center gap-1 pt-12 sm:pt-14 px-1">
+                <span className="text-slate-300 font-black text-lg sm:text-xl">VS</span>
                 {canConfirm && (
-                  <span className="text-xs font-bold text-indigo-600">
+                  <span className="text-[11px] font-bold text-indigo-600 whitespace-nowrap">
                     {winnerIsA ? `🏆 ${playerA.name}` : `🏆 ${playerB.name}`}
                   </span>
                 )}
               </div>
 
               {/* Player B */}
-              <div className="flex-1 flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-2 min-w-0">
                 <AvatarSVG type={playerB.avatar} size={52} emoji={playerB.avatarEmoji} color={playerB.avatarColor} />
-                <p className="text-slate-900 font-black text-sm text-center truncate w-full">{playerB.name}</p>
+                <p className="text-slate-900 font-black text-sm text-center truncate w-full px-1">{playerB.name}</p>
                 <ScoreCounter
                   value={scoreB}
                   onChange={updateScoreB}
@@ -333,9 +350,9 @@ export function ScoreInput({
               className={`w-full py-4 rounded-2xl font-black text-base transition-all ${
                 canConfirm
                   ? isEditing
-                    ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-98"
-                    : "bg-slate-950 hover:bg-slate-800 text-white shadow-xl shadow-slate-950/20 active:scale-98"
-                  : "bg-slate-100 text-slate-400 cursor-not-allowed font-bold"
+                    ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-98 cursor-pointer"
+                    : "bg-slate-950 hover:bg-slate-800 text-white shadow-xl shadow-slate-950/20 active:scale-98 cursor-pointer"
+                  : "bg-slate-100 text-slate-400 border border-slate-200/60 cursor-not-allowed font-bold"
               }`}
             >
               {canConfirm
