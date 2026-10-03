@@ -767,6 +767,7 @@ export const useStore = create<AppState>()(
       name: "badminton-app-state-v2",
       onRehydrateStorage: () => (state) => {
         if (state) {
+          state.isScoreSheetOpen = false;
           if (state.pastTournaments.length === 0) {
             const recovered = recoverTournamentsFromSyncQueue();
             if (recovered.length > 0) {
