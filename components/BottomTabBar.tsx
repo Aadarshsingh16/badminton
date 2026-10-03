@@ -1,7 +1,7 @@
 "use client";
-// components/BottomTabBar.tsx — Persistent 2-tab bottom navigation
+// components/BottomTabBar.tsx — Floating capsule bottom navigation with scroll hide/show
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -13,103 +13,201 @@ export function BottomTabBar() {
   const { dayTable, currentTournament, phase, isScoreSheetOpen } = useStore();
   const [viewerSlug, setViewerSlug] = useState<string | null>(null);
 
+  // Scroll detection state
+  const [isScrolledDown, setIsScrolledDown] = useState(false);
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+
   useEffect(() => {
     setViewerSlug(getViewerSlug());
   }, [pathname]);
 
+  // Reset scroll-down state on route change
+  useEffect(() => {
+    setIsScrolledDown(false);
+    lastScrollY.current = 0;
+  }, [pathname]);
+
+  // Listen to scroll events across the window and any scrollable container (e.g. <main>)
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      if (!ticking.current) {
+        window.requestAnimationFrame(() => {
+          const target = e.target;
+          let currentY = 0;
+
+          if (target === document || target === window) {
+            currentY = window.scrollY || document.documentElement.scrollTop || 0;
+          } else if (target instanceof HTMLElement) {
+            currentY = target.scrollTop;
+          }
+
+          const diff = currentY - lastScrollY.current;
+
+          // If scrolled down past 50px threshold and moving downwards with clear intent (> 8px)
+          if (currentY > 60 && diff > 8) {
+            setIsScrolledDown(true);
+          } else if (diff < -8 || currentY <= 30) {
+            // If scrolling upwards with clear intent or near the very top of the page
+            setIsScrolledDown(false);
+          }
+
+          lastScrollY.current = Math.max(0, currentY);
+          ticking.current = false;
+        });
+        ticking.current = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll, { capture: true });
+    };
+  }, []);
+
   const isViewer = !currentTournament && (isViewerMode() || !!viewerSlug);
 
-  // Status indicator for Play tab
-  const playStatus = (() => {
-    if (isViewer) return "Live 📡";
-    if (!currentTournament) return null;
-    if (phase === "fixtures") {
-      const remaining = currentTournament.matches.filter(m => !m.played).length;
-      return `${remaining} left`;
-    }
-    if (phase === "final") return "Final!";
-    if (phase === "tournament-summary") return "Done";
-    return null;
-  })();
+  // Remaining matches count in tournament
+  const remainingMatches =
+    currentTournament && phase === "fixtures"
+      ? currentTournament.matches.filter((m) => !m.played).length
+      : null;
+
+  // Day Table tournaments count
+  const dayBadge = dayTable.tournaments.length > 0 ? dayTable.tournaments.length : null;
 
   const tabs = [
     {
       href: isViewer ? `/live/${viewerSlug}` : "/",
       label: isViewer ? "Live Court" : "Play",
+      badge: isViewer ? (
+        <span className="absolute -top-1 -right-1 flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        </span>
+      ) : phase === "final" ? (
+        <span className="absolute -top-1.5 -right-2 text-[10px]">🏆</span>
+      ) : remainingMatches !== null && remainingMatches > 0 ? (
+        <span className="absolute -top-1 -right-2 px-1 min-w-[15px] h-[15px] bg-blue-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-2xs">
+          {remainingMatches}
+        </span>
+      ) : null,
       icon: (active: boolean) => (
-        <div className="relative">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1.5a8.5 8.5 0 110 17 8.5 8.5 0 010-17z"
-              fill={active ? "#0F172A" : "#94A3B8"}
-            />
-            <ellipse cx="12" cy="12" rx="3.5" ry="5" stroke={active ? "#0F172A" : "#94A3B8"} strokeWidth="1.5" fill="none" transform="rotate(-30 12 12)" />
-            <line x1="6" y1="17" x2="18" y2="7" stroke={active ? "#0F172A" : "#94A3B8"} strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          {isViewer && (
-            <>
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 animate-ping opacity-75" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
-            </>
-          )}
-        </div>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" className="transition-colors">
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1.5a8.5 8.5 0 110 17 8.5 8.5 0 010-17z"
+            fill={active ? "#FFFFFF" : "#94A3B8"}
+          />
+          <ellipse
+            cx="12"
+            cy="12"
+            rx="3.5"
+            ry="5"
+            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            strokeWidth="1.6"
+            fill="none"
+            transform="rotate(-30 12 12)"
+          />
+          <line
+            x1="6"
+            y1="17"
+            x2="18"
+            y2="7"
+            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        </svg>
       ),
     },
     {
       href: "/day",
       label: "Day Table",
+      badge: dayBadge ? (
+        <span className="absolute -top-1 -right-2 px-1 min-w-[15px] h-[15px] bg-slate-900 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-2xs">
+          {dayBadge}
+        </span>
+      ) : null,
       icon: (active: boolean) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="3" width="18" height="18" rx="3" stroke={active ? "#0F172A" : "#94A3B8"} strokeWidth="1.6" fill="none" />
-          <path d="M7 15l3-3 3 3 4-5" stroke={active ? "#0F172A" : "#94A3B8"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="7" cy="15" r="1" fill={active ? "#0F172A" : "#94A3B8"} />
-          <circle cx="10" cy="12" r="1" fill={active ? "#0F172A" : "#94A3B8"} />
-          <circle cx="13" cy="15" r="1" fill={active ? "#0F172A" : "#94A3B8"} />
-          <circle cx="17" cy="10" r="1" fill={active ? "#0F172A" : "#94A3B8"} />
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" className="transition-colors">
+          <rect
+            x="3"
+            y="3"
+            width="18"
+            height="18"
+            rx="3"
+            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            strokeWidth="1.7"
+            fill="none"
+          />
+          <path
+            d="M7 15l3-3 3 3 4-5"
+            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="7" cy="15" r="1.1" fill={active ? "#FFFFFF" : "#94A3B8"} />
+          <circle cx="10" cy="12" r="1.1" fill={active ? "#FFFFFF" : "#94A3B8"} />
+          <circle cx="13" cy="15" r="1.1" fill={active ? "#FFFFFF" : "#94A3B8"} />
+          <circle cx="17" cy="10" r="1.1" fill={active ? "#FFFFFF" : "#94A3B8"} />
         </svg>
       ),
     },
     {
       href: "/history",
       label: "History",
+      badge: null,
       icon: (active: boolean) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <path d="M12 8v4l3 3" stroke={active ? "#0F172A" : "#94A3B8"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="12" cy="12" r="9" stroke={active ? "#0F172A" : "#94A3B8"} strokeWidth="1.6" />
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" className="transition-colors">
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            strokeWidth="1.7"
+          />
+          <path
+            d="M12 7v5l3.5 2"
+            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       ),
     },
     {
       href: "/profiles",
       label: "Squad",
+      badge: null,
       icon: (active: boolean) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" className="transition-colors">
           <path
             d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
-            stroke={active ? "#0F172A" : "#94A3B8"}
-            strokeWidth="1.6"
+            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            strokeWidth="1.7"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
           <circle
             cx="9"
             cy="7"
-            r="4"
-            stroke={active ? "#0F172A" : "#94A3B8"}
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M22 21v-2a4 4 0 0 0-3-3.87"
-            stroke={active ? "#0F172A" : "#94A3B8"}
-            strokeWidth="1.6"
+            r="3.8"
+            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            strokeWidth="1.7"
             strokeLinecap="round"
           />
           <path
-            d="M16 3.13a4 4 0 0 1 0 7.75"
-            stroke={active ? "#0F172A" : "#94A3B8"}
-            strokeWidth="1.6"
+            d="M21 21v-2a3.8 3.8 0 0 0-2.5-3.6"
+            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+          <path
+            d="M15.5 3.3a3.8 3.8 0 0 1 0 7.4"
+            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            strokeWidth="1.7"
             strokeLinecap="round"
           />
         </svg>
@@ -117,81 +215,68 @@ export function BottomTabBar() {
     },
   ];
 
-  // Badge for Day Table tab
-  const dayBadge = dayTable.tournaments.length > 0 ? dayTable.tournaments.length : null;
+  const isHidden = isScoreSheetOpen || isScrolledDown;
 
   return (
     <motion.div
       initial={false}
       animate={{
-        y: isScoreSheetOpen ? 120 : 0,
-        opacity: isScoreSheetOpen ? 0 : 1,
+        y: isHidden ? 90 : 0,
+        opacity: isHidden ? 0 : 1,
       }}
       transition={{
         type: "spring",
         damping: 28,
         stiffness: 350,
       }}
-      className={`fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto ${
-        isScoreSheetOpen ? "pointer-events-none" : ""
-      }`}
+      className={`fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] inset-x-0 z-30 max-w-[390px] mx-auto px-4 pointer-events-none select-none`}
     >
-      {/* Frosted clean white bottom navigation */}
-      <div className="bg-white/92 backdrop-blur-xl border-t border-slate-200/70 shadow-[0_-4px_24px_rgba(0,0,0,0.04)] px-4 pb-safe">
-        <div className="flex items-center pt-2.5 pb-2">
-          {tabs.map((tab, idx) => {
-            const isFirstTab = idx === 0;
-            const isActive = isFirstTab
-              ? isViewer
-                ? pathname.startsWith("/live") || pathname === "/"
-                : pathname === "/"
-              : pathname.startsWith(tab.href);
+      {/* Floating Capsule Dock */}
+      <nav
+        aria-label="Bottom Navigation"
+        className="w-full pointer-events-auto bg-white/88 backdrop-blur-2xl border border-white/80 shadow-[0_12px_32px_-6px_rgba(15,23,42,0.12),0_0_0_1px_rgba(15,23,42,0.05)] rounded-full p-1.5 flex items-center justify-between gap-1"
+      >
+        {tabs.map((tab, idx) => {
+          const isFirstTab = idx === 0;
+          const isActive = isFirstTab
+            ? isViewer
+              ? pathname.startsWith("/live") || pathname === "/"
+              : pathname === "/"
+            : pathname.startsWith(tab.href);
 
-            const badge = tab.href === "/day" ? dayBadge : null;
-            const status = isFirstTab ? playStatus : null;
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`relative flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-full transition-all active:scale-95 group ${
+                isActive ? "text-white" : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              {/* Active animated pill capsule */}
+              {isActive && (
+                <motion.div
+                  layoutId="bottom-nav-active-pill"
+                  transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                  className="absolute inset-0 bg-slate-950 rounded-full shadow-sm -z-10"
+                />
+              )}
 
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className="flex-1 flex flex-col items-center gap-1 py-0.5 relative transition-transform active:scale-95"
+              <div className="relative flex items-center justify-center mb-0.5">
+                {tab.icon(isActive)}
+                {tab.badge}
+              </div>
+
+              <span
+                className={`text-[10px] sm:text-[10.5px] leading-tight font-extrabold tracking-tight transition-colors ${
+                  isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700"
+                }`}
               >
-                <div className="relative flex items-center justify-center">
-                  {tab.icon(isActive)}
-                  {badge && (
-                    <div className="absolute -top-1 -right-2 w-4 h-4 bg-slate-900 rounded-full flex items-center justify-center shadow-xs">
-                      <span className="text-white text-[9px] font-extrabold">{badge}</span>
-                    </div>
-                  )}
-                </div>
-
-                <span
-                  className={`text-[11px] transition-colors leading-tight ${
-                    isActive ? "font-bold text-slate-950" : "font-medium text-slate-400"
-                  }`}
-                >
-                  {tab.label}
-                </span>
-
-                {status && (
-                  <span className="text-[9px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.2 rounded-full -mt-0.5">
-                    {status}
-                  </span>
-                )}
-
-                {/* Subtle active dot indicator inspired by Image 3 */}
-                {isActive && (
-                  <motion.div
-                    layoutId="tab-dot"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    className="w-1.5 h-1.5 rounded-full bg-slate-950 mt-0.5"
-                  />
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+                {tab.label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
     </motion.div>
   );
 }
