@@ -671,6 +671,56 @@ export default function HistoryPage() {
     }));
   };
 
+  const rangeOptions = [
+    { value: "all", label: "All Time" },
+    { value: "month", label: "30 Days" },
+    { value: "week", label: "7 Days" },
+    { value: "day", label: "Today" },
+  ];
+
+  const currentRangeLabel =
+    rangeFilter === "day"
+      ? "Today"
+      : rangeFilter === "week"
+      ? "7 Days"
+      : rangeFilter === "month"
+      ? "30 Days"
+      : "All Time";
+
+  const playerOptions = [
+    { value: "all", label: "All Players" },
+    ...players.map((p) => ({ value: p.id, label: p.name })),
+  ];
+
+  const currentPlayerLabel =
+    playerFilter === "all"
+      ? "All Players"
+      : players.find((p) => p.id === playerFilter)?.name ?? "Player";
+
+  const patternOptions = [
+    { value: "all", label: "All Scores" },
+    { value: "blowout", label: "Blowouts (Diff ≥ 4)" },
+    { value: "5-0", label: "5 - 0 Shutouts" },
+    { value: "5-1", label: "5 - 1 Matches" },
+    { value: "6-0", label: "6 - 0 Final Blowout" },
+  ];
+
+  const currentPatternLabel =
+    patternFilter === "all"
+      ? "All Scores"
+      : patternFilter === "blowout"
+      ? "Blowouts"
+      : patternFilter === "5-0"
+      ? "5 - 0"
+      : patternFilter === "5-1"
+      ? "5 - 1"
+      : patternFilter === "6-0"
+      ? "6 - 0"
+      : patternFilter;
+
+  const hasActiveFilter =
+    rangeFilter !== "all" || playerFilter !== "all" || patternFilter !== "all";
+
   return (
     <div className="min-h-full flex flex-col px-4 pt-4 pb-20">
       {/* Spectator Mode Banner */}
@@ -691,11 +741,11 @@ export default function HistoryPage() {
         </div>
       )}
 
-      {/* Top Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-slate-900 text-lg">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between mb-3 px-0.5">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-slate-900 text-sm">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
               <path
                 d="M12 8v4l3 3"
                 stroke="currentColor"
@@ -707,10 +757,10 @@ export default function HistoryPage() {
             </svg>
           </div>
           <div>
-            <h1 className="text-base font-extrabold text-slate-900 leading-tight">
+            <h1 className="text-sm font-black text-slate-900 leading-tight">
               History & Stats
             </h1>
-            <p className="text-xs text-slate-400 font-medium">Match logs, standings & day honors</p>
+            <p className="text-[10px] text-slate-400 font-medium">Match logs & day honors</p>
           </div>
         </div>
 
@@ -720,11 +770,11 @@ export default function HistoryPage() {
             else fetchLeaderboards();
           }}
           disabled={loading}
-          className="w-10 h-10 rounded-full bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center text-slate-600"
+          className="w-8 h-8 rounded-full bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center text-slate-600 cursor-pointer"
           title="Refresh"
         >
           <svg
-            className={`w-4 h-4 ${loading ? "animate-spin text-slate-950" : ""}`}
+            className={`w-3.5 h-3.5 ${loading ? "animate-spin text-slate-950" : ""}`}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -738,11 +788,11 @@ export default function HistoryPage() {
         </button>
       </div>
 
-      {/* Sub-tab segmented pill control (Inspiration Image 3) */}
-      <div className="p-1 bg-slate-200/70 rounded-full flex gap-1 mb-4">
+      {/* Sub-tab segmented pill control */}
+      <div className="p-1 bg-slate-200/70 rounded-full flex gap-1 mb-3">
         <button
           onClick={() => setActiveSubTab("log")}
-          className={`py-2 px-3 text-xs font-extrabold rounded-full flex-1 transition-all flex items-center justify-center gap-1.5 ${
+          className={`py-1.5 px-3 text-xs font-extrabold rounded-full flex-1 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeSubTab === "log"
               ? "bg-slate-950 text-white shadow-sm"
               : "text-slate-600 hover:text-slate-950"
@@ -753,7 +803,7 @@ export default function HistoryPage() {
         </button>
         <button
           onClick={() => setActiveSubTab("leaderboards")}
-          className={`py-2 px-3 text-xs font-extrabold rounded-full flex-1 transition-all flex items-center justify-center gap-1.5 ${
+          className={`py-1.5 px-3 text-xs font-extrabold rounded-full flex-1 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeSubTab === "leaderboards"
               ? "bg-slate-950 text-white shadow-sm"
               : "text-slate-600 hover:text-slate-950"
@@ -764,102 +814,131 @@ export default function HistoryPage() {
         </button>
       </div>
 
-      {/* Date Range Selector Pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-none">
-        {(
-          [
-            { key: "all", label: "All Time" },
-            { key: "month", label: "30 Days" },
-            { key: "week", label: "7 Days" },
-            { key: "day", label: "Today" },
-          ] as const
-        ).map((item) => (
-          <button
-            key={item.key}
-            onClick={() => setRangeFilter(item.key)}
-            className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 ${
-              rangeFilter === item.key
-                ? "bg-slate-950 text-white shadow-xs"
-                : "bg-white border border-slate-200/80 text-slate-600 hover:border-slate-300 shadow-xs"
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-
       {/* SUB-TAB 1: MATCH LOG */}
       {activeSubTab === "log" && (
-        <div className="space-y-4">
-          {/* Filter controls bento card */}
-          <div className="bg-white border border-slate-200/80 rounded-[24px] p-3.5 shadow-xs grid grid-cols-2 gap-2.5">
-            <div>
-              <label className="block text-[10px] uppercase font-extrabold text-slate-400 mb-1">
-                Player Filter
-              </label>
+        <div className="space-y-3">
+          {/* Combined Streamlined Filter Bar */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+            {/* Time Filter Pill */}
+            <div
+              className={`relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
+                rangeFilter !== "all"
+                  ? "bg-slate-950 text-white font-black shadow-xs ring-1 ring-slate-950"
+                  : "bg-white border border-slate-200/80 text-slate-700 font-bold hover:bg-slate-50"
+              }`}
+            >
+              <span>📅</span>
+              <span>{currentRangeLabel}</span>
+              <span className={`text-[9px] ${rangeFilter !== "all" ? "text-white/70" : "text-slate-400"}`}>▾</span>
               <select
-                value={playerFilter}
-                onChange={(e) => setPlayerFilter(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-950 transition-colors"
+                value={rangeFilter}
+                onChange={(e) => setRangeFilter(e.target.value as any)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
+                aria-label="Filter by time range"
               >
-                <option value="all">All Players</option>
-                {players.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
+                {rangeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label className="block text-[10px] uppercase font-extrabold text-slate-400 mb-1">
-                Score Pattern
-              </label>
+            {/* Player Filter Pill */}
+            <div
+              className={`relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
+                playerFilter !== "all"
+                  ? "bg-slate-950 text-white font-black shadow-xs ring-1 ring-slate-950"
+                  : "bg-white border border-slate-200/80 text-slate-700 font-bold hover:bg-slate-50"
+              }`}
+            >
+              <span>👤</span>
+              <span className="truncate max-w-[85px]">{currentPlayerLabel}</span>
+              <span className={`text-[9px] ${playerFilter !== "all" ? "text-white/70" : "text-slate-400"}`}>▾</span>
+              <select
+                value={playerFilter}
+                onChange={(e) => setPlayerFilter(e.target.value)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
+                aria-label="Filter by player"
+              >
+                {playerOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Score Pattern Pill */}
+            <div
+              className={`relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
+                patternFilter !== "all"
+                  ? "bg-slate-950 text-white font-black shadow-xs ring-1 ring-slate-950"
+                  : "bg-white border border-slate-200/80 text-slate-700 font-bold hover:bg-slate-50"
+              }`}
+            >
+              <span>🎯</span>
+              <span className="truncate max-w-[85px]">{currentPatternLabel}</span>
+              <span className={`text-[9px] ${patternFilter !== "all" ? "text-white/70" : "text-slate-400"}`}>▾</span>
               <select
                 value={patternFilter}
                 onChange={(e) => setPatternFilter(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-950 transition-colors"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
+                aria-label="Filter by score pattern"
               >
-                <option value="all">All Scores</option>
-                <option value="blowout">Blowouts (Diff ≥ 4)</option>
-                <option value="5-0">5 - 0 Shutouts</option>
-                <option value="5-1">5 - 1 Matches</option>
-                <option value="6-0">6 - 0 Final Blowout</option>
+                {patternOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
+
+            {/* Reset Button */}
+            {hasActiveFilter && (
+              <button
+                onClick={() => {
+                  setRangeFilter("all");
+                  setPlayerFilter("all");
+                  setPatternFilter("all");
+                }}
+                className="px-2.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-extrabold text-xs transition-colors flex items-center gap-1 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
+                title="Reset all filters"
+              >
+                <span>✕</span>
+                <span className="text-[11px]">Clear</span>
+              </button>
+            )}
           </div>
 
-          {/* Mini-Leaderboard Hero Banner (Inspiration Image 3 - Bento Card) */}
-          {displayedHistory.miniLeaderboard.length > 0 && (
-            <div className="bg-gradient-to-br from-[#9BB8FF] to-[#7EA3FC] text-slate-950 rounded-[28px] p-4 shadow-xs">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-950 flex items-center gap-1.5">
-                  <span>⚡</span> Filter Summary
-                </span>
-                <div className="text-[11px] font-bold text-slate-900/80 bg-white/50 px-2.5 py-0.5 rounded-full">
-                  <span>{displayedHistory.totalMatches}</span> matches •{" "}
-                  <span>{displayedHistory.totalPoints}</span> pts
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                {displayedHistory.miniLeaderboard.slice(0, 3).map((item, idx) => (
-                  <div
-                    key={item.playerId}
-                    className="bg-white/95 rounded-2xl p-2.5 text-center shadow-xs"
-                  >
-                    <div className="text-[10px] font-black text-slate-900 mb-0.5">
-                      {idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : "🥉 #3"}
-                    </div>
-                    <div className="text-xs font-extrabold text-slate-900 truncate">{item.name}</div>
-                    <div className="text-[10px] text-slate-500 font-semibold mt-0.5">
-                      <span className="text-emerald-600 font-bold">{item.points} pts</span> • {item.wins}W
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* Quick Breadcrumb Stats */}
+          <div className="flex items-center justify-between px-1 text-xs text-slate-500 font-bold">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-900 font-black">{displayedHistory.totalMatches} matches</span>
+              <span>•</span>
+              <span>{displayedHistory.totalPoints} pts</span>
+              {displayedHistory.miniLeaderboard.length > 0 && (
+                <>
+                  <span>•</span>
+                  <span className="text-slate-700 font-extrabold flex items-center gap-1">
+                    🥇 {displayedHistory.miniLeaderboard[0].name}
+                  </span>
+                </>
+              )}
             </div>
-          )}
+            {hasActiveFilter && (
+              <button
+                onClick={() => {
+                  setRangeFilter("all");
+                  setPlayerFilter("all");
+                  setPatternFilter("all");
+                }}
+                className="text-[11px] text-blue-600 hover:text-blue-800 font-bold underline cursor-pointer"
+              >
+                Reset filters
+              </button>
+            )}
+          </div>
 
           {/* Timeline days */}
           {displayedHistory.days.length === 0 ? (
@@ -1056,11 +1135,37 @@ export default function HistoryPage() {
 
       {/* SUB-TAB 2: LEADERBOARDS & DAY HONORS */}
       {activeSubTab === "leaderboards" && (
-        <div className="space-y-4">
-          {/* Metric Switcher Pill Row */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-2 flex items-center gap-2 shadow-xs">
-            <span className="text-[10px] font-extrabold text-slate-400 px-2 uppercase tracking-wider">Rank by:</span>
-            <div className="flex-1 grid grid-cols-3 gap-1">
+        <div className="space-y-3">
+          {/* Combined Controls for Leaderboards */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Time Filter Pill */}
+            <div
+              className={`relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
+                rangeFilter !== "all"
+                  ? "bg-slate-950 text-white font-black shadow-xs ring-1 ring-slate-950"
+                  : "bg-white border border-slate-200/80 text-slate-700 font-bold hover:bg-slate-50"
+              }`}
+            >
+              <span>📅</span>
+              <span>{currentRangeLabel}</span>
+              <span className={`text-[9px] ${rangeFilter !== "all" ? "text-white/70" : "text-slate-400"}`}>▾</span>
+              <select
+                value={rangeFilter}
+                onChange={(e) => setRangeFilter(e.target.value as any)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
+                aria-label="Filter by time range"
+              >
+                {rangeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Metric Switcher Pill Row */}
+            <div className="p-1 bg-slate-200/70 rounded-full flex gap-1 items-center">
+              <span className="text-[10px] font-extrabold text-slate-500 pl-2 pr-0.5 uppercase">Rank:</span>
               {(
                 [
                   { key: "points", label: "Points" },
@@ -1071,10 +1176,10 @@ export default function HistoryPage() {
                 <button
                   key={m.key}
                   onClick={() => setSortBy(m.key)}
-                  className={`py-1.5 text-xs font-extrabold rounded-xl transition-all ${
+                  className={`py-1 px-2.5 text-xs font-extrabold rounded-full transition-all cursor-pointer ${
                     sortBy === m.key
                       ? "bg-slate-950 text-white shadow-xs"
-                      : "text-slate-500 hover:text-slate-900 bg-slate-50"
+                      : "text-slate-600 hover:text-slate-950"
                   }`}
                 >
                   {m.label}
