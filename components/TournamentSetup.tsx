@@ -28,24 +28,26 @@ function Stepper({
   max: number;
 }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
+    <div className="flex items-center justify-between py-3.5 border-b border-slate-100 last:border-0">
       <div className="flex-1 min-w-0 pr-4">
-        <p className="text-white text-sm font-semibold">{label}</p>
-        {hint && <p className="text-white/40 text-xs mt-0.5">{hint}</p>}
+        <p className="text-slate-900 text-sm font-bold">{label}</p>
+        {hint && <p className="text-slate-500 text-xs mt-0.5 font-medium leading-tight">{hint}</p>}
       </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-2.5 flex-shrink-0">
         <button
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          className="w-8 h-8 rounded-full bg-white/10 text-white font-bold hover:bg-white/20 transition-colors disabled:opacity-30 text-lg flex items-center justify-center"
+          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
         >
           −
         </button>
-        <span className="text-white font-black text-lg w-8 text-center tabular-nums">{value}</span>
+        <span className="text-slate-900 font-black text-lg w-8 text-center tabular-nums">
+          {value}
+        </span>
         <button
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
-          className="w-8 h-8 rounded-full bg-white/10 text-white font-bold hover:bg-white/20 transition-colors disabled:opacity-30 text-lg flex items-center justify-center"
+          className="w-9 h-9 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-black text-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none shadow-xs"
         >
           +
         </button>
@@ -64,29 +66,67 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
   const loserPts = cfg.finalLoserPenalty;
 
   return (
-    <div className="min-h-full flex flex-col">
-      {/* Header */}
-      <div className="px-4 pt-6 pb-4">
-        <button onClick={onBack} className="text-white/40 text-sm mb-4 flex items-center gap-1 hover:text-white/70 transition-colors">
-          ← Back
-        </button>
-        <h2 className="text-white font-black text-2xl leading-tight">Tournament Setup</h2>
-        <p className="text-white/40 text-xs mt-1">
-          {playerCount} players · {matchCount} round-robin matches
-        </p>
+    <div className="min-h-full flex flex-col bg-[#F7F9FD] text-slate-900 pb-32">
+      {/* Top Header */}
+      <div className="px-5 pt-6 pb-3 border-b border-slate-200/60 bg-[#F7F9FD]/90 backdrop-blur-md sticky top-0 z-20">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="w-9 h-9 rounded-full bg-white border border-slate-200/80 text-slate-700 font-black text-sm flex items-center justify-center shadow-xs hover:bg-slate-50 active:scale-95 transition-all"
+            title="Back to Player Selection"
+          >
+            ←
+          </button>
+          <div>
+            <h1 className="text-slate-900 font-black text-2xl tracking-tight leading-none">
+              Tournament Setup
+            </h1>
+            <p className="text-slate-500 text-xs mt-1 font-medium">
+              {playerCount} players · {matchCount} round-robin matches
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-4">
+      <div className="flex-1 overflow-y-auto px-5 pt-4 space-y-4">
+        {/* Hero Info Card */}
+        <div className="rounded-[30px] p-5 bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border border-indigo-100/90 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center text-2xl shadow-xs">
+                🏸
+              </div>
+              <div>
+                <p className="text-[10px] uppercase font-black tracking-wider text-indigo-700">
+                  Scoring Configuration
+                </p>
+                <h3 className="text-slate-900 font-black text-base leading-tight">
+                  Round-Robin &amp; Finals
+                </h3>
+              </div>
+            </div>
+            <span className="text-xs font-black text-indigo-900 bg-indigo-100/80 px-3 py-1.5 rounded-full">
+              {matchCount} Matches
+            </span>
+          </div>
+          <p className="text-slate-600 text-xs mt-2.5 leading-relaxed font-medium">
+            Customize target win scores, bonus point thresholds, and final match rules before launching.
+          </p>
+        </div>
 
-        {/* Round-robin rules */}
+        {/* Round-robin rules card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/5 border border-white/10 rounded-2xl px-4 py-2"
+          className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-1"
         >
-          <p className="text-purple-400 text-xs uppercase tracking-widest font-bold pt-2 pb-1">
-            🏸 Round-Robin Match Rules
-          </p>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/80 inline-flex items-center gap-1">
+              <span>🏸</span>
+              <span>Round-Robin Match Rules</span>
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono font-medium">Stage 1</span>
+          </div>
 
           <Stepper
             label="Win score"
@@ -122,23 +162,43 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           />
         </motion.div>
 
-        {/* Points preview */}
+        {/* Round-robin points preview card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-purple-500/10 border border-purple-500/20 rounded-2xl px-4 py-3"
+          className="bg-indigo-50/60 border border-indigo-100/90 rounded-[26px] p-4.5 space-y-2.5"
         >
-          <p className="text-purple-300 text-xs uppercase tracking-widest font-bold mb-2">📊 Match Points Preview</p>
+          <div className="flex items-center justify-between">
+            <p className="text-indigo-900 text-[10px] uppercase tracking-wider font-black">
+              📊 Points Preview (Round-Robin)
+            </p>
+            <span className="text-[10px] text-indigo-600 font-bold">First to {cfg.winScore}</span>
+          </div>
+
           <div className="grid grid-cols-2 gap-2 text-sm">
             {Array.from({ length: cfg.winScore }, (_, i) => i).map((loserScore) => {
               const margin = cfg.winScore - loserScore;
-              const pts = margin >= cfg.bonusMargin ? cfg.winPoints + cfg.bonusPoints : cfg.winPoints;
+              const hasBonus = margin >= cfg.bonusMargin;
+              const pts = hasBonus ? cfg.winPoints + cfg.bonusPoints : cfg.winPoints;
               return (
-                <div key={loserScore} className="flex justify-between items-center bg-white/5 rounded-lg px-3 py-1">
-                  <span className="text-white/50 font-mono">{cfg.winScore}–{loserScore}</span>
-                  <span className={`font-black ${pts > cfg.winPoints ? "text-yellow-400" : "text-white"}`}>
-                    {pts} pts {pts > cfg.winPoints ? "⭐" : ""}
+                <div
+                  key={loserScore}
+                  className={`flex justify-between items-center rounded-xl px-3 py-1.5 border transition-all ${
+                    hasBonus
+                      ? "bg-amber-50/90 border-amber-200/80 shadow-2xs"
+                      : "bg-white border-slate-200/70 shadow-2xs"
+                  }`}
+                >
+                  <span className="text-slate-600 font-mono font-bold text-xs">
+                    {cfg.winScore}–{loserScore}
+                  </span>
+                  <span
+                    className={`font-black text-xs ${
+                      hasBonus ? "text-amber-900" : "text-slate-900"
+                    }`}
+                  >
+                    {pts} pts {hasBonus ? "⭐" : ""}
                   </span>
                 </div>
               );
@@ -146,16 +206,20 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           </div>
         </motion.div>
 
-        {/* Final rules */}
+        {/* Final rules card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white/5 border border-yellow-500/20 rounded-2xl px-4 py-2"
+          className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-1"
         >
-          <p className="text-yellow-400 text-xs uppercase tracking-widest font-bold pt-2 pb-1">
-            🏆 Final Match Rules
-          </p>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/80 inline-flex items-center gap-1">
+              <span>🏆</span>
+              <span>Final Match Rules</span>
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono font-medium">Championship</span>
+          </div>
 
           <Stepper
             label="Final win score"
@@ -183,7 +247,7 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           />
           <Stepper
             label="Loser penalty"
-            hint={`Points deducted from loser when conceding margin ≥ ${cfg.finalBonusMargin} (currently: ${loserPts})`}
+            hint={`Points deducted from loser when margin ≥ ${cfg.finalBonusMargin} (currently: ${loserPts})`}
             value={Math.abs(cfg.finalLoserPenalty)}
             onChange={(v) => update("finalLoserPenalty", -v)}
             min={0}
@@ -191,64 +255,83 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           />
         </motion.div>
 
-        {/* Final preview */}
+        {/* Final preview card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl px-4 py-3"
+          className="bg-amber-50/70 border border-amber-200/80 rounded-[26px] p-4.5 space-y-2.5"
         >
-          <p className="text-yellow-300 text-xs uppercase tracking-widest font-bold mb-2">🏆 Final Points Preview</p>
-          <div className="space-y-1 text-sm">
+          <div className="flex items-center justify-between">
+            <p className="text-amber-900 text-[10px] uppercase tracking-wider font-black">
+              🏆 Final Points Preview
+            </p>
+            <span className="text-[10px] text-amber-800 font-bold">First to {cfg.finalWinScore}</span>
+          </div>
+
+          <div className="space-y-1.5 text-xs">
             {[
               { score: `${cfg.finalWinScore}–0`, margin: cfg.finalWinScore },
               { score: `${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin}`, margin: cfg.finalBonusMargin },
               { score: `${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin + 1}`, margin: cfg.finalBonusMargin - 1 },
               { score: `${cfg.finalWinScore}–${cfg.finalWinScore - 1}`, margin: 1 },
-            ].filter((v, i, arr) => arr.findIndex(x => x.score === v.score) === i).map(({ score, margin }) => {
+            ].filter((v, i, arr) => arr.findIndex((x) => x.score === v.score) === i).map(({ score, margin }) => {
               const winnerPts = cfg.finalWinBase;
               const loserPtsVal = margin >= cfg.finalBonusMargin ? cfg.finalLoserPenalty : 0;
               return (
-                <div key={score} className="flex justify-between items-center bg-white/5 rounded-lg px-3 py-1">
-                  <span className="text-white/50 font-mono">{score}</span>
-                  <span className="text-white/60 text-xs">
-                    Winner: <span className="text-green-400 font-bold">+{winnerPts} pts</span>
-                    {" · "}
-                    Loser: <span className={loserPtsVal < 0 ? "text-red-400 font-bold" : "text-white/40"}>{loserPtsVal} pts</span>
-                  </span>
+                <div
+                  key={score}
+                  className="flex justify-between items-center bg-white rounded-xl px-3 py-2 border border-amber-200/60 shadow-2xs"
+                >
+                  <span className="text-slate-700 font-mono font-bold">{score}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-600 font-medium text-[11px]">
+                      Winner: <strong className="text-emerald-700 font-black">+{winnerPts} pts</strong>
+                    </span>
+                    <span className="text-slate-300">·</span>
+                    <span className="text-slate-600 font-medium text-[11px]">
+                      Loser:{" "}
+                      <strong className={loserPtsVal < 0 ? "text-rose-600 font-black" : "text-slate-500 font-bold"}>
+                        {loserPtsVal} pts
+                      </strong>
+                    </span>
+                  </div>
                 </div>
               );
             })}
           </div>
         </motion.div>
+
         {/* Practice / Test Mode Toggle Card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           onClick={() => setCfg((c) => ({ ...c, isPractice: !c.isPractice }))}
-          className={`cursor-pointer border rounded-2xl p-4 transition-all flex items-center justify-between gap-3 ${
+          className={`cursor-pointer border rounded-[28px] p-4.5 transition-all flex items-center justify-between gap-3 shadow-xs ${
             cfg.isPractice
-              ? "bg-amber-500/15 border-amber-500/40 shadow-lg shadow-amber-500/10"
-              : "bg-white/5 border-white/10 hover:border-white/20"
+              ? "bg-amber-50/90 border-2 border-amber-400"
+              : "bg-white border border-slate-200/80 hover:border-slate-300"
           }`}
         >
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${
-              cfg.isPractice ? "bg-amber-500/30 text-amber-300" : "bg-white/10 text-gray-400"
-            }`}>
+            <div
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-xs ${
+                cfg.isPractice ? "bg-amber-100 border border-amber-300 text-amber-900" : "bg-slate-100 text-slate-600"
+              }`}
+            >
               🧪
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white">Practice / Test Mode</span>
+                <span className="text-sm font-black text-slate-900">Practice / Test Mode</span>
                 {cfg.isPractice && (
-                  <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/40">
+                  <span className="text-[10px] bg-amber-200/80 text-amber-950 font-black px-2 py-0.5 rounded-full border border-amber-300">
                     TESTING
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5 font-medium leading-tight">
                 {cfg.isPractice
                   ? "Test match active: won't be saved to permanent history or leaderboards."
                   : "Ranked match: will be saved to Day Table & permanent Leaderboards."}
@@ -257,30 +340,37 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           </div>
 
           {/* Toggle Switch */}
-          <div className={`w-12 h-6 rounded-full transition-colors p-0.5 flex items-center ${
-            cfg.isPractice ? "bg-amber-500 justify-end" : "bg-white/20 justify-start"
-          }`}>
+          <div
+            className={`w-12 h-6 rounded-full transition-colors p-0.5 flex items-center flex-shrink-0 ${
+              cfg.isPractice ? "bg-slate-950 justify-end" : "bg-slate-200 justify-start"
+            }`}
+          >
             <motion.div
               layout
-              className="w-5 h-5 rounded-full bg-white shadow-md"
+              className="w-5 h-5 rounded-full bg-white shadow-sm"
             />
           </div>
         </motion.div>
       </div>
 
-      {/* Start button */}
-      <div className="px-4 pb-6 pt-2">
+      {/* Sticky Bottom CTA Bar */}
+      <div className="sticky bottom-0 p-5 bg-gradient-to-t from-[#F7F9FD] via-[#F7F9FD]/95 to-transparent pt-3 z-30">
         <motion.button
           onClick={() => onConfirm(cfg)}
-          whileTap={{ scale: 0.97 }}
-          className={`w-full py-4 rounded-2xl font-black text-white text-lg shadow-lg transition-all ${
+          whileTap={{ scale: 0.98 }}
+          className={`w-full py-4 rounded-full font-black text-white text-base shadow-lg transition-all flex items-center justify-center gap-2 ${
             cfg.isPractice
-              ? "bg-gradient-to-r from-amber-600 to-orange-600 shadow-amber-500/30"
-              : "bg-gradient-to-r from-purple-600 to-blue-600 shadow-purple-500/30"
+              ? "bg-amber-600 hover:bg-amber-500 shadow-amber-600/20"
+              : "bg-slate-950 hover:bg-slate-800 shadow-slate-950/20"
           }`}
         >
-          {cfg.isPractice ? "Start Practice Tournament 🧪" : "Start Ranked Tournament 🏸"}
+          <span>{cfg.isPractice ? "Start Practice Tournament 🧪" : "Start Ranked Tournament 🏸"}</span>
+          <span>&rarr;</span>
         </motion.button>
+      </div>
+    </div>
+  );
+}  </motion.button>
       </div>
     </div>
   );
