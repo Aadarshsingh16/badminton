@@ -542,65 +542,98 @@ export default function PlayPage() {
         </AnimatePresence>
 
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-[#F7F9FD]/90 backdrop-blur-md border-b border-slate-200/60 px-5 pt-5 pb-0 text-slate-900">
-          <div className="flex items-center justify-between mb-3">
+        <div className="sticky top-0 z-10 bg-[#F7F9FD]/90 backdrop-blur-md border-b border-slate-200/60 px-5 pt-4 pb-0 text-slate-900">
+          {/* Top Utility Row: Status chip on left, clean circular buttons on right */}
+          <div className="flex items-center justify-between mb-2.5">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-slate-900 font-black text-xl tracking-tight">Tournament</h2>
-                {currentTournament.isPractice ? (
-                  <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-2.5 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 shadow-2xs">
-                    <span>🧪</span>
-                    <span>Practice Mode</span>
-                  </span>
-                ) : (
-                  <SyncStatusBadge />
-                )}
-              </div>
-              <p className="text-slate-500 text-xs font-medium mt-0.5">
-                {playedMatches.length}/{currentTournament.matches.length} played · First to {currentTournament.config.winScore}
-              </p>
+              {currentTournament.isPractice ? (
+                <span className="text-[11px] bg-amber-50 text-amber-900 font-extrabold px-3 py-1 rounded-full border border-amber-200/90 flex items-center gap-1.5 shadow-2xs">
+                  <span>🧪</span>
+                  <span>Practice Mode</span>
+                </span>
+              ) : (
+                <SyncStatusBadge />
+              )}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => {
                   setPinIsInvalid(false);
                   setShowPinModal(true);
                 }}
                 title="Scorekeeper PIN"
-                className="w-8 h-8 rounded-full bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs flex items-center justify-center text-xs"
+                className="w-8 h-8 rounded-full bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 transition-all active:scale-95 shadow-2xs flex items-center justify-center text-xs relative"
               >
                 <span>🔑</span>
+                {apiSync.hasPin() && (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                )}
               </button>
               <button
                 onClick={() => setShowShareModal(true)}
-                className="text-xs bg-white border border-slate-200/80 text-slate-700 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors font-bold flex items-center gap-1 shadow-2xs"
+                title="Share live stream"
+                className="w-8 h-8 rounded-full bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 transition-all active:scale-95 shadow-2xs flex items-center justify-center text-xs"
               >
                 <span>📡</span>
-                <span>Share</span>
               </button>
               <button
                 onClick={() => setShowShuffleConfirm(true)}
-                className="text-xs bg-white border border-slate-200/80 text-slate-700 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors font-bold flex items-center gap-1 shadow-2xs"
+                title="Shuffle fixtures order"
+                className="w-8 h-8 rounded-full bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 transition-all active:scale-95 shadow-2xs flex items-center justify-center text-xs"
               >
                 <span>🔀</span>
-                <span>Shuffle</span>
               </button>
             </div>
           </div>
 
+          {/* Title & Match Progress Hero Row */}
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-slate-900 font-black text-2xl tracking-tight leading-none">
+                Tournament
+              </h1>
+              <p className="text-slate-500 text-xs font-semibold mt-1">
+                First to {currentTournament.config.winScore} pts · {currentTournament.playerIds.length} players
+              </p>
+            </div>
+
+            {/* Circular progress badge inspired by mockup */}
+            <div className="flex items-center gap-2 bg-white border border-slate-200/80 rounded-[20px] py-1.5 px-3 shadow-2xs">
+              <div className="w-7 h-7 rounded-full bg-indigo-50 border border-indigo-200 flex items-center justify-center">
+                <span className="text-[11px] font-black text-indigo-900 tabular-nums">
+                  {playedMatches.length}/{currentTournament.matches.length}
+                </span>
+              </div>
+              <div className="text-left">
+                <p className="text-[9px] uppercase font-black tracking-wider text-slate-400 leading-none">Matches</p>
+                <p className="text-[11px] font-black text-slate-800 leading-tight mt-0.5">
+                  {playedMatches.length === currentTournament.matches.length
+                    ? "100%"
+                    : `${Math.round((playedMatches.length / currentTournament.matches.length) * 100)}%`}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Segmented control */}
-          <div className="flex gap-1.5 bg-white rounded-full p-1 border border-slate-200/80 shadow-2xs mb-2.5">
+          <div className="flex gap-1.5 bg-slate-100/90 rounded-full p-1 border border-slate-200/70 shadow-2xs mb-2.5">
             {(["fixtures", "table"] as FixtureTab[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setFixtureTab(tab)}
-                className={`flex-1 py-1.5 rounded-full text-xs font-black transition-all capitalize ${
+                className={`flex-1 py-2 rounded-full text-xs font-black transition-all capitalize flex items-center justify-center gap-1.5 ${
                   fixtureTab === tab
                     ? "bg-slate-950 text-white shadow-xs"
-                    : "text-slate-500 hover:text-slate-800"
+                    : "text-slate-500 hover:text-slate-800 font-bold"
                 }`}
               >
-                {tab === "fixtures" ? "📋 Fixtures" : "📊 Standings"}
+                <span>{tab === "fixtures" ? "📋" : "📊"}</span>
+                <span>{tab === "fixtures" ? "Fixtures" : "Standings"}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  fixtureTab === tab ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-600"
+                }`}>
+                  {tab === "fixtures" ? currentTournament.matches.length : table.length}
+                </span>
               </button>
             ))}
           </div>
