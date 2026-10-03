@@ -158,21 +158,21 @@ export default function PlayPage() {
       const viewerSlug = getViewerSlug();
       return (
         <div className="min-h-[80vh] flex flex-col items-center justify-center text-center px-6">
-          <div className="w-16 h-16 rounded-3xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-3xl mb-4 shadow-xl shadow-purple-600/20 animate-pulse">
+          <div className="w-16 h-16 rounded-[28px] bg-indigo-50 border border-indigo-200 flex items-center justify-center text-3xl mb-4 shadow-xs">
             📡
           </div>
-          <span className="text-[11px] font-black uppercase tracking-wider text-purple-400 mb-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-indigo-600 mb-1">
             Spectator Mode Active
           </span>
-          <h2 className="text-white font-black text-xl mb-2">Connecting to Live Court...</h2>
-          <p className="text-white/50 text-xs max-w-xs mb-6">
+          <h2 className="text-slate-900 font-black text-2xl mb-2">Connecting to Live Court...</h2>
+          <p className="text-slate-500 text-xs max-w-xs mb-6 font-medium">
             You are in live spectator mode. Taking you back to the court action.
           </p>
           <div className="flex flex-col sm:flex-row gap-2.5 w-full max-w-xs">
             {viewerSlug && (
               <a
                 href={`/live/${viewerSlug}`}
-                className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-3.5 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-black text-xs shadow-md transition-all flex items-center justify-center gap-1.5 active:scale-95"
               >
                 <span>👁️</span>
                 <span>Open Live Court</span>
@@ -183,7 +183,7 @@ export default function PlayPage() {
                 clearViewerMode();
                 window.location.reload();
               }}
-              className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/70 font-semibold text-xs transition-colors"
+              className="w-full py-3.5 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 font-bold text-xs transition-colors shadow-2xs"
             >
               Switch to Host Mode ⚙️
             </button>
