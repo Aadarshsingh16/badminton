@@ -40,7 +40,7 @@ export default function RootLayout({
           </div>
 
           {/* Scrollable content area above the tab bar */}
-          <main className="flex-1 overflow-y-auto pb-24 relative z-0">
+          <main className="flex-1 overflow-y-auto pb-24 relative">
             {children}
           </main>
 
