@@ -370,8 +370,4 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
       </div>
     </div>
   );
-}  </motion.button>
-      </div>
-    </div>
-  );
 }
