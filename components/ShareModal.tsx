@@ -60,37 +60,37 @@ export function ShareModal({ open, onClose, slug }: ShareModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50"
           />
 
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed inset-x-6 top-1/2 -translate-y-1/2 max-w-sm mx-auto z-50 bg-slate-900 border border-purple-500/30 rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center"
+            className="fixed inset-x-6 top-1/2 -translate-y-1/2 max-w-sm mx-auto z-50 bg-white border border-slate-200/80 rounded-[32px] p-6 shadow-2xl flex flex-col items-center text-center"
           >
-            <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-2xl mb-3">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-3xl mb-3 shadow-2xs">
               📡
             </div>
 
-            <h3 className="text-white font-black text-xl mb-1">Live Share Link</h3>
-            <p className="text-white/50 text-xs mb-3">
+            <h3 className="text-slate-900 font-black text-xl mb-1">Live Share Link</h3>
+            <p className="text-slate-500 text-xs mb-3 font-medium leading-relaxed">
               Friends can scan or open the link to watch real-time scores courtside!
             </p>
 
             {isCloudSynced && (
-              <div className="mb-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="mb-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Cloud Stream Ready ✓
               </div>
             )}
 
             {/* QR Code Container */}
-            <div className="bg-white p-3.5 rounded-2xl shadow-inner mb-5">
+            <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-2xl shadow-inner mb-4">
               {shareUrl && (
                 <QRCodeSVG
                   value={shareUrl}
-                  size={180}
+                  size={175}
                   level="M"
                   includeMargin={false}
                 />
@@ -98,19 +98,19 @@ export function ShareModal({ open, onClose, slug }: ShareModalProps) {
             </div>
 
             {/* URL input + copy button */}
-            <div className="w-full flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1.5 mb-4">
+            <div className="w-full flex items-center gap-2 bg-slate-100 border border-slate-200/80 rounded-full p-1.5 mb-3">
               <input
                 type="text"
                 readOnly
                 value={shareUrl}
-                className="bg-transparent text-white/70 text-xs px-2 flex-1 outline-none truncate font-mono"
+                className="bg-transparent text-slate-700 text-xs px-3 flex-1 outline-none truncate font-mono font-medium"
               />
               <button
                 onClick={handleCopy}
-                className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all ${
+                className={`text-xs font-black px-3.5 py-1.5 rounded-full transition-all shadow-2xs ${
                   copied
-                    ? "bg-green-500 text-white"
-                    : "bg-purple-600 hover:bg-purple-500 text-white"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-slate-950 hover:bg-slate-800 text-white active:scale-95"
                 }`}
               >
                 {copied ? "Copied! ✓" : "Copy"}
@@ -120,7 +120,7 @@ export function ShareModal({ open, onClose, slug }: ShareModalProps) {
             {/* Close button */}
             <button
               onClick={onClose}
-              className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/70 font-semibold text-sm transition-colors"
+              className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
             >
               Done
             </button>
