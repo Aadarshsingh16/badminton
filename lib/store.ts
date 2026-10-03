@@ -317,6 +317,8 @@ export const useStore = create<AppState>()(
       },
       pastTournaments: [],
       completedDays: [],
+      isScoreSheetOpen: false,
+      setIsScoreSheetOpen: (open) => set({ isScoreSheetOpen: open }),
 
       addPlayer: (player) => {
         set((s) => ({
