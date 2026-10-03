@@ -645,7 +645,7 @@ export default function ProfilesPage() {
                 {activeLore.title}
               </p>
 
-              {/* Origin & Trophy Chips */}
+              {/* Origin, Trophy & Win Rate Chips */}
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/90 border border-slate-200/80 text-[10px] font-bold text-slate-600 shadow-xs">
                   {activeLore.origin}
@@ -655,18 +655,18 @@ export default function ProfilesPage() {
                     🏆 {activeStats.tournamentsWon} Won
                   </span>
                 )}
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-100/80 border border-indigo-200/70 text-[10px] font-black text-indigo-800">
+                  📈 {winRate}% WR
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Player Tagline & Quick Highlight */}
-          <div className="mt-3.5 pt-3 border-t border-indigo-100/70 flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-600 italic truncate max-w-[78%]">
+          {/* Full Player Tagline Quote - Never Truncated */}
+          <div className="mt-3.5 pt-3 border-t border-indigo-100/70">
+            <p className="text-xs font-semibold text-slate-700 italic leading-relaxed">
               &ldquo;{activeLore.tagline}&rdquo;
             </p>
-            <span className="text-[10px] font-black text-indigo-700 bg-indigo-100/70 px-2 py-0.5 rounded-full">
-              {winRate}% WR
-            </span>
           </div>
         </div>
 
