@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { pool } from "../db/client";
+import { requireScorekeeper } from "../middleware/auth";
 
 export const leaderboardRouter = Router();
 
@@ -155,3 +156,20 @@ dayResultsRouter.get("/", async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch day results", details: err.message });
   }
 });
+
+// DELETE /day-results/:date — delete day honors record for a date or ID (scorekeeper only)
+dayResultsRouter.delete("/:date", requireScorekeeper, async (req, res) => {
+  const { date } = req.params;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM day_results WHERE date::text = $1 OR id::text = $1`,
+      [date]
+    );
+    res.json({ success: true, deletedDate: date, rowCount: result.rowCount });
+  } catch (err: any) {
+    console.error("DELETE /day-results/:date error:", err);
+    res.status(500).json({ error: "Failed to delete day result", details: err.message });
+  }
+});
+

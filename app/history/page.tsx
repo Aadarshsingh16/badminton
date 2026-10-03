@@ -127,7 +127,10 @@ export default function HistoryPage() {
   const [dayHonors, setDayHonors] = useState<DayHonors | null>(null);
   const [expandedTournaments, setExpandedTournaments] = useState<{ [tId: string]: boolean }>({});
   const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(null);
+  const [dayToDelete, setDayToDelete] = useState<string | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
+  const [pinAction, setPinAction] = useState<"tournament" | "day">("tournament");
+  const [targetIdForPin, setTargetIdForPin] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
 
@@ -143,6 +146,8 @@ export default function HistoryPage() {
 
   const handleDeleteTournament = async (tId: string) => {
     if (!apiSync.hasPin()) {
+      setPinAction("tournament");
+      setTargetIdForPin(tId);
       setShowPinModal(true);
       return;
     }
@@ -191,6 +196,62 @@ export default function HistoryPage() {
       }
     } catch (e) {
       console.warn("Failed to delete tournament on backend, preserved local deletion:", e);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteDay = async (date: string) => {
+    if (!apiSync.hasPin()) {
+      setPinAction("day");
+      setTargetIdForPin(date);
+      setShowPinModal(true);
+      return;
+    }
+
+    setIsDeleting(true);
+
+    // 1. Immediately delete locally in Zustand store, permanent archive, and purge from sync queue
+    useStore.getState().resetDayTable(date);
+
+    // 2. Immediately purge from local historyData state for instantaneous UI removal
+    setHistoryData((prev) => {
+      if (!prev) return null;
+      const updatedDays = prev.days.filter((d) => d.date !== date);
+      const remainingMatches = updatedDays.flatMap((d) => d.tournaments.flatMap((t) => t.matches));
+
+      return {
+        ...prev,
+        days: updatedDays,
+        totalMatches: remainingMatches.length,
+        totalPoints: remainingMatches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
+      };
+    });
+
+    // 3. Immediately purge from local dayHonors state
+    setDayHonors((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        history: prev.history.filter((h) => h.date !== date),
+      };
+    });
+
+    setDayToDelete(null);
+
+    // 4. Delete from backend database
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        "x-scorekeeper-pin": apiSync.getPin(),
+      };
+      await Promise.all([
+        fetch(`${backendUrl}/day-tables/${date}`, { method: "DELETE", headers }),
+        fetch(`${backendUrl}/day-results/${date}`, { method: "DELETE", headers }),
+      ]);
+      await Promise.all([fetchHistory(), fetchLeaderboards()]);
+    } catch (e) {
+      console.warn("Failed to delete day on backend, preserved local deletion:", e);
     } finally {
       setIsDeleting(false);
     }
@@ -967,9 +1028,21 @@ export default function HistoryPage() {
                   {/* Day date header */}
                   <div className="flex items-center gap-2 px-1">
                     <div className="h-px flex-1 bg-slate-200" />
-                    <span className="text-xs font-extrabold text-slate-700 bg-slate-200/70 border border-slate-200/80 px-3.5 py-1 rounded-full shadow-2xs">
-                      📅 {dayGroup.date}
-                    </span>
+                    <div className="flex items-center gap-1.5 bg-slate-200/70 border border-slate-200/80 pl-3.5 pr-2 py-1 rounded-full shadow-2xs">
+                      <span className="text-xs font-extrabold text-slate-700">
+                        📅 {dayGroup.date}
+                      </span>
+                      {!isViewer && (
+                        <button
+                          type="button"
+                          onClick={() => setDayToDelete(dayGroup.date)}
+                          title={`Delete all records for ${dayGroup.date}`}
+                          className="w-5 h-5 rounded-full hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors flex items-center justify-center cursor-pointer text-[10px]"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
                     <div className="h-px flex-1 bg-slate-200" />
                   </div>
 
@@ -1369,13 +1442,23 @@ export default function HistoryPage() {
                 {dayHonors.history.map((h) => (
                   <div key={h.id} className="py-2.5 flex items-center justify-between text-xs">
                     <span className="font-mono text-slate-400 text-xs font-bold">{h.date}</span>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <span className="text-amber-700 font-bold flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full">
                         👑 {h.topPlayerName}
                       </span>
                       <span className="text-rose-700 font-bold flex items-center gap-1 bg-rose-50 px-2 py-0.5 rounded-full">
                         🥄 {h.bottomPlayerName}
                       </span>
+                      {!isViewer && (
+                        <button
+                          type="button"
+                          onClick={() => setDayToDelete(h.date)}
+                          title={`Delete Day Result for ${h.date}`}
+                          className="w-6 h-6 rounded-full hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors flex items-center justify-center cursor-pointer text-xs ml-1"
+                        >
+                          🗑️
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1425,6 +1508,53 @@ export default function HistoryPage() {
                   className="flex-1 py-3 px-4 rounded-full bg-red-600 hover:bg-red-700 active:scale-95 text-xs font-extrabold text-white shadow-md transition-all flex items-center justify-center gap-1.5"
                 >
                   {isDeleting ? <span>Deleting...</span> : <span>Delete</span>}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Day Confirmation Modal */}
+      <AnimatePresence>
+        {dayToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-sm bg-white border border-slate-200/80 rounded-[32px] p-6 shadow-2xl space-y-4 text-slate-900"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-rose-50 flex items-center justify-center text-xl text-rose-600 shadow-2xs">
+                  🗑️
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-slate-900">Delete Day Table?</h2>
+                  <p className="text-[11px] text-slate-400 font-medium">{dayToDelete}</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-500 leading-relaxed">
+                This will permanently delete the day table, all tournaments, matches, and day champions for {dayToDelete}.
+              </p>
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDayToDelete(null)}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteDay(dayToDelete)}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 px-4 rounded-full bg-rose-600 hover:bg-rose-700 active:scale-95 text-xs font-extrabold text-white shadow-md transition-all flex items-center justify-center gap-1.5"
+                >
+                  {isDeleting ? <span>Deleting...</span> : <span>Delete Day</span>}
                 </button>
               </div>
             </motion.div>
@@ -1594,12 +1724,20 @@ export default function HistoryPage() {
       {/* Scorekeeper PIN Modal */}
       <PinModal
         open={showPinModal}
-        onClose={() => setShowPinModal(false)}
+        onClose={() => {
+          setShowPinModal(false);
+          setTargetIdForPin(null);
+        }}
         onSuccess={() => {
           setShowPinModal(false);
-          if (tournamentToDelete) {
+          if (pinAction === "day" && targetIdForPin) {
+            handleDeleteDay(targetIdForPin);
+          } else if (tournamentToDelete) {
             handleDeleteTournament(tournamentToDelete);
+          } else if (targetIdForPin) {
+            handleDeleteTournament(targetIdForPin);
           }
+          setTargetIdForPin(null);
         }}
       />
     </div>

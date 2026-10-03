@@ -10,7 +10,7 @@ dayTablesRouter.get("/:date", async (req, res) => {
 
   try {
     const dayRes = await pool.query(
-      `SELECT id, date, closed, totals, closed_at FROM day_tables WHERE date = $1`,
+      `SELECT id, date, closed, totals, closed_at FROM day_tables WHERE date::text = $1`,
       [date]
     );
 
@@ -65,7 +65,7 @@ dayTablesRouter.post("/close", requireScorekeeper, async (req, res) => {
       const topPlayerId = entries[0][0];
       const bottomPlayerId = entries[entries.length - 1][0];
 
-      // Insert into day_results
+      // Insert or update day_results
       await pool.query(
         `INSERT INTO day_results (day_table_id, date, top_player_id, bottom_player_id)
          VALUES ($1, $2, $3, $4)`,
@@ -80,5 +80,61 @@ dayTablesRouter.post("/close", requireScorekeeper, async (req, res) => {
     await pool.query("ROLLBACK");
     console.error("POST /day-tables/close error:", err);
     res.status(500).json({ error: "Failed to close day table", details: err.message });
+  }
+});
+
+// DELETE /day-tables/:date — reset or delete a day table, all associated tournaments, matches, and day results (scorekeeper only)
+dayTablesRouter.delete("/:date", requireScorekeeper, async (req, res) => {
+  const { date } = req.params;
+
+  try {
+    await pool.query("BEGIN");
+
+    // Find the day table for this date
+    const dayRes = await pool.query(
+      `SELECT id FROM day_tables WHERE date::text = $1`,
+      [date]
+    );
+
+    const dayId = dayRes.rows[0]?.id;
+
+    if (dayId) {
+      // 1. Delete day results
+      await pool.query(
+        `DELETE FROM day_results WHERE day_table_id = $1 OR date::text = $2`,
+        [dayId, date]
+      );
+
+      // 2. Delete matches belonging to tournaments in this day
+      await pool.query(
+        `DELETE FROM matches WHERE tournament_id IN (SELECT id FROM tournaments WHERE day_id = $1)`,
+        [dayId]
+      );
+
+      // 3. Delete tournaments belonging to this day
+      await pool.query(
+        `DELETE FROM tournaments WHERE day_id = $1`,
+        [dayId]
+      );
+
+      // 4. Delete the day table record itself
+      await pool.query(
+        `DELETE FROM day_tables WHERE id = $1`,
+        [dayId]
+      );
+    } else {
+      // Clean up any orphaned day results by date
+      await pool.query(
+        `DELETE FROM day_results WHERE date::text = $1`,
+        [date]
+      );
+    }
+
+    await pool.query("COMMIT");
+    res.json({ success: true, deletedDate: date });
+  } catch (err: any) {
+    await pool.query("ROLLBACK");
+    console.error("DELETE /day-tables/:date error:", err);
+    res.status(500).json({ error: "Failed to delete day table", details: err.message });
   }
 });

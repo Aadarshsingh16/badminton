@@ -20,14 +20,16 @@ const PODIUM_COLORS = ["#D97706", "#475569", "#C2410C", "#64748B"];
 const RANK_MEDAL = ["🥇", "🥈", "🥉", "4th", "5th", "6th", "7th"];
 
 export default function DayPage() {
-  const { players, dayTable, currentTournament, pastTournaments, startNewDay } = useStore();
+  const { players, dayTable, currentTournament, pastTournaments, startNewDay, resetDayTable } = useStore();
   const [activeDayTab, setActiveDayTab] = useState<"standings" | "tournaments">("standings");
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
   const [expandedTournament, setExpandedTournament] = useState<string | null>(null);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showFinishDayModal, setShowFinishDayModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  const [pinAction, setPinAction] = useState<"finish" | "reset">("finish");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [cloudDayData, setCloudDayData] = useState<{
     miniLeaderboard: Array<{ playerId: string; name: string; points: number; matches: number; wins: number }>;
@@ -39,35 +41,36 @@ export default function DayPage() {
   const [viewerSlug, setViewerSlugState] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const fetchCloudDay = async () => {
+    setLoading(true);
+    try {
+      const backendUrl = getBackendUrl();
+      const dateParam = dayTable.date || new Date().toISOString().split("T")[0];
+      const res = await fetch(`${backendUrl}/history?from=${dateParam}&to=${dateParam}`);
+      if (res.ok) {
+        const json = await res.json();
+        const todayGroup = json.days?.[0];
+        setCloudDayData({
+          miniLeaderboard: json.miniLeaderboard || [],
+          tournaments: todayGroup?.tournaments || [],
+          totalMatches: json.totalMatches || 0,
+          totalPoints: json.totalPoints || 0,
+        });
+      }
+    } catch (err) {
+      console.warn("Failed to fetch cloud day data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const viewer = isViewerMode() && !currentTournament;
     setIsViewer(viewer);
     setViewerSlugState(getViewerSlug());
 
-    const fetchCloudDay = async () => {
-      setLoading(true);
-      try {
-        const backendUrl = getBackendUrl();
-        const res = await fetch(`${backendUrl}/history?range=day`);
-        if (res.ok) {
-          const json = await res.json();
-          const todayGroup = json.days?.[0];
-          setCloudDayData({
-            miniLeaderboard: json.miniLeaderboard || [],
-            tournaments: todayGroup?.tournaments || [],
-            totalMatches: json.totalMatches || 0,
-            totalPoints: json.totalPoints || 0,
-          });
-        }
-      } catch (err) {
-        console.warn("Failed to fetch cloud day data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCloudDay();
-  }, [currentTournament]);
+  }, [currentTournament, dayTable.date]);
 
   const getPlayer = (id: string): Player =>
     players.find((p) => p.id === id) ?? { id, name: id, avatar: "custom" as any };
@@ -80,7 +83,7 @@ export default function DayPage() {
       if (rec.length > 0) list = rec;
     }
 
-    if (list.length === 0 && cloudDayData?.tournaments && cloudDayData.tournaments.length > 0) {
+    if (isViewer && list.length === 0 && cloudDayData?.tournaments && cloudDayData.tournaments.length > 0) {
       return cloudDayData.tournaments.map((ct: any) => {
         const mappedMatches = (ct.matches || []).map((m: any) => ({
           ...m,
@@ -110,9 +113,9 @@ export default function DayPage() {
     }
 
     return list;
-  }, [pastTournaments, cloudDayData]);
+  }, [pastTournaments, cloudDayData, isViewer]);
 
-  // Sort players by day total (use local dayTable if host has it, else cloud day summary)
+  // Sort players by day total (use local dayTable if host has it, else cloud day summary for viewers)
   const sortedPlayers = useMemo(() => {
     if (Object.keys(dayTable.totals).length > 0 && !isViewer) {
       return Object.entries(dayTable.totals)
@@ -120,7 +123,7 @@ export default function DayPage() {
         .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
     }
 
-    if (cloudDayData?.miniLeaderboard && cloudDayData.miniLeaderboard.length > 0) {
+    if (isViewer && cloudDayData?.miniLeaderboard && cloudDayData.miniLeaderboard.length > 0) {
       return cloudDayData.miniLeaderboard.map((item, idx) => ({
         id: item.playerId,
         pts: item.points,
@@ -128,9 +131,7 @@ export default function DayPage() {
       }));
     }
 
-    return Object.entries(dayTable.totals)
-      .sort(([, a], [, b]) => b - a)
-      .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
+    return [];
   }, [dayTable.totals, cloudDayData, isViewer]);
 
   const hasTournaments = effectiveTournaments.length > 0;
@@ -138,6 +139,7 @@ export default function DayPage() {
 
   const handleFinishDay = () => {
     if (!apiSync.hasPin()) {
+      setPinAction("finish");
       setShowPinModal(true);
       return;
     }
@@ -151,6 +153,45 @@ export default function DayPage() {
     setShowConfetti(true);
     setShowFinishDayModal(false);
     startNewDay();
+  };
+
+  const handleResetDay = async () => {
+    if (!apiSync.hasPin()) {
+      setPinAction("reset");
+      setShowPinModal(true);
+      return;
+    }
+
+    setIsDeleting(true);
+    const targetDate = dayTable.date || new Date().toISOString().split("T")[0];
+
+    // 1. Immediately wipe cloud state in UI
+    setCloudDayData(null);
+
+    // 2. Call store resetDayTable
+    resetDayTable(targetDate);
+
+    setShowConfirmReset(false);
+
+    // 3. Directly call backend to delete the day table & day results
+    try {
+      const backendUrl = getBackendUrl();
+      const headers = {
+        "Content-Type": "application/json",
+        "x-scorekeeper-pin": apiSync.getPin(),
+      };
+      await Promise.all([
+        fetch(`${backendUrl}/day-tables/${targetDate}`, { method: "DELETE", headers }),
+        fetch(`${backendUrl}/day-results/${targetDate}`, { method: "DELETE", headers }),
+      ]);
+    } catch (e) {
+      console.warn("Direct day delete failed, queued in background:", e);
+    } finally {
+      setIsDeleting(false);
+    }
+
+    // 4. Re-fetch cloud day
+    fetchCloudDay();
   };
 
   /** For a given player, get their position in each tournament */
@@ -361,19 +402,20 @@ export default function DayPage() {
               </p>
               <div className="flex gap-2.5 pt-2">
                 <button
+                  type="button"
                   onClick={() => setShowConfirmReset(false)}
+                  disabled={isDeleting}
                   className="flex-1 py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    startNewDay();
-                    setShowConfirmReset(false);
-                  }}
-                  className="flex-1 py-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-sm transition-all"
+                  type="button"
+                  onClick={handleResetDay}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
                 >
-                  Reset
+                  {isDeleting ? <span>Resetting...</span> : <span>Reset</span>}
                 </button>
               </div>
             </motion.div>
@@ -387,7 +429,11 @@ export default function DayPage() {
         onClose={() => setShowPinModal(false)}
         onSuccess={() => {
           setShowPinModal(false);
-          handleFinishDay();
+          if (pinAction === "reset") {
+            handleResetDay();
+          } else {
+            handleFinishDay();
+          }
         }}
       />
 

@@ -323,6 +323,10 @@ tournamentsRouter.delete("/:id", requireScorekeeper, async (req, res) => {
   try {
     await pool.query("BEGIN");
 
+    // Look up day_id before deleting
+    const tQuery = await pool.query("SELECT day_id FROM tournaments WHERE id = $1", [tournamentId]);
+    const tourneyDayId = tQuery.rows[0]?.day_id;
+
     // Delete matches belonging to tournament
     await pool.query("DELETE FROM matches WHERE tournament_id = $1", [tournamentId]);
 
@@ -332,6 +336,53 @@ tournamentsRouter.delete("/:id", requireScorekeeper, async (req, res) => {
     if (result.rowCount === 0) {
       await pool.query("ROLLBACK");
       return res.status(404).json({ error: "Tournament not found" });
+    }
+
+    // If no more tournaments exist for this day, reset day_tables totals and remove day_results
+    if (tourneyDayId) {
+      const remaining = await pool.query(
+        "SELECT id FROM tournaments WHERE day_id = $1",
+        [tourneyDayId]
+      );
+
+      if (remaining.rowCount === 0) {
+        await pool.query(
+          "UPDATE day_tables SET totals = '{}', closed = false, closed_at = null WHERE id = $1",
+          [tourneyDayId]
+        );
+        await pool.query(
+          "DELETE FROM day_results WHERE day_table_id = $1",
+          [tourneyDayId]
+        );
+      } else {
+        const ptsQuery = await pool.query(
+          `SELECT player_id, SUM(pts) as total_pts FROM (
+             SELECT m.player_a AS player_id, SUM(m.points_a) AS pts
+             FROM matches m
+             JOIN tournaments t ON m.tournament_id = t.id
+             WHERE t.day_id = $1 AND m.played = true
+             GROUP BY m.player_a
+             UNION ALL
+             SELECT m.player_b AS player_id, SUM(m.points_b) AS pts
+             FROM matches m
+             JOIN tournaments t ON m.tournament_id = t.id
+             WHERE t.day_id = $1 AND m.played = true
+             GROUP BY m.player_b
+           ) sub
+           GROUP BY player_id`,
+          [tourneyDayId]
+        );
+        const newTotals: Record<string, number> = {};
+        for (const row of ptsQuery.rows) {
+          if (row.player_id) {
+            newTotals[row.player_id] = parseInt(row.total_pts, 10) || 0;
+          }
+        }
+        await pool.query(
+          "UPDATE day_tables SET totals = $1 WHERE id = $2",
+          [JSON.stringify(newTotals), tourneyDayId]
+        );
+      }
     }
 
     await pool.query("COMMIT");

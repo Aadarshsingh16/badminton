@@ -72,6 +72,7 @@ interface AppState {
   deleteTournament: (id: string, skipSync?: boolean) => void;
   startNextTournament: () => void;
   startNewDay: () => void;
+  resetDayTable: (date?: string) => void;
   // UI state
   isScoreSheetOpen: boolean;
   setIsScoreSheetOpen: (open: boolean) => void;
@@ -124,6 +125,29 @@ export function markTournamentDeleted(id: string) {
     const set = getDeletedTournamentIds();
     set.add(id);
     localStorage.setItem(DELETED_TOURNAMENTS_KEY, JSON.stringify(Array.from(set)));
+  } catch {}
+}
+
+const DELETED_DAYS_KEY = "badminton_deleted_days_v1";
+
+export function getDeletedDayDates(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(DELETED_DAYS_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function markDayDeleted(date: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const set = getDeletedDayDates();
+    set.add(date);
+    localStorage.setItem(DELETED_DAYS_KEY, JSON.stringify(Array.from(set)));
   } catch {}
 }
 
@@ -253,6 +277,7 @@ export function recoverTournamentsFromSyncQueue(): Tournament[] {
  */
 export function recoverCompletedDaysFromSyncQueue(): CompletedDaySummary[] {
   if (typeof window === "undefined") return [];
+  const deletedDates = getDeletedDayDates();
   const daysMap: { [date: string]: CompletedDaySummary } = {};
 
   try {
@@ -261,7 +286,7 @@ export function recoverCompletedDaysFromSyncQueue(): CompletedDaySummary[] {
       const archived = JSON.parse(rawArchive);
       if (Array.isArray(archived)) {
         for (const d of archived) {
-          if (d && d.date) daysMap[d.date] = d;
+          if (d && d.date && !deletedDates.has(d.date)) daysMap[d.date] = d;
         }
       }
     }
@@ -275,7 +300,7 @@ export function recoverCompletedDaysFromSyncQueue(): CompletedDaySummary[] {
         for (const item of queue) {
           if (item.method === "POST" && item.url.includes("/day-tables/close") && item.body) {
             const { date, totals } = item.body;
-            if (date && totals && !daysMap[date]) {
+            if (date && totals && !deletedDates.has(date) && !daysMap[date]) {
               const sorted = Object.entries(totals).sort(([, a]: any, [, b]: any) => b - a);
               daysMap[date] = {
                 date,
@@ -688,7 +713,7 @@ export const useStore = create<AppState>()(
 
         const recalculatedTotals: { [playerId: string]: number } = {};
         for (const t of updatedPast) {
-          if (t.dayPointsAwarded) {
+          if (updatedDayTournaments.includes(t.id) && t.dayPointsAwarded) {
             for (const [pid, pts] of Object.entries(t.dayPointsAwarded)) {
               recalculatedTotals[pid] = (recalculatedTotals[pid] ?? 0) + pts;
             }
@@ -724,6 +749,9 @@ export const useStore = create<AppState>()(
 
         if (!skipSync) {
           apiSync.enqueue(`/tournaments/${id}`, "DELETE", {});
+          if (updatedDayTournaments.length === 0) {
+            apiSync.enqueue(`/day-tables/${dayTable.date || today()}`, "DELETE", {});
+          }
         }
       },
 
@@ -759,6 +787,69 @@ export const useStore = create<AppState>()(
           phase: "player-select",
           selectedPlayerIds: [],
         });
+      },
+
+      resetDayTable: (dateParam?: string) => {
+        const { dayTable, pastTournaments, completedDays } = get();
+        const dateToReset = dateParam || dayTable.date || today();
+
+        // 1. Mark date as permanently deleted so recovery never brings it back
+        markDayDeleted(dateToReset);
+
+        // 2. Purge sync queue of any pending mutations for this date
+        apiSync.purgeDay(dateToReset);
+
+        // 3. Find any tournaments associated with this day
+        const dayTourneyIds = new Set(dayTable.tournaments);
+        const tourneysToRemove = pastTournaments.filter(
+          (t) =>
+            dayTourneyIds.has(t.id) ||
+            (t.createdAt && new Date(t.createdAt).toISOString().split("T")[0] === dateToReset)
+        );
+
+        // Mark all these tournaments as permanently deleted too
+        tourneysToRemove.forEach((t) => {
+          markTournamentDeleted(t.id);
+          apiSync.purgeTournament(t.id);
+        });
+
+        const updatedPast = pastTournaments.filter(
+          (t) =>
+            !dayTourneyIds.has(t.id) &&
+            !(t.createdAt && new Date(t.createdAt).toISOString().split("T")[0] === dateToReset)
+        );
+
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("badminton_archived_tournaments_v1", JSON.stringify(updatedPast));
+          }
+        } catch {}
+
+        // 4. Remove from completedDays
+        const updatedCompletedDays = (completedDays || []).filter((cd) => cd.date !== dateToReset);
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("badminton_completed_days_v1", JSON.stringify(updatedCompletedDays));
+          }
+        } catch {}
+
+        // 5. Reset store dayTable to completely empty state
+        set({
+          dayTable: {
+            date: today(),
+            tournaments: [],
+            totals: {},
+          },
+          pastTournaments: updatedPast,
+          completedDays: updatedCompletedDays,
+          currentTournament: null,
+          phase: "player-select",
+          selectedPlayerIds: [],
+        });
+
+        // 6. Enqueue backend deletion for the day table and day results
+        apiSync.enqueue(`/day-tables/${dateToReset}`, "DELETE", {});
+        apiSync.enqueue(`/day-results/${dateToReset}`, "DELETE", {});
       },
 
       setPhase: (phase) => set({ phase }),

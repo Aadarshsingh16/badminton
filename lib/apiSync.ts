@@ -181,6 +181,18 @@ class ApiSyncService {
   }
 
   /**
+   * Purge all queued mutation requests for a specific date (day table or day results)
+   */
+  public purgeDay(date: string) {
+    this.queue = this.queue.filter(
+      (item) =>
+        !(item.url.includes("/day-tables") && (item.body?.date === date || item.url.includes(date))) &&
+        !(item.url.includes("/day-results") && item.url.includes(date))
+    );
+    this.saveQueue();
+  }
+
+  /**
    * Immediately reset retry timers and flush all pending queued items.
    */
   public forceSyncAll() {
