@@ -129,6 +129,7 @@ export default function HistoryPage() {
   const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   const [isViewer, setIsViewer] = useState(false);
   const [viewerSlug, setViewerSlugState] = useState<string | null>(null);
@@ -721,6 +722,11 @@ export default function HistoryPage() {
   const hasActiveFilter =
     rangeFilter !== "all" || playerFilter !== "all" || patternFilter !== "all";
 
+  const activeFilterCount =
+    (rangeFilter !== "all" ? 1 : 0) +
+    (playerFilter !== "all" ? 1 : 0) +
+    (patternFilter !== "all" ? 1 : 0);
+
   return (
     <div className="min-h-full flex flex-col px-4 pt-4 pb-20">
       {/* Spectator Mode Banner */}
@@ -741,7 +747,7 @@ export default function HistoryPage() {
         </div>
       )}
 
-      {/* Compact Header */}
+      {/* Top Header */}
       <div className="flex items-center justify-between mb-3 px-0.5">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-slate-900 text-sm">
@@ -764,28 +770,68 @@ export default function HistoryPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            if (activeSubTab === "log") fetchHistory();
-            else fetchLeaderboards();
-          }}
-          disabled={loading}
-          className="w-8 h-8 rounded-full bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center text-slate-600 cursor-pointer"
-          title="Refresh"
-        >
-          <svg
-            className={`w-3.5 h-3.5 ${loading ? "animate-spin text-slate-950" : ""}`}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+        <div className="flex items-center gap-1.5">
+          {/* Smooth Filter Menu Trigger */}
+          <button
+            onClick={() => setShowFilterMenu(true)}
+            className={`px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer ${
+              hasActiveFilter
+                ? "bg-slate-950 text-white shadow-xs"
+                : "bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50"
+            }`}
           >
-            <path d="M21 12a9 9 0 00-9-9 9.75 9.75 0 00-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-            <path d="M3 12a9 9 0 009 9 9.75 9.75 0 006.74-2.74L21 16" />
-            <path d="M21 21v-5h-5" />
-          </svg>
-        </button>
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="4" y1="21" x2="4" y2="14" />
+              <line x1="4" y1="10" x2="4" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12" y2="3" />
+              <line x1="20" y1="21" x2="20" y2="16" />
+              <line x1="20" y1="12" x2="20" y2="3" />
+              <line x1="1" y1="14" x2="7" y2="14" />
+              <line x1="9" y1="8" x2="15" y2="8" />
+              <line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+            <span>Filters</span>
+            {hasActiveFilter && (
+              <span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] font-black flex items-center justify-center -mr-0.5">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+
+          {/* Refresh Button */}
+          <button
+            onClick={() => {
+              if (activeSubTab === "log") fetchHistory();
+              else fetchLeaderboards();
+            }}
+            disabled={loading}
+            className="w-8 h-8 rounded-full bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center text-slate-600 cursor-pointer"
+            title="Refresh"
+          >
+            <svg
+              className={`w-3.5 h-3.5 ${loading ? "animate-spin text-slate-950" : ""}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M21 12a9 9 0 00-9-9 9.75 9.75 0 00-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M3 12a9 9 0 009 9 9.75 9.75 0 006.74-2.74L21 16" />
+              <path d="M21 21v-5h-5" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Sub-tab segmented pill control */}
@@ -817,128 +863,91 @@ export default function HistoryPage() {
       {/* SUB-TAB 1: MATCH LOG */}
       {activeSubTab === "log" && (
         <div className="space-y-3">
-          {/* Combined Streamlined Filter Bar */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-            {/* Time Filter Pill */}
-            <div
-              className={`relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
-                rangeFilter !== "all"
-                  ? "bg-slate-950 text-white font-black shadow-xs ring-1 ring-slate-950"
-                  : "bg-white border border-slate-200/80 text-slate-700 font-bold hover:bg-slate-50"
-              }`}
-            >
-              <span>📅</span>
-              <span>{currentRangeLabel}</span>
-              <span className={`text-[9px] ${rangeFilter !== "all" ? "text-white/70" : "text-slate-400"}`}>▾</span>
-              <select
-                value={rangeFilter}
-                onChange={(e) => setRangeFilter(e.target.value as any)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
-                aria-label="Filter by time range"
-              >
-                {rangeOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Player Filter Pill */}
-            <div
-              className={`relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
-                playerFilter !== "all"
-                  ? "bg-slate-950 text-white font-black shadow-xs ring-1 ring-slate-950"
-                  : "bg-white border border-slate-200/80 text-slate-700 font-bold hover:bg-slate-50"
-              }`}
-            >
-              <span>👤</span>
-              <span className="truncate max-w-[85px]">{currentPlayerLabel}</span>
-              <span className={`text-[9px] ${playerFilter !== "all" ? "text-white/70" : "text-slate-400"}`}>▾</span>
-              <select
-                value={playerFilter}
-                onChange={(e) => setPlayerFilter(e.target.value)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
-                aria-label="Filter by player"
-              >
-                {playerOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Score Pattern Pill */}
-            <div
-              className={`relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
-                patternFilter !== "all"
-                  ? "bg-slate-950 text-white font-black shadow-xs ring-1 ring-slate-950"
-                  : "bg-white border border-slate-200/80 text-slate-700 font-bold hover:bg-slate-50"
-              }`}
-            >
-              <span>🎯</span>
-              <span className="truncate max-w-[85px]">{currentPatternLabel}</span>
-              <span className={`text-[9px] ${patternFilter !== "all" ? "text-white/70" : "text-slate-400"}`}>▾</span>
-              <select
-                value={patternFilter}
-                onChange={(e) => setPatternFilter(e.target.value)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
-                aria-label="Filter by score pattern"
-              >
-                {patternOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Reset Button */}
-            {hasActiveFilter && (
-              <button
-                onClick={() => {
-                  setRangeFilter("all");
-                  setPlayerFilter("all");
-                  setPatternFilter("all");
-                }}
-                className="px-2.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-extrabold text-xs transition-colors flex items-center gap-1 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
-                title="Reset all filters"
-              >
-                <span>✕</span>
-                <span className="text-[11px]">Clear</span>
-              </button>
-            )}
-          </div>
-
-          {/* Quick Breadcrumb Stats */}
-          <div className="flex items-center justify-between px-1 text-xs text-slate-500 font-bold">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-900 font-black">{displayedHistory.totalMatches} matches</span>
-              <span>•</span>
-              <span>{displayedHistory.totalPoints} pts</span>
-              {displayedHistory.miniLeaderboard.length > 0 && (
-                <>
-                  <span>•</span>
-                  <span className="text-slate-700 font-extrabold flex items-center gap-1">
-                    🥇 {displayedHistory.miniLeaderboard[0].name}
-                  </span>
-                </>
+          {/* Active Filter Chips (only when filters applied) */}
+          {hasActiveFilter && (
+            <div className="flex items-center gap-1.5 flex-wrap px-0.5">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Filtered:</span>
+              {rangeFilter !== "all" && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white text-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
+                  📅 {currentRangeLabel}
+                  <button
+                    type="button"
+                    onClick={() => setRangeFilter("all")}
+                    className="hover:text-rose-600 cursor-pointer ml-0.5 font-black text-[10px]"
+                  >
+                    ✕
+                  </button>
+                </span>
               )}
-            </div>
-            {hasActiveFilter && (
+              {playerFilter !== "all" && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white text-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
+                  👤 {currentPlayerLabel}
+                  <button
+                    type="button"
+                    onClick={() => setPlayerFilter("all")}
+                    className="hover:text-rose-600 cursor-pointer ml-0.5 font-black text-[10px]"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {patternFilter !== "all" && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white text-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
+                  🎯 {currentPatternLabel}
+                  <button
+                    type="button"
+                    onClick={() => setPatternFilter("all")}
+                    className="hover:text-rose-600 cursor-pointer ml-0.5 font-black text-[10px]"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
               <button
+                type="button"
                 onClick={() => {
                   setRangeFilter("all");
                   setPlayerFilter("all");
                   setPatternFilter("all");
                 }}
-                className="text-[11px] text-blue-600 hover:text-blue-800 font-bold underline cursor-pointer"
+                className="text-[11px] font-black text-blue-600 hover:underline cursor-pointer ml-1"
               >
-                Reset filters
+                Clear all
               </button>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Mini-Leaderboard Hero Banner (Bento Summary) */}
+          {displayedHistory.miniLeaderboard.length > 0 && (
+            <div className="bg-gradient-to-br from-[#9BB8FF] to-[#7EA3FC] text-slate-950 rounded-[28px] p-4 shadow-xs">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-950 flex items-center gap-1.5">
+                  <span>⚡</span> Match Summary
+                </span>
+                <div className="text-[11px] font-bold text-slate-900/80 bg-white/50 px-2.5 py-0.5 rounded-full">
+                  <span>{displayedHistory.totalMatches}</span> matches •{" "}
+                  <span>{displayedHistory.totalPoints}</span> pts
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {displayedHistory.miniLeaderboard.slice(0, 3).map((item, idx) => (
+                  <div
+                    key={item.playerId}
+                    className="bg-white/95 rounded-2xl p-2.5 text-center shadow-xs"
+                  >
+                    <div className="text-[10px] font-black text-slate-900 mb-0.5">
+                      {idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : "🥉 #3"}
+                    </div>
+                    <div className="text-xs font-extrabold text-slate-900 truncate">{item.name}</div>
+                    <div className="text-[10px] text-slate-500 font-semibold mt-0.5">
+                      <span className="text-emerald-600 font-bold">{item.points} pts</span> • {item.wins}W
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Timeline days */}
           {displayedHistory.days.length === 0 ? (
@@ -1418,6 +1427,165 @@ export default function HistoryPage() {
                   {isDeleting ? <span>Deleting...</span> : <span>Delete</span>}
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Filter Bottom Sheet Menu */}
+      <AnimatePresence>
+        {showFilterMenu && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-auto">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFilterMenu(false)}
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+            />
+
+            {/* Bottom Sheet */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 350 }}
+              className="relative z-10 w-full max-w-md bg-white border-t border-slate-200/80 rounded-t-[36px] shadow-2xl pb-8 pt-4 px-5 space-y-4 max-h-[82vh] overflow-y-auto"
+            >
+              {/* Drag Handle */}
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto" />
+
+              {/* Sheet Header */}
+              <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                <div>
+                  <h3 className="text-base font-black text-slate-900">Filter History</h3>
+                  <p className="text-xs text-slate-400 font-medium">Customize matches & stats view</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {hasActiveFilter && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRangeFilter("all");
+                        setPlayerFilter("all");
+                        setPatternFilter("all");
+                      }}
+                      className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full cursor-pointer transition-colors"
+                    >
+                      Reset All
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowFilterMenu(false)}
+                    className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-sm cursor-pointer transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              {/* 1. Time Range */}
+              <div>
+                <label className="block text-[11px] uppercase font-black tracking-wider text-slate-400 mb-2">
+                  📅 Time Range
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {rangeOptions.map((opt) => {
+                    const selected = rangeFilter === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setRangeFilter(opt.value as any)}
+                        className={`py-2 px-1 text-center text-xs font-extrabold rounded-xl transition-all cursor-pointer ${
+                          selected
+                            ? "bg-slate-950 text-white shadow-xs"
+                            : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Player Filter */}
+              <div>
+                <label className="block text-[11px] uppercase font-black tracking-wider text-slate-400 mb-2">
+                  👤 Squad Players
+                </label>
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                  <button
+                    type="button"
+                    onClick={() => setPlayerFilter("all")}
+                    className={`py-1.5 px-3 text-xs font-extrabold rounded-full transition-all cursor-pointer ${
+                      playerFilter === "all"
+                        ? "bg-slate-950 text-white shadow-xs"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    }`}
+                  >
+                    All Players
+                  </button>
+                  {players.map((p) => {
+                    const selected = playerFilter === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setPlayerFilter(p.id)}
+                        className={`py-1 px-2.5 text-xs font-extrabold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+                          selected
+                            ? "bg-slate-950 text-white shadow-xs ring-1 ring-slate-950"
+                            : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        <AvatarSVG type={p.avatar} size={20} emoji={p.avatarEmoji} color={p.avatarColor} />
+                        <span>{p.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Match Pattern */}
+              <div>
+                <label className="block text-[11px] uppercase font-black tracking-wider text-slate-400 mb-2">
+                  🎯 Match Outcome / Score
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {patternOptions.map((opt) => {
+                    const selected = patternFilter === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setPatternFilter(opt.value)}
+                        className={`py-1.5 px-3 text-xs font-extrabold rounded-full transition-all cursor-pointer ${
+                          selected
+                            ? "bg-slate-950 text-white shadow-xs"
+                            : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Apply Button */}
+              <button
+                type="button"
+                onClick={() => setShowFilterMenu(false)}
+                className="w-full py-3.5 bg-slate-950 hover:bg-slate-800 text-white font-black text-sm rounded-2xl shadow-xl shadow-slate-950/20 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>Apply & View Matches</span>
+                <span className="text-white/60 font-medium">({displayedHistory.totalMatches})</span>
+                <span>✓</span>
+              </button>
             </motion.div>
           </div>
         )}
