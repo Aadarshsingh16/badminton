@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Player, Match, TournamentConfig, DEFAULT_CONFIG } from "@/lib/types";
 import { AvatarSVG } from "./avatars/AvatarSVG";
+import { useStore } from "@/lib/store";
 
 interface ScoreInputProps {
   match: Match;
@@ -55,11 +56,13 @@ function ScoreCounter({
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center gap-1.5">
-      <div className="flex items-center gap-2 mt-1">
+    <div className="flex flex-col items-center gap-1 w-full">
+      <div className="flex items-center justify-center gap-1.5 sm:gap-2 mt-0.5 w-full">
         <button
+          type="button"
           onClick={() => onChange(Math.max(0, value - 1))}
-          className="w-11 h-11 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-2xl font-black transition-colors active:scale-95 flex items-center justify-center disabled:opacity-30"
+          disabled={value <= 0}
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xl font-black transition-all active:scale-95 flex items-center justify-center disabled:opacity-25 flex-shrink-0"
         >
           −
         </button>
@@ -77,17 +80,18 @@ function ScoreCounter({
               if (e.key === "Enter") commitRaw();
               if (e.key === "Escape") { setRaw(String(value)); setInputMode(false); }
             }}
-            className={`w-16 text-center text-4xl font-black bg-slate-50 border-2 rounded-2xl outline-none tabular-nums
+            className={`w-11 sm:w-13 text-center text-3xl sm:text-4xl font-black bg-slate-50 border-2 rounded-2xl outline-none tabular-nums
               ${highlight ? "border-emerald-500 text-emerald-700 bg-emerald-50" : "border-slate-300 text-slate-900"}`}
             style={{ MozAppearance: "textfield" } as React.CSSProperties}
           />
         ) : (
           <motion.button
             key={value}
+            type="button"
             initial={{ scale: 1.25, opacity: 0.7 }}
             animate={{ scale: 1, opacity: 1 }}
             onClick={() => { setRaw(String(value)); setInputMode(true); setTimeout(() => inputRef.current?.select(), 30); }}
-            className={`text-4xl font-black w-16 text-center tabular-nums rounded-2xl px-1 py-1 hover:bg-slate-50 transition-colors ${
+            className={`text-3xl sm:text-4xl font-black w-11 sm:w-13 text-center tabular-nums rounded-2xl py-0.5 hover:bg-slate-50 transition-colors flex-shrink-0 ${
               highlight ? "text-emerald-700 font-black" : "text-slate-900"
             }`}
           >
@@ -96,9 +100,10 @@ function ScoreCounter({
         )}
 
         <button
+          type="button"
           onClick={() => onChange(Math.min(maxScore, value + 1))}
-          disabled={value === maxScore}
-          className="w-11 h-11 rounded-full bg-slate-950 hover:bg-slate-800 text-white text-2xl font-black transition-colors active:scale-95 disabled:opacity-30 shadow-xs flex items-center justify-center"
+          disabled={value >= maxScore}
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-950 hover:bg-slate-800 text-white text-xl font-black transition-all active:scale-95 disabled:opacity-25 shadow-xs flex items-center justify-center flex-shrink-0"
         >
           +
         </button>
