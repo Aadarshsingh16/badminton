@@ -192,7 +192,7 @@ export function ScoreInput({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 z-40 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/60 z-40 backdrop-blur-sm"
             onClick={onMinimize ? onMinimize : handleClose}
           />
 
@@ -202,18 +202,18 @@ export function ScoreInput({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 350 }}
-            className="fixed bottom-0 inset-x-0 z-50 bg-slate-900 border-t border-white/10 rounded-t-3xl pb-8 pt-4 px-4 max-w-lg mx-auto"
+            className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200/80 rounded-t-[36px] shadow-2xl pb-10 pt-4 px-5 max-w-md mx-auto"
           >
             {/* Header with drag handle and Minimize button */}
             <div className="flex items-center justify-between px-1 mb-3">
               <div className="w-16" />
-              <div className="w-10 h-1 bg-white/20 rounded-full" />
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
               <div className="w-16 flex justify-end">
                 {onMinimize && (
                   <button
                     type="button"
                     onClick={onMinimize}
-                    className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-[11px] font-bold text-white/80 transition-colors flex items-center gap-1 active:scale-95 shadow-sm"
+                    className="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 transition-colors flex items-center gap-1 active:scale-95 shadow-2xs"
                   >
                     <span>⌄</span>
                     <span>Hide</span>
@@ -223,39 +223,39 @@ export function ScoreInput({
             </div>
 
             {/* Match label */}
-            <p className="text-center text-white/50 text-xs uppercase tracking-widest mb-1">
+            <p className="text-center text-slate-400 text-xs uppercase tracking-wider font-extrabold mb-1">
               {isFinal
                 ? `🏆 Grand Final — First to ${maxScore}`
                 : `Round ${match.round + 1} — First to ${maxScore}`}
             </p>
             {isEditing && (
-              <p className="text-center text-orange-400 text-xs mb-3">✏️ Editing confirmed score</p>
+              <p className="text-center text-amber-600 font-bold text-xs mb-3">✏️ Editing confirmed score</p>
             )}
 
             {/* Court side indicator */}
             <div className="flex items-center justify-center gap-2 mb-4">
-              <div className={`text-xs px-3 py-1 rounded-full font-medium ${sideA === 1 ? "bg-blue-500/20 text-blue-300" : "bg-orange-500/20 text-orange-300"}`}>
+              <div className={`text-xs px-3 py-1 rounded-full font-bold border ${sideA === 1 ? "bg-indigo-50 text-indigo-700 border-indigo-200/70" : "bg-orange-50 text-orange-700 border-orange-200/70"}`}>
                 {playerA.name}: Side {sideA}
               </div>
               {onToggleCourtSide && (
                 <button
                   onClick={onToggleCourtSide}
-                  className="text-xs px-2 py-1 bg-white/10 text-white/50 rounded-full hover:bg-white/20 transition-colors"
+                  className="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 font-bold border border-slate-200 transition-colors"
                 >
                   ⇄ Swap
                 </button>
               )}
-              <div className={`text-xs px-3 py-1 rounded-full font-medium ${sideB === 1 ? "bg-blue-500/20 text-blue-300" : "bg-orange-500/20 text-orange-300"}`}>
+              <div className={`text-xs px-3 py-1 rounded-full font-bold border ${sideB === 1 ? "bg-indigo-50 text-indigo-700 border-indigo-200/70" : "bg-orange-50 text-orange-700 border-orange-200/70"}`}>
                 {playerB.name}: Side {sideB}
               </div>
             </div>
 
             {/* Score inputs */}
-            <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex items-start justify-between gap-3 mb-3">
               {/* Player A */}
               <div className="flex-1 flex flex-col items-center gap-2">
                 <AvatarSVG type={playerA.avatar} size={52} emoji={playerA.avatarEmoji} color={playerA.avatarColor} />
-                <p className="text-white font-semibold text-sm text-center truncate w-full">{playerA.name}</p>
+                <p className="text-slate-900 font-black text-sm text-center truncate w-full">{playerA.name}</p>
                 <ScoreCounter
                   value={scoreA}
                   onChange={updateScoreA}
@@ -267,9 +267,9 @@ export function ScoreInput({
 
               {/* VS divider */}
               <div className="flex flex-col items-center gap-1 pt-14">
-                <span className="text-white/30 font-black text-xl">VS</span>
+                <span className="text-slate-300 font-black text-xl">VS</span>
                 {canConfirm && (
-                  <span className="text-xs text-white/40">
+                  <span className="text-xs font-bold text-indigo-600">
                     {winnerIsA ? `🏆 ${playerA.name}` : `🏆 ${playerB.name}`}
                   </span>
                 )}
@@ -278,7 +278,7 @@ export function ScoreInput({
               {/* Player B */}
               <div className="flex-1 flex flex-col items-center gap-2">
                 <AvatarSVG type={playerB.avatar} size={52} emoji={playerB.avatarEmoji} color={playerB.avatarColor} />
-                <p className="text-white font-semibold text-sm text-center truncate w-full">{playerB.name}</p>
+                <p className="text-slate-900 font-black text-sm text-center truncate w-full">{playerB.name}</p>
                 <ScoreCounter
                   value={scoreB}
                   onChange={updateScoreB}
@@ -294,7 +294,7 @@ export function ScoreInput({
               <motion.div
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex justify-center gap-4 mb-4"
+                className="flex justify-center gap-3 mb-4"
               >
                 {[
                   { player: playerA, score: scoreA, won: aWins },
@@ -308,10 +308,10 @@ export function ScoreInput({
                         ? (margin >= config.bonusMargin ? config.winPoints + config.bonusPoints : config.winPoints)
                         : 0);
                   return (
-                    <div key={player.id} className={`text-xs px-3 py-1 rounded-full font-bold ${
-                      pts > 0 ? "bg-green-500/20 text-green-400"
-                      : pts < 0 ? "bg-red-500/20 text-red-400"
-                      : "bg-white/10 text-white/40"
+                    <div key={player.id} className={`text-xs px-3 py-1 rounded-full font-black border ${
+                      pts > 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : pts < 0 ? "bg-rose-50 text-rose-700 border-rose-200"
+                      : "bg-slate-100 text-slate-500 border-slate-200"
                     }`}>
                       {player.name}: {pts > 0 ? "+" : ""}{pts} pts
                     </div>
@@ -325,12 +325,12 @@ export function ScoreInput({
               onClick={handleConfirm}
               disabled={!canConfirm}
               whileTap={canConfirm ? { scale: 0.97 } : undefined}
-              className={`w-full py-4 rounded-2xl font-bold text-white text-lg transition-all ${
+              className={`w-full py-4 rounded-2xl font-black text-base transition-all ${
                 canConfirm
                   ? isEditing
-                    ? "bg-gradient-to-r from-orange-500 to-red-500 shadow-lg shadow-orange-500/30"
-                    : "bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg shadow-purple-500/30"
-                  : "bg-white/10 text-white/30 cursor-not-allowed"
+                    ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-98"
+                    : "bg-slate-950 hover:bg-slate-800 text-white shadow-xl shadow-slate-950/20 active:scale-98"
+                  : "bg-slate-100 text-slate-400 cursor-not-allowed font-bold"
               }`}
             >
               {canConfirm

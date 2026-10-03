@@ -25,61 +25,67 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
     <motion.div
       layout
       layoutId={`match-${match.id}`}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.3 }}
+      transition={{ delay: index * 0.03, duration: 0.25 }}
       onClick={() => onTap(match)}
-      className={`relative mb-3 rounded-2xl border transition-all cursor-pointer ${
+      className={`relative mb-3.5 rounded-[26px] border transition-all cursor-pointer ${
         played
-          ? "bg-white/5 border-white/5 opacity-80 hover:opacity-100 hover:border-orange-400/30 hover:bg-orange-500/5"
+          ? "bg-white border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-slate-300"
           : isUpNext
-          ? "bg-gradient-to-br from-purple-900/60 to-blue-900/60 border-purple-500/50 shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20"
-          : "bg-white/5 border-white/10 hover:bg-white/8"
+          ? "bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border-2 border-indigo-300 shadow-md shadow-indigo-100/50 hover:shadow-lg"
+          : "bg-white border-slate-200/80 shadow-2xs hover:border-slate-300 hover:shadow-xs"
       }`}
     >
       {/* Up Next badge */}
       {isUpNext && !played && (
-        <div className="absolute -top-2 left-4 bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-          Up Next
+        <div className="absolute -top-2.5 left-5 bg-slate-950 text-white text-[10px] font-black px-3 py-0.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span>Up Next</span>
         </div>
       )}
 
       {/* Edit badge on played matches */}
       {played && (
-        <div className="absolute -top-2 right-4 bg-slate-700 text-white/50 text-[10px] font-medium px-2 py-0.5 rounded-full">
+        <div className="absolute -top-2.5 right-4 bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-2xs">
           ✏️ tap to edit
         </div>
       )}
 
       {/* Match number label */}
-      <div className={`text-center text-xs font-medium pt-3 pb-1 ${isUpNext && !played ? "text-purple-300" : "text-white/30"}`}>
+      <div className={`text-center text-[11px] font-extrabold pt-3.5 pb-1 ${isUpNext && !played ? "text-indigo-600" : "text-slate-400"}`}>
         Match {index + 1}
       </div>
 
-      <div className="flex items-center px-4 pb-3 gap-2">
+      <div className="flex items-center px-4 pb-3.5 gap-2">
         {/* Player A */}
-        <div className={`flex-1 flex flex-col items-center gap-1 ${played && winnerIsA ? "opacity-100" : played ? "opacity-50" : ""}`}>
-          <AvatarSVG
-            type={playerA.avatar}
-            size={played ? 36 : 44}
-            emoji={playerA.avatarEmoji}
-            color={playerA.avatarColor}
-          />
-          <p className={`text-xs font-semibold text-center truncate w-full ${winnerIsA ? "text-white" : "text-white/70"}`}>
+        <div className={`flex-1 flex flex-col items-center gap-1.5 ${played && winnerIsA ? "opacity-100" : played ? "opacity-45" : ""}`}>
+          <div className="relative">
+            <AvatarSVG
+              type={playerA.avatar}
+              size={played ? 40 : 48}
+              emoji={playerA.avatarEmoji}
+              color={playerA.avatarColor}
+            />
+            {played && winnerIsA && (
+              <span className="absolute -top-1 -right-1 text-xs">👑</span>
+            )}
+          </div>
+          <p className={`text-xs font-black text-center truncate w-full ${winnerIsA ? "text-slate-900" : "text-slate-700"}`}>
             {playerA.name}
           </p>
           {played && match.scoreA !== undefined && (
-            <div className={`text-xl font-black tabular-nums ${winnerIsA ? "text-white" : "text-white/40"}`}>
+            <div className={`text-2xl font-black tabular-nums ${winnerIsA ? "text-slate-900 font-black" : "text-slate-400"}`}>
               {match.scoreA}
             </div>
           )}
           {played && match.pointsAwarded && (
-            <div className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+            <div className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${
               (match.pointsAwarded[playerA.id] ?? 0) >= 2
-                ? "bg-green-500/20 text-green-400"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                 : (match.pointsAwarded[playerA.id] ?? 0) < 0
-                ? "bg-red-500/20 text-red-400"
-                : "bg-white/10 text-white/40"
+                ? "bg-rose-50 text-rose-700 border-rose-200"
+                : "bg-slate-100 text-slate-600 border-slate-200"
             }`}>
               {(match.pointsAwarded[playerA.id] ?? 0) > 0 ? "+" : ""}{match.pointsAwarded[playerA.id] ?? 0} pts
             </div>
@@ -89,38 +95,45 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
         {/* VS / Score separator */}
         <div className="flex flex-col items-center gap-1 px-2">
           {played ? (
-            <span className="text-white/20 text-sm font-bold">–</span>
+            <span className="text-slate-300 text-base font-black">–</span>
           ) : (
             <div className="flex flex-col items-center gap-1">
-              <span className="text-white/30 text-sm font-bold">VS</span>
-              <span className="text-purple-400 text-xs">Tap to score</span>
+              <span className="text-slate-300 text-sm font-black">VS</span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isUpNext ? "bg-indigo-600 text-white shadow-2xs" : "bg-slate-100 text-slate-500 border border-slate-200"}`}>
+                Score
+              </span>
             </div>
           )}
         </div>
 
         {/* Player B */}
-        <div className={`flex-1 flex flex-col items-center gap-1 ${played && winnerIsB ? "opacity-100" : played ? "opacity-50" : ""}`}>
-          <AvatarSVG
-            type={playerB.avatar}
-            size={played ? 36 : 44}
-            emoji={playerB.avatarEmoji}
-            color={playerB.avatarColor}
-          />
-          <p className={`text-xs font-semibold text-center truncate w-full ${winnerIsB ? "text-white" : "text-white/70"}`}>
+        <div className={`flex-1 flex flex-col items-center gap-1.5 ${played && winnerIsB ? "opacity-100" : played ? "opacity-45" : ""}`}>
+          <div className="relative">
+            <AvatarSVG
+              type={playerB.avatar}
+              size={played ? 40 : 48}
+              emoji={playerB.avatarEmoji}
+              color={playerB.avatarColor}
+            />
+            {played && winnerIsB && (
+              <span className="absolute -top-1 -right-1 text-xs">👑</span>
+            )}
+          </div>
+          <p className={`text-xs font-black text-center truncate w-full ${winnerIsB ? "text-slate-900" : "text-slate-700"}`}>
             {playerB.name}
           </p>
           {played && match.scoreB !== undefined && (
-            <div className={`text-xl font-black tabular-nums ${winnerIsB ? "text-white" : "text-white/40"}`}>
+            <div className={`text-2xl font-black tabular-nums ${winnerIsB ? "text-slate-900 font-black" : "text-slate-400"}`}>
               {match.scoreB}
             </div>
           )}
           {played && match.pointsAwarded && (
-            <div className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+            <div className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${
               (match.pointsAwarded[playerB.id] ?? 0) >= 2
-                ? "bg-green-500/20 text-green-400"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                 : (match.pointsAwarded[playerB.id] ?? 0) < 0
-                ? "bg-red-500/20 text-red-400"
-                : "bg-white/10 text-white/40"
+                ? "bg-rose-50 text-rose-700 border-rose-200"
+                : "bg-slate-100 text-slate-600 border-slate-200"
             }`}>
               {(match.pointsAwarded[playerB.id] ?? 0) > 0 ? "+" : ""}{match.pointsAwarded[playerB.id] ?? 0} pts
             </div>
@@ -130,7 +143,7 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
 
       {/* Court sides (only on unplayed) */}
       {!played && (
-        <div className="flex justify-center gap-4 pb-2 text-xs text-white/30">
+        <div className="flex justify-center gap-3 pb-3 text-[11px] text-slate-400 font-medium">
           <span>Side {match.courtSide[playerA.id]}: {playerA.name}</span>
           <span>•</span>
           <span>Side {match.courtSide[playerB.id]}: {playerB.name}</span>
