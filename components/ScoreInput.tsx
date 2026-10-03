@@ -55,11 +55,11 @@ function ScoreCounter({
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center gap-2">
+    <div className="flex-1 flex flex-col items-center gap-1.5">
       <div className="flex items-center gap-2 mt-1">
         <button
           onClick={() => onChange(Math.max(0, value - 1))}
-          className="w-10 h-10 rounded-full bg-white/10 text-white text-xl font-bold hover:bg-white/20 transition-colors active:scale-95 flex items-center justify-center"
+          className="w-11 h-11 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-2xl font-black transition-colors active:scale-95 flex items-center justify-center disabled:opacity-30"
         >
           −
         </button>
@@ -77,8 +77,8 @@ function ScoreCounter({
               if (e.key === "Enter") commitRaw();
               if (e.key === "Escape") { setRaw(String(value)); setInputMode(false); }
             }}
-            className={`w-14 text-center text-4xl font-black bg-white/10 border-2 rounded-xl outline-none tabular-nums
-              ${highlight ? "border-green-400 text-green-400" : "border-purple-400 text-white"}`}
+            className={`w-16 text-center text-4xl font-black bg-slate-50 border-2 rounded-2xl outline-none tabular-nums
+              ${highlight ? "border-emerald-500 text-emerald-700 bg-emerald-50" : "border-slate-300 text-slate-900"}`}
             style={{ MozAppearance: "textfield" } as React.CSSProperties}
           />
         ) : (
@@ -87,8 +87,8 @@ function ScoreCounter({
             initial={{ scale: 1.25, opacity: 0.7 }}
             animate={{ scale: 1, opacity: 1 }}
             onClick={() => { setRaw(String(value)); setInputMode(true); setTimeout(() => inputRef.current?.select(), 30); }}
-            className={`text-4xl font-black w-14 text-center tabular-nums rounded-xl px-1 py-0.5 hover:bg-white/10 transition-colors ${
-              highlight ? "text-green-400" : "text-white"
+            className={`text-4xl font-black w-16 text-center tabular-nums rounded-2xl px-1 py-1 hover:bg-slate-50 transition-colors ${
+              highlight ? "text-emerald-700 font-black" : "text-slate-900"
             }`}
           >
             {value}
@@ -98,12 +98,12 @@ function ScoreCounter({
         <button
           onClick={() => onChange(Math.min(maxScore, value + 1))}
           disabled={value === maxScore}
-          className="w-10 h-10 rounded-full bg-white/10 text-white text-xl font-bold hover:bg-white/20 transition-colors active:scale-95 disabled:opacity-30 flex items-center justify-center"
+          className="w-11 h-11 rounded-full bg-slate-950 hover:bg-slate-800 text-white text-2xl font-black transition-colors active:scale-95 disabled:opacity-30 shadow-xs flex items-center justify-center"
         >
           +
         </button>
       </div>
-      <p className="text-white/30 text-[10px]">tap score to type</p>
+      <p className="text-slate-400 text-[10px] font-medium">tap score to type</p>
     </div>
   );
 }
