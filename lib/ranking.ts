@@ -5,17 +5,13 @@ import { pointsForFinal } from "./scoring";
 import { DEFAULT_CONFIG } from "./types";
 
 /**
- * Compute the live tournament table from round-robin matches.
- * Does NOT include the final — final points are stored directly in the match's
- * pointsAwarded field and included when we read all matches.
- *
- * The table is derived purely from summing pointsAwarded across all played matches
- * (including the final once it's played). Never mutates state.
+ * Compute the round-robin league table (excluding the final match).
+ * Used during the league phase and to identify finalists / non-finalist order.
  */
-export function computeTournamentTable(tournament: Tournament): TournamentRow[] {
-  const { playerIds, matches, final } = tournament;
+export function computeRoundRobinTable(tournament: Tournament): TournamentRow[] {
+  const { playerIds, matches } = tournament;
+  const N = playerIds.length;
 
-  // Accumulate stats per player
   const stats: {
     [id: string]: {
       points: number;
@@ -30,46 +26,29 @@ export function computeTournamentTable(tournament: Tournament): TournamentRow[] 
     stats[pid] = { points: 0, wins: 0, matchesPlayed: 0, scoreFor: 0, scoreAgainst: 0 };
   }
 
-  // Process round-robin matches
+  // Process round-robin matches only
   for (const m of matches) {
-    if (!m.played || m.scoreA === undefined || m.scoreB === undefined) continue;
+    if (!m.played || m.isFinal || m.round === -1 || m.scoreA === undefined || m.scoreB === undefined) continue;
     const { playerA, playerB, scoreA, scoreB, pointsAwarded } = m;
     if (!pointsAwarded) continue;
 
-    stats[playerA].matchesPlayed++;
-    stats[playerA].points += pointsAwarded[playerA] ?? 0;
-    stats[playerA].scoreFor += scoreA;
-    stats[playerA].scoreAgainst += scoreB;
-    if (pointsAwarded[playerA] > 0) stats[playerA].wins++;
-
-    stats[playerB].matchesPlayed++;
-    stats[playerB].points += pointsAwarded[playerB] ?? 0;
-    stats[playerB].scoreFor += scoreB;
-    stats[playerB].scoreAgainst += scoreA;
-    if (pointsAwarded[playerB] > 0) stats[playerB].wins++;
-  }
-
-  // Include final if played
-  if (final?.played && final.scoreA !== undefined && final.scoreB !== undefined && final.pointsAwarded) {
-    const { playerA, playerB, scoreA, scoreB, pointsAwarded } = final;
-    // Only add for the two finalists
     if (stats[playerA]) {
-      stats[playerA].points += pointsAwarded[playerA] ?? 0;
       stats[playerA].matchesPlayed++;
+      stats[playerA].points += pointsAwarded[playerA] ?? 0;
       stats[playerA].scoreFor += scoreA;
       stats[playerA].scoreAgainst += scoreB;
-      if ((pointsAwarded[playerA] ?? 0) > 0) stats[playerA].wins++;
+      if (pointsAwarded[playerA] > 0) stats[playerA].wins++;
     }
+
     if (stats[playerB]) {
-      stats[playerB].points += pointsAwarded[playerB] ?? 0;
       stats[playerB].matchesPlayed++;
+      stats[playerB].points += pointsAwarded[playerB] ?? 0;
       stats[playerB].scoreFor += scoreB;
       stats[playerB].scoreAgainst += scoreA;
-      if ((pointsAwarded[playerB] ?? 0) > 0) stats[playerB].wins++;
+      if (pointsAwarded[playerB] > 0) stats[playerB].wins++;
     }
   }
 
-  // Build rows and sort
   const rows: TournamentRow[] = playerIds.map((pid) => ({
     playerId: pid,
     points: stats[pid].points,
@@ -77,15 +56,157 @@ export function computeTournamentTable(tournament: Tournament): TournamentRow[] 
     matchesPlayed: stats[pid].matchesPlayed,
     pointDiff: stats[pid].scoreFor - stats[pid].scoreAgainst,
     rank: 0,
+    dayPoints: 0,
   }));
 
-  // Sort: primary = points desc, secondary = pointDiff desc
+  // Sort: points desc, then pointDiff desc
   rows.sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
     return b.pointDiff - a.pointDiff;
   });
 
-  // Assign ranks (ties get same rank for now — tiebreak logic applied when selecting finalists)
+  rows.forEach((row, i) => {
+    row.rank = i + 1;
+    row.dayPoints = Math.max(1, N - i);
+  });
+
+  return rows;
+}
+
+/**
+ * Compute the live tournament table.
+ * - During round-robin: sorted by league points (wins, bonuses, +/-).
+ * - After the final ends: sorted by overall points (winner gets N, loser gets N-1 or N-2 on blowout penalty).
+ *   Winner always finishes 1st, runner-up finishes 2nd, and 3rd..Nth are ordered by their league finish.
+ */
+export function computeTournamentTable(tournament: Tournament): TournamentRow[] {
+  const { playerIds, matches, final, config } = tournament;
+  const N = playerIds.length;
+
+  // If the final has not been played yet, return round-robin standings
+  if (!final?.played || final.scoreA === undefined || final.scoreB === undefined) {
+    return computeRoundRobinTable(tournament);
+  }
+
+  // 1. Get round-robin standings as baseline for non-finalists
+  const rrTable = computeRoundRobinTable(tournament);
+
+  // 2. Identify final winner and loser
+  const isWinA = final.scoreA > final.scoreB;
+  const winnerId = isWinA ? final.playerA : final.playerB;
+  const loserId = isWinA ? final.playerB : final.playerA;
+
+  const winScore = Math.max(final.scoreA, final.scoreB);
+  const loseScore = Math.min(final.scoreA, final.scoreB);
+  const margin = winScore - loseScore;
+  const bonusMargin = config?.finalBonusMargin ?? DEFAULT_CONFIG.finalBonusMargin;
+  const hasPenalty = margin >= bonusMargin;
+
+  // 3. Compute overall day points for every player
+  const dayPointsMap: { [id: string]: number } = {};
+
+  // Winner of final finishes first and gets N overall points
+  dayPointsMap[winnerId] = N;
+
+  // Loser of final finishes second and gets N - 1 (or N - 2 if loser scored <= 2 in a 6-pt final)
+  dayPointsMap[loserId] = hasPenalty ? Math.max(1, N - 2) : Math.max(1, N - 1);
+
+  // Remaining players get positions 3..N based on their round-robin finish
+  const nonFinalists = rrTable.filter((r) => r.playerId !== winnerId && r.playerId !== loserId);
+  nonFinalists.forEach((row, idx) => {
+    // 3rd place (idx 0) gets N - 2, 4th gets N - 3, etc.
+    dayPointsMap[row.playerId] = Math.max(1, N - 2 - idx);
+  });
+
+  // 4. Accumulate overall match stats
+  const stats: {
+    [id: string]: {
+      points: number;
+      wins: number;
+      matchesPlayed: number;
+      scoreFor: number;
+      scoreAgainst: number;
+    };
+  } = {};
+
+  for (const pid of playerIds) {
+    stats[pid] = { points: 0, wins: 0, matchesPlayed: 0, scoreFor: 0, scoreAgainst: 0 };
+  }
+
+  // Include round-robin matches
+  for (const m of matches) {
+    if (!m.played || m.isFinal || m.round === -1 || m.scoreA === undefined || m.scoreB === undefined) continue;
+    const { playerA, playerB, scoreA, scoreB, pointsAwarded } = m;
+    if (!pointsAwarded) continue;
+
+    if (stats[playerA]) {
+      stats[playerA].matchesPlayed++;
+      stats[playerA].points += pointsAwarded[playerA] ?? 0;
+      stats[playerA].scoreFor += scoreA;
+      stats[playerA].scoreAgainst += scoreB;
+      if (pointsAwarded[playerA] > 0) stats[playerA].wins++;
+    }
+
+    if (stats[playerB]) {
+      stats[playerB].matchesPlayed++;
+      stats[playerB].points += pointsAwarded[playerB] ?? 0;
+      stats[playerB].scoreFor += scoreB;
+      stats[playerB].scoreAgainst += scoreA;
+      if (pointsAwarded[playerB] > 0) stats[playerB].wins++;
+    }
+  }
+
+  // Include final match in games played and point totals
+  const { playerA, playerB, scoreA, scoreB, pointsAwarded } = final;
+  if (stats[playerA]) {
+    stats[playerA].matchesPlayed++;
+    stats[playerA].scoreFor += scoreA;
+    stats[playerA].scoreAgainst += scoreB;
+    if (pointsAwarded && (pointsAwarded[playerA] ?? 0) > 0) {
+      stats[playerA].wins++;
+      stats[playerA].points += pointsAwarded[playerA] ?? 0;
+    }
+  }
+  if (stats[playerB]) {
+    stats[playerB].matchesPlayed++;
+    stats[playerB].scoreFor += scoreB;
+    stats[playerB].scoreAgainst += scoreA;
+    if (pointsAwarded && (pointsAwarded[playerB] ?? 0) > 0) {
+      stats[playerB].wins++;
+      stats[playerB].points += pointsAwarded[playerB] ?? 0;
+    }
+  }
+
+  // 5. Build rows
+  const rows: TournamentRow[] = playerIds.map((pid) => ({
+    playerId: pid,
+    points: stats[pid].points,
+    wins: stats[pid].wins,
+    matchesPlayed: stats[pid].matchesPlayed,
+    pointDiff: stats[pid].scoreFor - stats[pid].scoreAgainst,
+    rank: 0,
+    dayPoints: dayPointsMap[pid] ?? 0,
+  }));
+
+  // 6. Sort by overall points (winner gets N so finishes 1st, loser gets N-1 or N-2 so finishes 2nd)
+  rows.sort((a, b) => {
+    const dayA = dayPointsMap[a.playerId] ?? 0;
+    const dayB = dayPointsMap[b.playerId] ?? 0;
+    if (dayB !== dayA) return dayB - dayA;
+
+    // Tiebreak: if final loser with penalty and 3rd place both have N - 2 overall points,
+    // the finalist finishes 2nd and the non-finalist finishes 3rd
+    const aIsFinalist = a.playerId === winnerId || a.playerId === loserId;
+    const bIsFinalist = b.playerId === winnerId || b.playerId === loserId;
+    if (aIsFinalist && !bIsFinalist) return -1;
+    if (!aIsFinalist && bIsFinalist) return 1;
+
+    // Secondary: round-robin points and pointDiff
+    if (b.points !== a.points) return b.points - a.points;
+    return b.pointDiff - a.pointDiff;
+  });
+
+  // Assign final ranks
   rows.forEach((row, i) => {
     row.rank = i + 1;
   });
@@ -100,7 +221,7 @@ export function computeTournamentTable(tournament: Tournament): TournamentRow[] 
 export function getFinalists(
   tournament: Tournament
 ): { finalistIds: [string, string]; needsCoinFlip: boolean } {
-  const table = computeTournamentTable(tournament);
+  const table = computeRoundRobinTable(tournament);
 
   // Check if positions 1 and 2 are tied in points
   const first = table[0];
@@ -111,23 +232,20 @@ export function getFinalists(
     const h2h = tournament.matches.find(
       (m) =>
         m.played &&
+        !m.isFinal &&
+        m.round !== -1 &&
         ((m.playerA === first.playerId && m.playerB === second.playerId) ||
           (m.playerA === second.playerId && m.playerB === first.playerId))
     );
 
     if (h2h && h2h.scoreA !== undefined && h2h.scoreB !== undefined) {
-      // Determine winner of h2h
-      const h2hWinner =
-        h2h.scoreA > h2h.scoreB ? h2h.playerA : h2h.playerB;
-      // Put h2h winner first
+      const h2hWinner = h2h.scoreA > h2h.scoreB ? h2h.playerA : h2h.playerB;
       if (h2hWinner === second.playerId) {
         return { finalistIds: [second.playerId, first.playerId], needsCoinFlip: false };
       }
     }
 
-    // Point diff tiebreak is already applied in the table sort
     if (first.pointDiff === second.pointDiff) {
-      // Need coin flip
       return {
         finalistIds: [first.playerId, second.playerId],
         needsCoinFlip: true,
@@ -143,16 +261,16 @@ export function getFinalists(
 
 /**
  * Convert a closed tournament's final standings into day points.
- * rank 1 → N points, rank N → 1 point.
- * Only reads the tournament table's already-penalized totals — never re-applies penalties.
+ * - Winner of final gets N points.
+ * - Loser of final gets N - 1 points (or N - 2 points if blowout penalty margin >= finalBonusMargin).
+ * - 3rd place gets N - 2 points, 4th gets N - 3 points, etc.
  */
 export function computeDayPoints(tournament: Tournament): { [playerId: string]: number } {
   const table = computeTournamentTable(tournament);
-  const N = table.length;
   const dayPoints: { [playerId: string]: number } = {};
 
   table.forEach((row) => {
-    dayPoints[row.playerId] = N - row.rank + 1;
+    dayPoints[row.playerId] = row.dayPoints ?? Math.max(1, table.length - row.rank + 1);
   });
 
   return dayPoints;
@@ -162,5 +280,5 @@ export function computeDayPoints(tournament: Tournament): { [playerId: string]: 
  * Check if all round-robin matches have been played.
  */
 export function isRoundRobinComplete(tournament: Tournament): boolean {
-  return tournament.matches.every((m) => m.played);
+  return tournament.matches.filter((m) => !m.isFinal && m.round !== -1).every((m) => m.played);
 }
