@@ -91,6 +91,7 @@ export interface TournamentRow {
   matchesPlayed: number;
   pointDiff: number;      // sum of (scoreFor - scoreAgainst) in played matches
   rank: number;
+  dayPoints?: number;     // overall day points earned in this tournament
 }
 
 export type PlayPhase =
