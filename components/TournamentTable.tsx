@@ -143,7 +143,9 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
             <span className="text-slate-400 text-xs font-extrabold w-8 text-center">MP</span>
             <span className="text-slate-400 text-xs font-extrabold w-8 text-center">W</span>
             <span className="text-slate-400 text-xs font-extrabold w-10 text-center">+/-</span>
-            <span className="text-slate-400 text-xs font-extrabold w-10 text-center font-black">PTS</span>
+            <span className="text-slate-400 text-xs font-extrabold w-10 text-center font-black">
+              {showFinalLabel ? "DAY" : "PTS"}
+            </span>
           </div>
 
       <AnimatePresence>
@@ -214,13 +216,13 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                   {row.pointDiff > 0 ? `+${row.pointDiff}` : row.pointDiff}
                 </span>
                 <motion.span
-                  key={row.points}
+                  key={showFinalLabel && row.dayPoints !== undefined ? row.dayPoints : row.points}
                   initial={{ scale: 1.2 }}
                   animate={{ scale: 1 }}
                   transition={{ duration: 0.25 }}
                   className="text-base font-black w-10 text-center tabular-nums text-slate-900"
                 >
-                  {row.points}
+                  {showFinalLabel && row.dayPoints !== undefined ? row.dayPoints : row.points}
                 </motion.span>
 
                 {canExpand && (
