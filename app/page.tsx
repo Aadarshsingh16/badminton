@@ -1028,7 +1028,9 @@ export default function PlayPage() {
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-4xl">🏆</div>
               </div>
               <h2 className="text-slate-900 font-black text-3xl tracking-tight">{winnerPlayer.name}!</h2>
-              <p className="text-amber-600 font-black text-lg">{winner.points} pts</p>
+              <p className="text-amber-600 font-black text-lg">
+                {winner.dayPoints ? `${winner.dayPoints} overall pts` : `${winner.points} pts`}
+              </p>
             </motion.div>
           )}
 
