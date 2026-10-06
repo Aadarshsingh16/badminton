@@ -242,7 +242,8 @@ tournamentsRouter.get("/:slug", async (req, res) => {
     );
 
     const matches = mRes.rows;
-    const table = computeTable(matches, tournament.player_ids);
+    const tournamentConfig = typeof tournament.config === "string" ? JSON.parse(tournament.config) : (tournament.config || DEFAULT_CONFIG);
+    const table = computeTable(matches, tournament.player_ids, tournamentConfig);
 
     // Return complete player objects for all tournament player_ids
     const foundPlayerIds = new Set(pRes.rows.map((p: any) => p.id));
