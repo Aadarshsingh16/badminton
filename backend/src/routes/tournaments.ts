@@ -8,36 +8,104 @@ import { pointsForMatch, pointsForFinal, TournamentConfig, DEFAULT_CONFIG } from
 export const tournamentsRouter = Router();
 
 // Helper to compute tournament standings table
-function computeTable(matches: any[], playerIds: string[]) {
+function computeTable(matches: any[], playerIds: string[], config: TournamentConfig = DEFAULT_CONFIG) {
   const stats: { [id: string]: { points: number; wins: number; matchesPlayed: number; pointDiff: number } } = {};
+  const N = playerIds.length;
 
   for (const id of playerIds) {
     stats[id] = { points: 0, wins: 0, matchesPlayed: 0, pointDiff: 0 };
   }
 
   for (const m of matches) {
-    if (!m.played || m.scoreA === null || m.scoreB === null) continue;
-    const { playerA, playerB, scoreA, scoreB, pointsA, pointsB, isFinal } = m;
+    if (!m.played || m.isFinal || m.round === -1 || m.scoreA === null || m.scoreB === null) continue;
+    const { playerA, playerB, scoreA, scoreB, pointsA, pointsB } = m;
 
     if (!stats[playerA]) stats[playerA] = { points: 0, wins: 0, matchesPlayed: 0, pointDiff: 0 };
     if (!stats[playerB]) stats[playerB] = { points: 0, wins: 0, matchesPlayed: 0, pointDiff: 0 };
 
-    if (!isFinal) {
-      stats[playerA].matchesPlayed++;
-      stats[playerB].matchesPlayed++;
-      stats[playerA].pointDiff += scoreA - scoreB;
-      stats[playerB].pointDiff += scoreB - scoreA;
-      if (scoreA > scoreB) stats[playerA].wins++;
-      if (scoreB > scoreA) stats[playerB].wins++;
-    }
+    stats[playerA].matchesPlayed++;
+    stats[playerB].matchesPlayed++;
+    stats[playerA].pointDiff += scoreA - scoreB;
+    stats[playerB].pointDiff += scoreB - scoreA;
+    if (scoreA > scoreB) stats[playerA].wins++;
+    if (scoreB > scoreA) stats[playerB].wins++;
 
     stats[playerA].points += pointsA ?? 0;
     stats[playerB].points += pointsB ?? 0;
   }
 
-  return Object.entries(stats)
+  const rrRows = Object.entries(stats)
     .map(([playerId, s]) => ({ playerId, ...s }))
     .sort((a, b) => b.points - a.points || b.wins - a.wins || b.pointDiff - a.pointDiff);
+
+  const finalMatch = matches.find((m) => (m.isFinal || m.round === -1) && m.played && m.scoreA !== null && m.scoreB !== null);
+
+  if (finalMatch) {
+    const isWinA = finalMatch.scoreA > finalMatch.scoreB;
+    const winnerId = isWinA ? finalMatch.playerA : finalMatch.playerB;
+    const loserId = isWinA ? finalMatch.playerB : finalMatch.playerA;
+
+    const winScore = Math.max(finalMatch.scoreA, finalMatch.scoreB);
+    const loseScore = Math.min(finalMatch.scoreA, finalMatch.scoreB);
+    const margin = winScore - loseScore;
+    const bonusMargin = config?.finalBonusMargin ?? DEFAULT_CONFIG.finalBonusMargin;
+    const hasPenalty = margin >= bonusMargin;
+
+    const dayPointsMap: { [id: string]: number } = {};
+    dayPointsMap[winnerId] = N;
+    dayPointsMap[loserId] = hasPenalty ? Math.max(1, N - 2) : Math.max(1, N - 1);
+
+    const nonFinalists = rrRows.filter((r) => r.playerId !== winnerId && r.playerId !== loserId);
+    nonFinalists.forEach((r, idx) => {
+      dayPointsMap[r.playerId] = Math.max(1, N - 2 - idx);
+    });
+
+    if (stats[finalMatch.playerA]) {
+      stats[finalMatch.playerA].matchesPlayed++;
+      stats[finalMatch.playerA].pointDiff += finalMatch.scoreA - finalMatch.scoreB;
+      if (finalMatch.scoreA > finalMatch.scoreB) stats[finalMatch.playerA].wins++;
+      if (finalMatch.pointsA !== null) stats[finalMatch.playerA].points += finalMatch.pointsA;
+    }
+    if (stats[finalMatch.playerB]) {
+      stats[finalMatch.playerB].matchesPlayed++;
+      stats[finalMatch.playerB].pointDiff += finalMatch.scoreB - finalMatch.scoreA;
+      if (finalMatch.scoreB > finalMatch.scoreA) stats[finalMatch.playerB].wins++;
+      if (finalMatch.pointsB !== null) stats[finalMatch.playerB].points += finalMatch.pointsB;
+    }
+
+    const rows = Object.entries(stats).map(([playerId, s]) => ({
+      playerId,
+      ...s,
+      dayPoints: dayPointsMap[playerId] ?? 0,
+      rank: 0,
+    }));
+
+    rows.sort((a, b) => {
+      const dayA = dayPointsMap[a.playerId] ?? 0;
+      const dayB = dayPointsMap[b.playerId] ?? 0;
+      if (dayB !== dayA) return dayB - dayA;
+
+      const aIsFinalist = a.playerId === winnerId || a.playerId === loserId;
+      const bIsFinalist = b.playerId === winnerId || b.playerId === loserId;
+      if (aIsFinalist && !bIsFinalist) return -1;
+      if (!aIsFinalist && bIsFinalist) return 1;
+
+      if (b.points !== a.points) return b.points - a.points;
+      return b.pointDiff - a.pointDiff;
+    });
+
+    rows.forEach((r, idx) => {
+      r.rank = idx + 1;
+    });
+
+    return rows;
+  }
+
+  return rrRows.map((r, idx) => ({
+    ...r,
+    rank: idx + 1,
+    dayPoints: Math.max(1, N - idx),
+  }));
 }
 
 // POST /tournaments — create a new tournament (scorekeeper only)
