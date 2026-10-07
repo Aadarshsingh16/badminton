@@ -29,36 +29,65 @@ leaderboardRouter.get("/", async (req, res) => {
     }
 
     const query = `
-      WITH player_matches AS (
-        SELECT
-          p.id AS player_id,
-          p.name,
-          p.avatar_type AS "avatar",
-          p.avatar_emoji AS "avatarEmoji",
-          p.avatar_color AS "avatarColor",
-          COUNT(m.id) AS matches_played,
-          SUM(CASE WHEN (m.player_a = p.id AND m.score_a > m.score_b) OR (m.player_b = p.id AND m.score_b > m.score_a) THEN 1 ELSE 0 END) AS wins,
-          SUM(CASE WHEN m.player_a = p.id THEN m.points_a ELSE m.points_b END) AS total_points,
-          SUM(CASE WHEN m.player_a = p.id THEN (m.score_a - m.score_b) ELSE (m.score_b - m.score_a) END) AS point_diff
+      WITH date_filtered_days AS (
+        SELECT id, date, totals FROM day_tables d WHERE 1=1 ${dateFilter}
+      ),
+      day_points AS (
+        SELECT p.id as player_id, SUM((d.totals->>p.id)::int) as day_points_total
         FROM players p
-        JOIN matches m ON (m.player_a = p.id OR m.player_b = p.id) AND m.played = true
+        CROSS JOIN date_filtered_days d
+        WHERE (d.totals->>p.id) IS NOT NULL
+        GROUP BY p.id
+      ),
+      league_stats AS (
+        SELECT
+          p.id as player_id,
+          COUNT(m.id) as league_matches_played,
+          SUM(CASE WHEN (m.player_a = p.id AND m.score_a > m.score_b) OR (m.player_b = p.id AND m.score_b > m.score_a) THEN 1 ELSE 0 END) as league_wins,
+          SUM(CASE WHEN m.player_a = p.id THEN m.points_a ELSE m.points_b END) as league_points,
+          SUM(CASE WHEN m.player_a = p.id THEN (m.score_a - m.score_b) ELSE (m.score_b - m.score_a) END) as league_point_diff,
+          SUM(CASE WHEN (m.player_a = p.id AND m.score_b = 0) OR (m.player_b = p.id AND m.score_a = 0) THEN 1 ELSE 0 END) as shutout_wins,
+          SUM(CASE WHEN (m.player_a = p.id AND m.score_a = 0) OR (m.player_b = p.id AND m.score_b = 0) THEN 1 ELSE 0 END) as shutout_losses,
+          MAX(CASE WHEN (m.player_a = p.id AND m.score_a > m.score_b) THEN (m.score_a - m.score_b) WHEN (m.player_b = p.id AND m.score_b > m.score_a) THEN (m.score_b - m.score_a) ELSE 0 END) as highest_win_margin
+        FROM players p
+        JOIN matches m ON (m.player_a = p.id OR m.player_b = p.id) AND m.played = true AND (m.is_final = false AND m.round != -1)
         JOIN tournaments t ON m.tournament_id = t.id
-        JOIN day_tables d ON t.day_id = d.id
-        WHERE 1=1 ${dateFilter}
-        GROUP BY p.id, p.name, p.avatar_type, p.avatar_emoji, p.avatar_color
+        JOIN date_filtered_days d ON t.day_id = d.id
+        GROUP BY p.id
+      ),
+      final_stats AS (
+        SELECT
+          p.id as player_id,
+          COUNT(m.id) as finals_played,
+          SUM(CASE WHEN (m.player_a = p.id AND m.score_a > m.score_b) OR (m.player_b = p.id AND m.score_b > m.score_a) THEN 1 ELSE 0 END) as finals_won
+        FROM players p
+        JOIN matches m ON (m.player_a = p.id OR m.player_b = p.id) AND m.played = true AND (m.is_final = true OR m.round = -1)
+        JOIN tournaments t ON m.tournament_id = t.id
+        JOIN date_filtered_days d ON t.day_id = d.id
+        GROUP BY p.id
       )
       SELECT
-        player_id AS "playerId",
-        name,
-        avatar,
-        "avatarEmoji",
-        "avatarColor",
-        COALESCE(matches_played, 0)::int AS "matchesPlayed",
-        COALESCE(wins, 0)::int AS "wins",
-        COALESCE(total_points, 0)::int AS "totalPoints",
-        COALESCE(point_diff, 0)::int AS "pointDiff",
-        CASE WHEN matches_played > 0 THEN ROUND((wins::numeric / matches_played::numeric) * 100, 1) ELSE 0 END AS "winRate"
-      FROM player_matches
+        p.id AS "playerId",
+        p.name,
+        p.avatar_type AS "avatar",
+        p.avatar_emoji AS "avatarEmoji",
+        p.avatar_color AS "avatarColor",
+        COALESCE(dp.day_points_total, 0)::int AS "dayPointsTotal",
+        COALESCE(ls.league_matches_played, 0)::int AS "leagueMatchesPlayed",
+        COALESCE(ls.league_wins, 0)::int AS "leagueWins",
+        COALESCE(ls.league_points, 0)::int AS "leaguePoints",
+        COALESCE(ls.league_point_diff, 0)::int AS "leaguePointDiff",
+        COALESCE(ls.shutout_wins, 0)::int AS "shutoutWins",
+        COALESCE(ls.shutout_losses, 0)::int AS "shutoutLosses",
+        COALESCE(ls.highest_win_margin, 0)::int AS "highestWinMargin",
+        COALESCE(fs.finals_played, 0)::int AS "finalsPlayed",
+        COALESCE(fs.finals_won, 0)::int AS "finalsWon",
+        CASE WHEN COALESCE(ls.league_matches_played, 0) > 0 THEN ROUND((COALESCE(ls.league_wins, 0)::numeric / ls.league_matches_played::numeric) * 100, 1) ELSE 0 END AS "leagueWinRate"
+      FROM players p
+      LEFT JOIN day_points dp ON p.id = dp.player_id
+      LEFT JOIN league_stats ls ON p.id = ls.player_id
+      LEFT JOIN final_stats fs ON p.id = fs.player_id
+      WHERE COALESCE(ls.league_matches_played, 0) > 0 OR COALESCE(dp.day_points_total, 0) > 0 OR COALESCE(fs.finals_played, 0) > 0
     `;
 
     const result = await pool.query(query, params);
@@ -66,12 +95,12 @@ leaderboardRouter.get("/", async (req, res) => {
 
     // Sorting
     if (sortBy === "matches") {
-      rows.sort((a, b) => b.matchesPlayed - a.matchesPlayed || b.totalPoints - a.totalPoints);
+      rows.sort((a, b) => b.leagueMatchesPlayed - a.leagueMatchesPlayed || b.dayPointsTotal - a.dayPointsTotal);
     } else if (sortBy === "wins") {
-      rows.sort((a, b) => b.wins - a.wins || b.totalPoints - a.totalPoints);
+      rows.sort((a, b) => b.leagueWins - a.leagueWins || b.dayPointsTotal - a.dayPointsTotal);
     } else {
       // Default: points
-      rows.sort((a, b) => b.totalPoints - a.totalPoints || b.wins - a.wins || b.pointDiff - a.pointDiff);
+      rows.sort((a, b) => b.dayPointsTotal - a.dayPointsTotal || b.leaguePoints - a.leaguePoints || b.leaguePointDiff - a.leaguePointDiff);
     }
 
     res.json(rows);

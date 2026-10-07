@@ -73,11 +73,17 @@ interface LeaderboardEntry {
   avatar: AvatarType;
   avatarEmoji?: string;
   avatarColor?: string;
-  matchesPlayed: number;
-  wins: number;
-  totalPoints: number;
-  pointDiff: number;
-  winRate: number;
+  dayPointsTotal: number;
+  leagueMatchesPlayed: number;
+  leagueWins: number;
+  leaguePoints: number;
+  leaguePointDiff: number;
+  leagueWinRate: number;
+  shutoutWins: number;
+  shutoutLosses: number;
+  highestWinMargin: number;
+  finalsPlayed: number;
+  finalsWon: number;
 }
 
 interface DayHonors {
