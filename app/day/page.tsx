@@ -424,26 +424,15 @@ export default function DayPage() {
           </div>
           <h3 className="text-slate-900 font-black text-xl tracking-tight">No Day Matches Yet</h3>
           <p className="text-slate-500 text-xs mt-1 max-w-xs leading-relaxed font-medium">
-            {isViewer
-              ? "Waiting for live tournament matches to finish..."
-              : "Complete tournament matches to start racking up today's cumulative points!"}
+            Complete tournament matches to start racking up today&apos;s cumulative points!
           </p>
-          {isViewer && viewerSlug ? (
-            <Link
-              href={`/live/${viewerSlug}`}
-              className="mt-5 px-5 py-2.5 rounded-full bg-slate-950 text-white font-black text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all"
-            >
-              Watch Live Stream 👁️
-            </Link>
-          ) : (
-            <Link
-              href="/"
-              className="mt-5 px-5 py-2.5 rounded-full bg-slate-950 text-white font-black text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5"
-            >
-              <span>Start Tournament</span>
-              <span>&rarr;</span>
-            </Link>
-          )}
+          <Link
+            href="/"
+            className="mt-5 px-5 py-2.5 rounded-full bg-slate-950 text-white font-black text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5"
+          >
+            <span>Start Tournament</span>
+            <span>&rarr;</span>
+          </Link>
         </div>
       )}
 
