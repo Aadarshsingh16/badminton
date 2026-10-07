@@ -695,11 +695,6 @@ export const useStore = create<AppState>()(
           pastTournaments: updatedPast,
           selectedPlayerIds: closedTournament.playerIds,
         });
-
-        apiSync.enqueue("/day-tables/close", "POST", {
-          date: currentDate,
-          totals: newTotals,
-        });
       },
 
       deleteTournament: (id: string, skipSync?: boolean) => {

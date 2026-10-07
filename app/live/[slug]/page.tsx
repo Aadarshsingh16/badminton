@@ -139,10 +139,32 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
 
     // Always fetch latest authoritative data from backend
     try {
-      const res = await fetch(`${backendUrl}/day-tables/${targetDate}`);
-      if (res.ok) {
-        const json: any = await res.json();
+      let fetchDate = targetDate;
+      let res = await fetch(`${backendUrl}/day-tables/${fetchDate}`);
+      let json: any = res.ok ? await res.json() : null;
 
+      // If requested date has 0 tournaments, seamlessly check today's date or store's session date!
+      if (!json || !Array.isArray(json.tournaments) || json.tournaments.length === 0) {
+        const todayDate = new Date().toISOString().split("T")[0];
+        const storeDate = state.dayTable?.date;
+        const candidateDates = [todayDate, storeDate].filter((d) => d && d !== fetchDate) as string[];
+
+        for (const altDate of candidateDates) {
+          try {
+            const altRes = await fetch(`${backendUrl}/day-tables/${altDate}`);
+            if (altRes.ok) {
+              const altJson = await altRes.json();
+              if (Array.isArray(altJson.tournaments) && altJson.tournaments.length > 0) {
+                json = altJson;
+                fetchDate = altDate;
+                break;
+              }
+            }
+          } catch {}
+        }
+      }
+
+      if (json) {
         // 1. Resolve players
         let resolvedPlayers: Player[] = Array.isArray(json.players) ? json.players : [];
 
@@ -209,7 +231,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         }
 
         setDayData({
-          date: targetDate,
+          date: fetchDate,
           closed: !!json.closed,
           totals: resolvedTotals,
           activeTournament: resolvedActiveT,
@@ -221,7 +243,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         setIsWaiting(false);
         setLoading(false);
         setLastUpdated(new Date().toLocaleTimeString());
-      } else if (res.status === 404 && !dayData) {
+      } else if (!dayData) {
         setIsWaiting(true);
         setLoading(false);
       }
