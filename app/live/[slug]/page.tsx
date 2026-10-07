@@ -616,9 +616,10 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
   const computedStandings = useMemo<TournamentRow[]>(() => {
     if (!activeTournament) return [];
     if (!activeTournament.standings || activeTournament.standings.length === 0 || isTournamentCompleted) {
+      const matches = activeTournament.matches || [];
       const pIds = Array.from(
         new Set([
-          ...activeTournament.matches.flatMap((m) => [m.playerA, m.playerB]),
+          ...matches.flatMap((m: any) => [m.playerA, m.playerB]),
           ...(activeTournament.final ? [activeTournament.final.playerA, activeTournament.final.playerB] : []),
         ])
       ).filter(Boolean);
@@ -626,13 +627,13 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         return computeTournamentTable({
           id: activeTournament.id,
           playerIds: pIds,
-          matches: activeTournament.matches,
+          matches: matches,
           final: activeTournament.final,
           config: activeTournament.config,
         } as any);
       }
     }
-    return activeTournament.standings;
+    return activeTournament.standings || [];
   }, [activeTournament, isTournamentCompleted]);
 
   const dayStandings = useMemo<DayStandingItem[]>(() => {
@@ -646,9 +647,10 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       const isDone = t.status === "completed" || (t.final?.played ?? false);
       if (!isDone) continue;
 
+      const matches = t.matches || [];
       const pIds = Array.from(
         new Set([
-          ...t.matches.flatMap((m) => [m.playerA, m.playerB]),
+          ...matches.flatMap((m: any) => [m.playerA, m.playerB]),
           ...(t.final ? [t.final.playerA, t.final.playerB] : []),
         ])
       ).filter(Boolean);
@@ -656,7 +658,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       const table = computeTournamentTable({
         id: t.id,
         playerIds: pIds,
-        matches: t.matches,
+        matches: matches,
         final: t.final,
         config: t.config,
       } as any);
