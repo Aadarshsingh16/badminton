@@ -277,5 +277,6 @@ export function computeDayPoints(tournament: Tournament): { [playerId: string]: 
  * Check if all round-robin matches have been played.
  */
 export function isRoundRobinComplete(tournament: Tournament): boolean {
+  if (!tournament || !tournament.matches) return false;
   return tournament.matches.filter((m) => !m.isFinal && m.round !== -1).every((m) => m.played);
 }
