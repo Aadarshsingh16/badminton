@@ -321,6 +321,20 @@ tournamentsRouter.patch("/:id/matches/:matchId", requireScorekeeper, async (req,
       match: updatedMatch,
     });
 
+    if (day_id) {
+      pool.query("SELECT date::text FROM day_tables WHERE id = $1", [day_id]).then((dRes) => {
+        const dStr = dRes.rows[0]?.date;
+        if (dStr) {
+          io.to(`day:${dStr}`).emit("day:update", {
+            type: "match:updated",
+            match: updatedMatch,
+            tournamentId,
+            date: dStr,
+          });
+        }
+      }).catch(() => {});
+    }
+
     res.json(updatedMatch);
   } catch (err: any) {
     console.error("PATCH match score error:", err);
