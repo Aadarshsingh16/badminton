@@ -57,7 +57,7 @@ interface AppState {
   goToSetup: () => void;
   setPendingConfig: (config: TournamentConfig) => void;
 
-  startTournament: () => void;
+  startTournament: (sessionDate?: string) => void;
   shuffleFixtures: () => void;
   cancelTournament: () => void;
   confirmMatchScore: (matchId: string, scoreA: number, scoreB: number) => void;
@@ -367,11 +367,9 @@ export const useStore = create<AppState>()(
         set({ phase: "setup" });
       },
 
-      setPendingConfig: (config) => set({ pendingConfig: config }),
-
-      startTournament: () => {
+      setPendingConfig: (config) => set({ pendingConfig: config }),      startTournament: (sessionDate?: string) => {
         const { selectedPlayerIds, pendingConfig, dayTable } = get();
-        if (selectedPlayerIds.length < 3) return;
+        if (selectedPlayerIds.length < 2) return;
 
         const isPractice = !!pendingConfig.isPractice;
 
@@ -382,6 +380,7 @@ export const useStore = create<AppState>()(
           [randomized[i], randomized[j]] = [randomized[j], randomized[i]];
         }
 
+        const effectiveDate = sessionDate || dayTable.date || today();
         const { matches, byes } = generateRoundRobin(randomized);
         const tournament: Tournament = {
           id: generateId(),
@@ -393,15 +392,19 @@ export const useStore = create<AppState>()(
           shareSlug: Math.random().toString(36).slice(2, 10),
           config: { ...pendingConfig },
           isPractice,
-          date: dayTable.date || today(),
+          date: effectiveDate,
         };
+
+        const updatedDayTable = dayTable.date === effectiveDate
+          ? dayTable
+          : { date: effectiveDate, tournaments: [], totals: {} };
 
         set({
           currentTournament: tournament,
+          dayTable: updatedDayTable,
           phase: "fixtures",
           selectedPlayerIds: [],
           needsCoinFlip: false,
-          coinFlipWinnerId: null,
         });
 
         if (!isPractice) {

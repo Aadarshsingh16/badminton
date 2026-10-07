@@ -248,8 +248,12 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         });
 
         // If tournament is part of a day session, automatically load full day data as well!
-        if (json.tournament?.dayDate) {
-          fetchDaySession(json.tournament.dayDate);
+        const sessionDate =
+          json.tournament?.dayDate ||
+          (json.tournament?.created_at ? json.tournament.created_at.split("T")[0] : null);
+
+        if (sessionDate) {
+          fetchDaySession(sessionDate);
         }
         setIsWaiting(false);
         setLoading(false);

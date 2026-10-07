@@ -421,7 +421,7 @@ export default function PlayPage() {
       <TournamentSetup
         playerCount={selectedPlayerIds.length}
         matchCount={setupMatchCount}
-        initialDate={dayTable.date || today()}
+        initialDate={dayTable.date || new Date().toISOString().split("T")[0]}
         onConfirm={(cfg, sessionDate) => {
           setPendingConfig(cfg);
           if (cfg.isPractice) {
