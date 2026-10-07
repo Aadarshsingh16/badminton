@@ -39,22 +39,13 @@ export function pointsForMatch(
     : config.winPoints;
 }
 
-/**
- * Final match scoring (config-driven).
- * Winner: earns finalWinBase (+2) as flat reward for winning the final.
- * Loser:  finalLoserPenalty (-1) if margin >= finalBonusMargin, else 0.
- */
 export function pointsForFinal(
-  scoreWinner: number,
-  scoreLoser: number,
-  isWinner: boolean,
-  config: TournamentConfig = DEFAULT_CONFIG
+  _scoreWinner: number,
+  _scoreLoser: number,
+  _isWinner: boolean,
+  _config: TournamentConfig = DEFAULT_CONFIG
 ): number {
-  const margin = scoreWinner - scoreLoser;
-  if (isWinner) {
-    return config.finalWinBonus > 0 && margin >= config.finalBonusMargin
-      ? config.finalWinBase + config.finalWinBonus
-      : config.finalWinBase;
-  }
-  return margin >= config.finalBonusMargin ? config.finalLoserPenalty : 0;
+  // Final match is strictly for determining 1st vs 2nd place Day Points.
+  // It never awards round-robin league match points.
+  return 0;
 }
