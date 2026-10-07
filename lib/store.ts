@@ -232,9 +232,6 @@ export function recoverTournamentsFromSyncQueue(): Tournament[] {
               const winScore = Math.max(b.scoreA, b.scoreB);
               const loseScore = Math.min(b.scoreA, b.scoreB);
               const winnerIsA = b.scoreA > b.scoreB;
-              const ptsA = pointsForFinal(winScore, loseScore, winnerIsA, t.config);
-              const ptsB = pointsForFinal(winScore, loseScore, !winnerIsA, t.config);
-
               t.final = {
                 id: `final-${tId}`,
                 round: -1,
@@ -245,7 +242,7 @@ export function recoverTournamentsFromSyncQueue(): Tournament[] {
                 scoreA: b.scoreA,
                 scoreB: b.scoreB,
                 played: true,
-                pointsAwarded: { [b.playerA]: ptsA, [b.playerB]: ptsB },
+                pointsAwarded: { [b.playerA]: 0, [b.playerB]: 0 },
               };
             }
           } else if (item.method === "POST" && item.url.includes("/day-tables/close") && item.body) {
@@ -656,28 +653,32 @@ export const useStore = create<AppState>()(
         }
 
         const dayPoints = computeDayPoints(currentTournament);
-        const newTotals = { ...dayTable.totals };
-        for (const [pid, pts] of Object.entries(dayPoints)) {
-          newTotals[pid] = (newTotals[pid] ?? 0) + pts;
-        }
-
         const closedTournament: Tournament = {
           ...currentTournament,
           closed: true,
           dayPointsAwarded: dayPoints,
         };
 
-        const currentDate = today();
-        const newDayTable: DayTable =
-          dayTable.date !== currentDate
-            ? { date: currentDate, tournaments: [currentTournament.id], totals: dayPoints }
-            : {
-                date: dayTable.date,
-                tournaments: [...dayTable.tournaments, currentTournament.id],
-                totals: newTotals,
-              };
-
         const updatedPast = [...pastTournaments, closedTournament];
+        const currentDate = dayTable.date || today();
+
+        // Always recompute clean cumulative day totals from all tournaments completed today
+        const todaysTournaments = updatedPast.filter(
+          (t) => !t.isPractice && (t.date || today()) === currentDate
+        );
+        const newTotals: { [playerId: string]: number } = {};
+        for (const t of todaysTournaments) {
+          const ptsMap = t.dayPointsAwarded ?? computeDayPoints(t);
+          for (const [pid, pts] of Object.entries(ptsMap)) {
+            newTotals[pid] = (newTotals[pid] ?? 0) + pts;
+          }
+        }
+
+        const newDayTable: DayTable = {
+          date: currentDate,
+          tournaments: todaysTournaments.map((t) => t.id),
+          totals: newTotals,
+        };
         try {
           if (typeof window !== "undefined") {
             localStorage.setItem("badminton_archived_tournaments_v1", JSON.stringify(updatedPast));
