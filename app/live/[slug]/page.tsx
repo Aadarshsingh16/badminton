@@ -242,7 +242,34 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                   const rawT = tJson.tournament;
                   const rawMatches = (tJson.matches || []).map(normalizeMatch);
                   const rrMatches = rawMatches.filter((m: any) => !m.isFinal && m.round !== -1);
-                  const fMatch = rawMatches.find((m: any) => m.isFinal || m.round === -1) || null;
+                  let fMatch = rawMatches.find((m: any) => m.isFinal || m.round === -1) || null;
+                  
+                  const pIds = Array.from(new Set([
+                    ...rrMatches.flatMap((m: any) => [m.playerA, m.playerB]),
+                    ...(fMatch ? [fMatch.playerA, fMatch.playerB] : [])
+                  ])).filter(Boolean) as string[];
+
+                  if (fMatch && fMatch.played) {
+                    const N = pIds.length;
+                    const winnerIsA = (fMatch.scoreA ?? 0) > (fMatch.scoreB ?? 0);
+                    const winnerId = winnerIsA ? fMatch.playerA : fMatch.playerB;
+                    const loserId = winnerIsA ? fMatch.playerB : fMatch.playerA;
+                    const margin = Math.abs((fMatch.scoreA ?? 0) - (fMatch.scoreB ?? 0));
+                    const bonusMargin = rawT.config?.finalBonusMargin ?? 4;
+                    fMatch.pointsAwarded = {
+                      [winnerId]: N,
+                      [loserId]: margin >= bonusMargin ? Math.max(1, N - 2) : Math.max(1, N - 1)
+                    };
+                  }
+
+                  const localStandings = computeTournamentTable({
+                    id: rawT.id,
+                    playerIds: pIds,
+                    matches: rrMatches,
+                    final: fMatch,
+                    config: rawT.config,
+                  } as any);
+
                   resolvedActiveT = {
                     id: rawT.id,
                     shareSlug: rawT.shareSlug || rawT.share_slug || rawT.id,
@@ -251,7 +278,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                     config: rawT.config,
                     matches: rrMatches,
                     final: fMatch,
-                    standings: tJson.standings || [],
+                    standings: localStandings,
                   };
                   if (Array.isArray(tJson.players) && tJson.players.length > 0) {
                     resolvedPlayers = tJson.players;
@@ -301,15 +328,44 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                 const tJson = await tRes.json();
                 const rawT = tJson.tournament;
                 const rawMatches = (tJson.matches || []).map(normalizeMatch);
+                const rrMatches = rawMatches.filter((m: any) => !m.isFinal && m.round !== -1);
+                let fMatch = rawMatches.find((m: any) => m.isFinal || m.round === -1) || null;
+                
+                const pIds = Array.from(new Set([
+                  ...rrMatches.flatMap((m: any) => [m.playerA, m.playerB]),
+                  ...(fMatch ? [fMatch.playerA, fMatch.playerB] : [])
+                ])).filter(Boolean) as string[];
+
+                if (fMatch && fMatch.played) {
+                  const N = pIds.length;
+                  const winnerIsA = (fMatch.scoreA ?? 0) > (fMatch.scoreB ?? 0);
+                  const winnerId = winnerIsA ? fMatch.playerA : fMatch.playerB;
+                  const loserId = winnerIsA ? fMatch.playerB : fMatch.playerA;
+                  const margin = Math.abs((fMatch.scoreA ?? 0) - (fMatch.scoreB ?? 0));
+                  const bonusMargin = rawT.config?.finalBonusMargin ?? 4;
+                  fMatch.pointsAwarded = {
+                    [winnerId]: N,
+                    [loserId]: margin >= bonusMargin ? Math.max(1, N - 2) : Math.max(1, N - 1)
+                  };
+                }
+
+                const localStandings = computeTournamentTable({
+                  id: rawT.id,
+                  playerIds: pIds,
+                  matches: rrMatches,
+                  final: fMatch,
+                  config: rawT.config,
+                } as any);
+
                 fullyResolvedTournaments.push({
                   id: rawT.id,
                   shareSlug: rawT.shareSlug || rawT.share_slug || rawT.id,
                   status: rawT.status || "completed",
                   createdAt: rawT.createdAt || rawT.created_at || new Date().toISOString(),
                   config: rawT.config,
-                  matches: rawMatches.filter((m: any) => !m.isFinal && m.round !== -1),
-                  final: rawMatches.find((m: any) => m.isFinal || m.round === -1) || null,
-                  standings: tJson.standings || [],
+                  matches: rrMatches,
+                  final: fMatch,
+                  standings: localStandings,
                 });
                 if (Array.isArray(tJson.players)) {
                   for (const p of tJson.players) {
@@ -1195,7 +1251,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                               </span>
                             )}
                           </div>
-                          {winnerPlayer && (
+                          {winnerPlayer && !isLive && (
                             <p className="text-amber-400/90 text-xs font-semibold mt-0.5 flex items-center gap-1">
                               <span>🏆</span>
                               <span>Winner: {winnerPlayer.name} ({winnerRow.dayPoints ?? winnerRow.points} pts)</span>
@@ -1223,7 +1279,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                         <TournamentTable
                           rows={t.standings && t.standings.length > 0 && t.standings[0]?.dayPoints !== undefined ? t.standings : computeTournamentTable({
                             id: t.id,
-                            playerIds: Array.from(new Set([...t.matches.flatMap((m) => [m.playerA, m.playerB]), ...(t.final ? [t.final.playerA, t.final.playerB] : [])])).filter(Boolean),
+                            playerIds: Array.from(new Set([...(t.matches || []).flatMap((m: any) => [m.playerA, m.playerB]), ...(t.final ? [t.final.playerA, t.final.playerB] : [])])).filter(Boolean),
                             matches: t.matches,
                             final: t.final,
                             config: t.config,

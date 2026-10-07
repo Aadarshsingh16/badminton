@@ -625,12 +625,23 @@ export const useStore = create<AppState>()(
         const loseScore = Math.min(scoreA, scoreB);
         const config = currentTournament.config;
 
+        const winnerId = winnerIsA ? idA : idB;
+        const loserId = winnerIsA ? idB : idA;
+        const margin = winScore - loseScore;
+        const bonusMargin = config?.finalBonusMargin ?? 4;
+        const N = currentTournament.playerIds.length;
+        
+        const ptsAwarded = {
+          [winnerId]: N,
+          [loserId]: margin >= bonusMargin ? Math.max(1, N - 2) : Math.max(1, N - 1)
+        };
+
         const updatedFinal: Match = {
           ...final,
           scoreA,
           scoreB,
           played: true,
-          pointsAwarded: { [idA]: 0, [idB]: 0 },
+          pointsAwarded: ptsAwarded,
         };
 
         set({
