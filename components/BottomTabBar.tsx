@@ -11,16 +11,11 @@ import { getViewerSlug, isViewerMode } from "@/lib/viewerMode";
 export function BottomTabBar() {
   const pathname = usePathname();
   const { dayTable, currentTournament, phase, isScoreSheetOpen } = useStore();
-  const [viewerSlug, setViewerSlug] = useState<string | null>(null);
 
   // Scroll detection state
   const [isScrolledDown, setIsScrolledDown] = useState(false);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
-
-  useEffect(() => {
-    setViewerSlug(getViewerSlug());
-  }, [pathname]);
 
   // Reset scroll-down state on route change
   useEffect(() => {
@@ -28,44 +23,10 @@ export function BottomTabBar() {
     lastScrollY.current = 0;
   }, [pathname]);
 
-  // Listen to scroll events across the window and any scrollable container (e.g. <main>)
-  useEffect(() => {
-    const handleScroll = (e: Event) => {
-      if (!ticking.current) {
-        window.requestAnimationFrame(() => {
-          const target = e.target;
-          let currentY = 0;
-
-          if (target === document || target === window) {
-            currentY = window.scrollY || document.documentElement.scrollTop || 0;
-          } else if (target instanceof HTMLElement) {
-            currentY = target.scrollTop;
-          }
-
-          const diff = currentY - lastScrollY.current;
-
-          // If scrolled down past 50px threshold and moving downwards with clear intent (> 8px)
-          if (currentY > 60 && diff > 8) {
-            setIsScrolledDown(true);
-          } else if (diff < -8 || currentY <= 30) {
-            // If scrolling upwards with clear intent or near the very top of the page
-            setIsScrolledDown(false);
-          }
-
-          lastScrollY.current = Math.max(0, currentY);
-          ticking.current = false;
-        });
-        ticking.current = true;
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true, capture: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll, { capture: true });
-    };
-  }, []);
-
-  const isViewer = !currentTournament && (isViewerMode() || !!viewerSlug);
+  // Do not show bottom nav on spectator live stream pages (spectators navigate inside /live)
+  if (pathname?.startsWith("/live")) {
+    return null;
+  }
 
   // Remaining matches count in tournament
   const remainingMatches =
@@ -78,14 +39,9 @@ export function BottomTabBar() {
 
   const tabs = [
     {
-      href: isViewer ? `/live/${viewerSlug}` : "/",
-      label: isViewer ? "Live Court" : "Play",
-      badge: isViewer ? (
-        <span className="absolute -top-1 -right-1 flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-        </span>
-      ) : phase === "final" ? (
+      href: "/",
+      label: "Play",
+      badge: phase === "final" ? (
         <span className="absolute -top-1.5 -right-2 text-[10px]">🏆</span>
       ) : remainingMatches !== null && remainingMatches > 0 ? (
         <span className="absolute -top-1 -right-2 px-1 min-w-[15px] h-[15px] bg-blue-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-2xs">

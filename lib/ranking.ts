@@ -156,25 +156,19 @@ export function computeTournamentTable(tournament: Tournament): TournamentRow[] 
     }
   }
 
-  // Include final match in games played and point totals
-  const { playerA, playerB, scoreA, scoreB, pointsAwarded } = final;
+  // Include final match in games played and scores (but league points are not altered by the final)
+  const { playerA, playerB, scoreA, scoreB } = final;
   if (stats[playerA]) {
     stats[playerA].matchesPlayed++;
     stats[playerA].scoreFor += scoreA;
     stats[playerA].scoreAgainst += scoreB;
-    if (pointsAwarded && (pointsAwarded[playerA] ?? 0) > 0) {
-      stats[playerA].wins++;
-      stats[playerA].points += pointsAwarded[playerA] ?? 0;
-    }
+    if (scoreA > scoreB) stats[playerA].wins++;
   }
   if (stats[playerB]) {
     stats[playerB].matchesPlayed++;
     stats[playerB].scoreFor += scoreB;
     stats[playerB].scoreAgainst += scoreA;
-    if (pointsAwarded && (pointsAwarded[playerB] ?? 0) > 0) {
-      stats[playerB].wins++;
-      stats[playerB].points += pointsAwarded[playerB] ?? 0;
-    }
+    if (scoreB > scoreA) stats[playerB].wins++;
   }
 
   // 5. Build rows

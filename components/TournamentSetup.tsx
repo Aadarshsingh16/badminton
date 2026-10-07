@@ -223,35 +223,19 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
 
           <Stepper
             label="Final win score"
-            hint="First player to reach this score wins the final"
+            hint="First player to reach this score wins the championship final"
             value={cfg.finalWinScore}
             onChange={(v) => update("finalWinScore", v)}
             min={3}
             max={21}
           />
           <Stepper
-            label="Winner reward points"
-            hint="Extra points awarded to winner for winning the final"
-            value={cfg.finalWinBase}
-            onChange={(v) => update("finalWinBase", v)}
-            min={0}
-            max={10}
-          />
-          <Stepper
-            label="Loser penalty margin"
-            hint={`Loser receives penalty if winner's margin ≥ this value (e.g. ${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin} or worse)`}
+            label="Blowout penalty margin"
+            hint={`Loser receives a -1 Day Point penalty if winner's margin ≥ this value (e.g. ${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin} or worse)`}
             value={cfg.finalBonusMargin}
             onChange={(v) => update("finalBonusMargin", v)}
             min={1}
             max={cfg.finalWinScore - 1}
-          />
-          <Stepper
-            label="Loser penalty"
-            hint={`Points deducted from loser when margin ≥ ${cfg.finalBonusMargin} (currently: ${loserPts})`}
-            value={Math.abs(cfg.finalLoserPenalty)}
-            onChange={(v) => update("finalLoserPenalty", -v)}
-            min={0}
-            max={5}
           />
         </motion.div>
 
@@ -263,36 +247,42 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           className="bg-amber-50/70 border border-amber-200/80 rounded-[26px] p-4.5 space-y-2.5"
         >
           <div className="flex items-center justify-between">
-            <p className="text-amber-900 text-[10px] uppercase tracking-wider font-black">
-              🏆 Final Points Preview
-            </p>
+            <div>
+              <p className="text-amber-900 text-[10px] uppercase tracking-wider font-black">
+                🏆 Day Points Breakdown ({playerCount} Players)
+              </p>
+              <p className="text-slate-500 text-[11px] mt-0.5">
+                Winner finishes 1st ({playerCount} pts). Loser finishes 2nd.
+              </p>
+            </div>
             <span className="text-[10px] text-amber-800 font-bold">First to {cfg.finalWinScore}</span>
           </div>
 
           <div className="space-y-1.5 text-xs">
             {[
-              { score: `${cfg.finalWinScore}–0`, margin: cfg.finalWinScore },
-              { score: `${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin}`, margin: cfg.finalBonusMargin },
-              { score: `${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin + 1}`, margin: cfg.finalBonusMargin - 1 },
-              { score: `${cfg.finalWinScore}–${cfg.finalWinScore - 1}`, margin: 1 },
-            ].filter((v, i, arr) => arr.findIndex((x) => x.score === v.score) === i).map(({ score, margin }) => {
-              const winnerPts = cfg.finalWinBase;
-              const loserPtsVal = margin >= cfg.finalBonusMargin ? cfg.finalLoserPenalty : 0;
+              { label: `${cfg.finalWinScore}–0 (Blowout)`, margin: cfg.finalWinScore },
+              { label: `${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin} (Blowout)`, margin: cfg.finalBonusMargin },
+              { label: `${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin + 1} (Close)`, margin: cfg.finalBonusMargin - 1 },
+              { label: `${cfg.finalWinScore}–${cfg.finalWinScore - 1} (Close)`, margin: 1 },
+            ].filter((v, i, arr) => arr.findIndex((x) => x.label === v.label) === i).map(({ label, margin }) => {
+              const isBlowout = margin >= cfg.finalBonusMargin;
+              const winnerPts = playerCount;
+              const loserPtsVal = isBlowout ? Math.max(1, playerCount - 2) : Math.max(1, playerCount - 1);
               return (
                 <div
-                  key={score}
+                  key={label}
                   className="flex justify-between items-center bg-white rounded-xl px-3 py-2 border border-amber-200/60 shadow-2xs"
                 >
-                  <span className="text-slate-700 font-mono font-bold">{score}</span>
+                  <span className="text-slate-700 font-mono font-bold text-[11px]">{label}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-600 font-medium text-[11px]">
-                      Winner: <strong className="text-emerald-700 font-black">+{winnerPts} pts</strong>
+                    <span className="text-slate-700 font-bold text-[11px]">
+                      1st: <strong className="text-emerald-700 font-black">{winnerPts} pts</strong>
                     </span>
                     <span className="text-slate-300">·</span>
-                    <span className="text-slate-600 font-medium text-[11px]">
-                      Loser:{" "}
-                      <strong className={loserPtsVal < 0 ? "text-rose-600 font-black" : "text-slate-500 font-bold"}>
-                        {loserPtsVal} pts
+                    <span className="text-slate-700 font-bold text-[11px]">
+                      2nd:{" "}
+                      <strong className={isBlowout ? "text-amber-700 font-black" : "text-slate-800 font-black"}>
+                        {loserPtsVal} pts {isBlowout ? "(-1 penalty)" : ""}
                       </strong>
                     </span>
                   </div>
@@ -300,6 +290,10 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
               );
             })}
           </div>
+
+          <p className="text-[10px] text-slate-500 pt-1 leading-relaxed">
+            💡 3rd place gets {Math.max(1, playerCount - 2)} pts, 4th gets {Math.max(1, playerCount - 3)} pts, down to 1 pt for last place. Points add to the running Day Table!
+          </p>
         </motion.div>
 
         {/* Practice / Test Mode Toggle Card */}
