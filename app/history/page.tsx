@@ -134,6 +134,8 @@ export default function HistoryPage() {
   const [expandedTournaments, setExpandedTournaments] = useState<{ [tId: string]: boolean }>({});
   const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(null);
   const [dayToDelete, setDayToDelete] = useState<string | null>(null);
+  
+  const [leaderboardCategory, setLeaderboardCategory] = useState<"day" | "league" | "finals" | "analytics">("day");
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinAction, setPinAction] = useState<"tournament" | "day">("tournament");
   const [targetIdForPin, setTargetIdForPin] = useState<string | null>(null);
