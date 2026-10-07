@@ -529,7 +529,6 @@ export default function HistoryPage() {
     };
   }, [currentTournament, pastTournaments, dayTable, players, playerFilter, patternFilter]);
 
-  // Local fallback synthesis for Leaderboards if backend has no records yet
   const localLeaderboardFallback = useMemo<LeaderboardEntry[]>(() => {
     let allTourneys = [...pastTournaments];
     if (allTourneys.length === 0) {
@@ -538,67 +537,58 @@ export default function HistoryPage() {
     }
     if (currentTournament) allTourneys.push(currentTournament);
 
-    const allMatches: Array<{
-      playerA: string;
-      playerB: string;
-      scoreA: number;
-      scoreB: number;
-      played: boolean;
-    }> = [];
-
-    allTourneys.forEach((t) => {
-      t.matches.filter((m) => m.played).forEach((m) => {
-        allMatches.push({
-          playerA: m.playerA,
-          playerB: m.playerB,
-          scoreA: m.scoreA ?? 0,
-          scoreB: m.scoreB ?? 0,
-          played: true,
-        });
-      });
-      if (t.final && t.final.played) {
-        allMatches.push({
-          playerA: t.final.playerA,
-          playerB: t.final.playerB,
-          scoreA: t.final.scoreA ?? 0,
-          scoreB: t.final.scoreB ?? 0,
-          played: true,
-        });
-      }
-    });
-
     const entries: LeaderboardEntry[] = players.map((p) => {
-      const pMatches = allMatches.filter((m) => m.playerA === p.id || m.playerB === p.id);
-      const wins = allMatches.filter(
-        (m) =>
-          (m.playerA === p.id && m.scoreA > m.scoreB) ||
-          (m.playerB === p.id && m.scoreB > m.scoreA)
-      ).length;
+      let dayPointsTotal = 0;
+      let leagueMatchesPlayed = 0;
+      let leagueWins = 0;
+      let leaguePoints = 0;
+      let leaguePointDiff = 0;
+      let shutoutWins = 0;
+      let shutoutLosses = 0;
+      let highestWinMargin = 0;
+      let finalsPlayed = 0;
+      let finalsWon = 0;
 
-      let totalPoints = 0;
       allTourneys.forEach((t) => {
+        // Day points logic
         if (t.dayPointsAwarded && t.dayPointsAwarded[p.id] !== undefined) {
-          totalPoints += t.dayPointsAwarded[p.id];
-        } else {
-          t.matches.filter((m) => m.played).forEach((m) => {
-            totalPoints += m.pointsAwarded?.[p.id] || 0;
-          });
-          if (t.final?.played) {
-            totalPoints += t.final.pointsAwarded?.[p.id] || 0;
+          dayPointsTotal += t.dayPointsAwarded[p.id];
+        }
+
+        // League matches
+        t.matches.filter(m => m.played).forEach(m => {
+          if (m.playerA === p.id || m.playerB === p.id) {
+            leagueMatchesPlayed++;
+            const isA = m.playerA === p.id;
+            const myScore = isA ? (m.scoreA ?? 0) : (m.scoreB ?? 0);
+            const oppScore = isA ? (m.scoreB ?? 0) : (m.scoreA ?? 0);
+            const myPoints = isA ? (m.pointsAwarded?.[m.playerA] ?? 0) : (m.pointsAwarded?.[m.playerB] ?? 0);
+            const won = myScore > oppScore;
+            
+            if (won) leagueWins++;
+            leaguePoints += myPoints;
+            leaguePointDiff += (myScore - oppScore);
+            
+            if (won && oppScore === 0) shutoutWins++;
+            if (!won && myScore === 0) shutoutLosses++;
+            if (won) highestWinMargin = Math.max(highestWinMargin, myScore - oppScore);
           }
+        });
+
+        // Finals
+        if (t.final?.played && (t.final.playerA === p.id || t.final.playerB === p.id)) {
+          finalsPlayed++;
+          const m = t.final;
+          const isA = m.playerA === p.id;
+          const myScore = isA ? (m.scoreA ?? 0) : (m.scoreB ?? 0);
+          const oppScore = isA ? (m.scoreB ?? 0) : (m.scoreA ?? 0);
+          if (myScore > oppScore) finalsWon++;
         }
       });
-      if (totalPoints === 0 && dayTable.totals[p.id]) {
-        totalPoints = dayTable.totals[p.id];
-      }
 
-      let pointDiff = 0;
-      pMatches.forEach((m) => {
-        if (m.playerA === p.id) pointDiff += m.scoreA - m.scoreB;
-        else pointDiff += m.scoreB - m.scoreA;
-      });
-      const matchesPlayed = pMatches.length;
-      const winRate = matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 1000) / 10 : 0;
+      if (dayPointsTotal === 0 && dayTable.totals[p.id]) {
+        dayPointsTotal = dayTable.totals[p.id];
+      }
 
       return {
         playerId: p.id,
@@ -606,24 +596,22 @@ export default function HistoryPage() {
         avatar: p.avatar,
         avatarEmoji: p.avatarEmoji,
         avatarColor: p.avatarColor,
-        matchesPlayed,
-        wins,
-        totalPoints,
-        pointDiff,
-        winRate,
+        dayPointsTotal,
+        leagueMatchesPlayed,
+        leagueWins,
+        leaguePoints,
+        leaguePointDiff,
+        leagueWinRate: leagueMatchesPlayed > 0 ? Math.round((leagueWins / leagueMatchesPlayed) * 1000) / 10 : 0,
+        shutoutWins,
+        shutoutLosses,
+        highestWinMargin,
+        finalsPlayed,
+        finalsWon,
       };
-    }).filter((p) => p.matchesPlayed > 0 || p.totalPoints > 0);
-
-    if (sortBy === "matches") {
-      entries.sort((a, b) => b.matchesPlayed - a.matchesPlayed || b.totalPoints - a.totalPoints);
-    } else if (sortBy === "wins") {
-      entries.sort((a, b) => b.wins - a.wins || b.totalPoints - a.totalPoints);
-    } else {
-      entries.sort((a, b) => b.totalPoints - a.totalPoints || b.wins - a.wins || b.pointDiff - a.pointDiff);
-    }
+    }).filter((p) => p.leagueMatchesPlayed > 0 || p.dayPointsTotal > 0 || p.finalsPlayed > 0);
 
     return entries;
-  }, [pastTournaments, currentTournament, dayTable, players, sortBy]);
+  }, [pastTournaments, currentTournament, dayTable, players]);
 
   // Local fallback synthesis for Day Honors (Champion & Wooden Spoon)
   const localDayHonorsFallback = useMemo<DayHonors>(() => {
@@ -726,8 +714,29 @@ export default function HistoryPage() {
     };
   }, [historyData, localHistoryFallback]);
 
-  const displayedLeaderboard =
+  const baseLeaderboard =
     leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;
+
+  const displayedLeaderboard = useMemo(() => {
+    if (!baseLeaderboard) return [];
+    const lb = [...baseLeaderboard];
+    
+    if (leaderboardCategory === "day") {
+      lb.sort((a, b) => b.dayPointsTotal - a.dayPointsTotal || b.leaguePoints - a.leaguePoints);
+    } else if (leaderboardCategory === "finals") {
+      lb.sort((a, b) => b.finalsWon - a.finalsWon || b.finalsPlayed - a.finalsPlayed || b.dayPointsTotal - a.dayPointsTotal);
+    } else if (leaderboardCategory === "league") {
+      if (sortBy === "wins") {
+        lb.sort((a, b) => b.leagueWins - a.leagueWins || b.leaguePoints - a.leaguePoints);
+      } else if (sortBy === "matches") {
+        lb.sort((a, b) => b.leagueMatchesPlayed - a.leagueMatchesPlayed || b.leaguePoints - a.leaguePoints);
+      } else {
+        lb.sort((a, b) => b.leaguePoints - a.leaguePoints || b.leaguePointDiff - a.leaguePointDiff);
+      }
+    }
+    
+    return lb;
+  }, [baseLeaderboard, leaderboardCategory, sortBy]);
 
   const displayedDayHonors =
     dayHonors && (dayHonors.dayChampions?.length > 0 || dayHonors.dayLastPlaces?.length > 0)
