@@ -775,65 +775,41 @@ export default function HistoryPage() {
       }
     });
 
-    type NemesisEntry = { playerId: string; nemesisId: string; winRate: number; losses: number };
-    const nemesisList: NemesisEntry[] = players.map(p => {
-      const opps = h2h[p.id];
-      if (!opps) return null;
-      let worstOppId = "";
-      let worstWinRate = 1;
-      let worstLosses = 0;
-      
-      for (const [oppId, stats] of Object.entries(opps)) {
-        if (stats.losses + stats.wins >= 2) {
-           const rate = stats.wins / (stats.wins + stats.losses);
-           if (rate < worstWinRate || (rate === worstWinRate && stats.losses > worstLosses)) {
-             worstWinRate = rate;
-             worstOppId = oppId;
-             worstLosses = stats.losses;
-           }
-        }
-      }
-      
-      if (worstWinRate <= 0.4 && worstLosses >= 2) {
-         return {
-           playerId: p.id,
-           nemesisId: worstOppId,
-           winRate: Math.round(worstWinRate * 100),
-           losses: worstLosses
-         };
-      }
-      return null;
-    }).filter((item): item is NemesisEntry => item !== null);
-
     const winRateChartData = displayedLeaderboard
-      .filter(l => l.leagueMatchesPlayed >= 1)
+      .filter(l => l.leagueMatchesPlayed >= 1 || l.finalsPlayed >= 1)
       .map(l => ({
         name: l.name,
-        "Win Rate %": l.leagueWinRate,
-        wins: l.leagueWins,
+        "League WR %": l.leagueWinRate,
+        "Finals WR %": l.finalsPlayed > 0 ? Math.round((l.finalsWon / l.finalsPlayed) * 100) : 0,
       }));
 
-    const pointPowerData = players.map(p => {
-      let scored = 0;
-      let conceded = 0;
+    const dominanceData = players.map(p => {
+      let diff = 0;
       let count = 0;
       allChronologicalMatches.forEach(m => {
-        if (m.playerA === p.id) { scored += m.scoreA; conceded += m.scoreB; count++; }
-        else if (m.playerB === p.id) { scored += m.scoreB; conceded += m.scoreA; count++; }
+        if (m.playerA === p.id) { diff += (m.scoreA - m.scoreB); count++; }
+        else if (m.playerB === p.id) { diff += (m.scoreB - m.scoreA); count++; }
       });
       return {
         name: p.name,
-        Scored: count > 0 ? Number((scored / count).toFixed(1)) : 0,
-        Conceded: count > 0 ? Number((conceded / count).toFixed(1)) : 0,
+        "Avg Diff": count > 0 ? Number((diff / count).toFixed(1)) : 0,
         count
       };
-    }).filter(d => d.count >= 2);
+    }).filter(d => d.count >= 2).sort((a, b) => b["Avg Diff"] - a["Avg Diff"]);
+    
+    // Calculate Stat Leaders
+    const statLeaders = {
+      shutoutKing: displayedLeaderboard.reduce((prev, current) => (prev.shutoutWins > current.shutoutWins) ? prev : current, displayedLeaderboard[0]),
+      highestMargin: displayedLeaderboard.reduce((prev, current) => (prev.highestWinMargin > current.highestWinMargin) ? prev : current, displayedLeaderboard[0]),
+      ironMan: displayedLeaderboard.reduce((prev, current) => ((prev.leagueMatchesPlayed + prev.finalsPlayed) > (current.leagueMatchesPlayed + current.finalsPlayed)) ? prev : current, displayedLeaderboard[0]),
+      finalsSpecialist: displayedLeaderboard.reduce((prev, current) => (prev.finalsWon > current.finalsWon) ? prev : current, displayedLeaderboard[0]),
+    };
 
     return {
       formMap,
-      nemesisList,
+      statLeaders,
       winRateChartData,
-      pointPowerData
+      dominanceData
     };
   }, [displayedHistory, displayedLeaderboard, players]);
 
@@ -1524,39 +1500,49 @@ export default function HistoryPage() {
             <div className="flex flex-col gap-4">
               {/* Row 1: Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Win Rate Bar Chart */}
+                {/* Win Rates Chart */}
                 <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs flex flex-col">
-                  <h3 className="text-xs font-extrabold text-slate-900 mb-1">League Win Rate Comparison</h3>
-                  <p className="text-[10px] text-slate-400 font-medium mb-4">Players with 1+ league matches</p>
-                  <div className="h-48 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={advancedInsights.winRateChartData} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} stroke="#f1f5f9" />
-                        <XAxis type="number" domain={[0, 100]} hide />
-                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
-                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 700 }} />
-                        <Bar dataKey="Win Rate %" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <h3 className="text-xs font-extrabold text-slate-900 mb-1">Win Rates</h3>
+                  <p className="text-[10px] text-slate-400 font-medium mb-4">League vs Finals Performance</p>
+                  <div className="overflow-x-auto overflow-y-hidden no-scrollbar w-full h-48">
+                    <div style={{ minWidth: `${Math.max(100, advancedInsights.winRateChartData.length * 20)}%`, height: '100%' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={advancedInsights.winRateChartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                          <YAxis hide domain={[0, 100]} />
+                          <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 700 }} />
+                          <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 600 }} />
+                          <Bar dataKey="League WR %" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={16} />
+                          <Bar dataKey="Finals WR %" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={16} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
 
-                {/* Offensive vs Defensive Chart */}
+                {/* Dominance Index Chart */}
                 <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs flex flex-col">
-                  <h3 className="text-xs font-extrabold text-slate-900 mb-1">Offense vs Defense</h3>
-                  <p className="text-[10px] text-slate-400 font-medium mb-4">Average points scored vs conceded</p>
-                  <div className="h-48 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={advancedInsights.pointPowerData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
-                        <YAxis hide />
-                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 700 }} />
-                        <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 600 }} />
-                        <Bar dataKey="Scored" fill="#10b981" radius={[4, 4, 0, 0]} barSize={16} />
-                        <Bar dataKey="Conceded" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={16} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <h3 className="text-xs font-extrabold text-slate-900 mb-1">Dominance Index</h3>
+                  <p className="text-[10px] text-slate-400 font-medium mb-4">Average point differential per match</p>
+                  <div className="overflow-x-auto overflow-y-hidden no-scrollbar w-full h-48">
+                    <div style={{ minWidth: `${Math.max(100, advancedInsights.dominanceData.length * 20)}%`, height: '100%' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={advancedInsights.dominanceData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                          <YAxis hide />
+                          <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 700 }} />
+                          <Bar dataKey="Avg Diff" radius={[4, 4, 0, 0]} barSize={24}>
+                            {
+                              advancedInsights.dominanceData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry["Avg Diff"] > 0 ? '#10b981' : '#f43f5e'} />
+                              ))
+                            }
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1564,15 +1550,15 @@ export default function HistoryPage() {
               {/* Row 2: Advanced Insights Bento Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Form Guide */}
-                <div className="bg-[#FFFBEB] border border-amber-200/80 rounded-[26px] p-4 shadow-xs">
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="bg-[#FFFBEB] border border-amber-200/80 rounded-[26px] p-4 shadow-xs flex flex-col max-h-64">
+                  <div className="flex items-center gap-2 mb-3 shrink-0">
                     <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-sm shadow-2xs">🔥</div>
                     <div>
                       <h3 className="text-xs font-extrabold text-amber-900">Current Form Guide</h3>
                       <p className="text-[10px] text-amber-700 font-semibold">Last 5 matches (Newest first)</p>
                     </div>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 overflow-y-auto no-scrollbar flex-1 pr-1 pb-1">
                     {players.map(p => advancedInsights.formMap[p.id] && advancedInsights.formMap[p.id].length > 0 ? (
                       <div key={p.id} className="flex items-center justify-between p-2 rounded-xl bg-white border border-amber-200/50 shadow-2xs">
                         <div className="flex items-center gap-2">
@@ -1585,76 +1571,77 @@ export default function HistoryPage() {
                           ))}
                         </div>
                       </div>
-                    ) : null).filter(Boolean).slice(0, 4)}
+                    ) : null).filter(Boolean)}
                   </div>
                 </div>
 
-                {/* Nemesis or Unbreakable */}
-                {advancedInsights.nemesisList.length > 0 ? (
-                  <div className="bg-[#F4F4F5] border border-slate-200 rounded-[26px] p-4 shadow-xs">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-xl bg-slate-300/40 flex items-center justify-center text-sm shadow-2xs">⚔️</div>
-                      <div>
-                        <h3 className="text-xs font-extrabold text-slate-900">Biggest Nemesis</h3>
-                        <p className="text-[10px] text-slate-600 font-semibold">Most vulnerable against opponent</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      {advancedInsights.nemesisList.slice(0, 4).map(nem => {
-                        const player = players.find(p => p.id === nem.playerId);
-                        const opp = players.find(p => p.id === nem.nemesisId);
-                        if (!player || !opp) return null;
-                        return (
-                          <div key={nem.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/50 shadow-2xs">
-                            <div className="flex items-center gap-2">
-                              <AvatarSVG type={player.avatar} size={24} emoji={player.avatarEmoji} color={player.avatarColor} />
-                              <span className="text-[10px] font-extrabold text-slate-900">{player.name}</span>
-                            </div>
-                            <div className="text-[9px] font-bold text-rose-500 uppercase px-1">Lost {nem.losses} times to</div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-extrabold text-slate-900">{opp.name}</span>
-                              <AvatarSVG type={opp.avatar} size={24} emoji={opp.avatarEmoji} color={opp.avatarColor} />
-                            </div>
-                          </div>
-                        )
-                      })}
+                {/* Stat Leaders Grid */}
+                <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-[26px] p-4 shadow-xs flex flex-col max-h-64">
+                  <div className="flex items-center gap-2 mb-3 shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-slate-200/80 flex items-center justify-center text-sm shadow-2xs">🏅</div>
+                    <div>
+                      <h3 className="text-xs font-extrabold text-slate-900">Tournament Honors</h3>
+                      <p className="text-[10px] text-slate-500 font-semibold">Top performers across categories</p>
                     </div>
                   </div>
-                ) : (
-                  (() => {
-                    const maxShutoutWins = Math.max(...displayedLeaderboard.map(e => e.shutoutWins));
-                    const shutoutPlayers = displayedLeaderboard.filter(e => e.shutoutWins === maxShutoutWins && maxShutoutWins > 0);
+                  <div className="grid grid-cols-2 gap-2 h-full overflow-y-auto no-scrollbar pb-1">
+                    {/* Shutout King */}
+                    {advancedInsights.statLeaders.shutoutKing?.shutoutWins > 0 && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Shutout King</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.shutoutKing.name}</span>
+                             <span className="text-[10px] font-bold text-blue-500">{advancedInsights.statLeaders.shutoutKing.shutoutWins} shutouts</span>
+                           </div>
+                           <span className="text-lg opacity-80">🛡️</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Biggest Margin */}
+                    {advancedInsights.statLeaders.highestMargin?.highestWinMargin > 0 && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Biggest Win</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.highestMargin.name}</span>
+                             <span className="text-[10px] font-bold text-emerald-500">+{advancedInsights.statLeaders.highestMargin.highestWinMargin} margin</span>
+                           </div>
+                           <span className="text-lg opacity-80">🚀</span>
+                        </div>
+                      </div>
+                    )}
 
-                    return maxShutoutWins > 0 ? (
-                      <div className="bg-[#EFF6FF] border border-blue-200/80 rounded-[26px] p-4 shadow-xs">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center text-sm shadow-2xs">🛡️</div>
-                          <div>
-                            <h3 className="text-xs font-extrabold text-blue-900">Unbreakable</h3>
-                            <p className="text-[10px] text-blue-700 font-semibold">Most shutout (x-0) wins</p>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          {shutoutPlayers.slice(0, 3).map(p => (
-                            <div key={p.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-blue-200/50 shadow-2xs">
-                              <div className="flex items-center gap-2">
-                                <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
-                                <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
-                              </div>
-                              <div className="px-2.5 py-0.5 bg-blue-100 rounded-full text-[10px] font-extrabold text-blue-800">
-                                {p.shutoutWins} shutouts
-                              </div>
-                            </div>
-                          ))}
+                    {/* Finals Specialist */}
+                    {advancedInsights.statLeaders.finalsSpecialist?.finalsWon > 0 && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Finals Clutch</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsSpecialist.name}</span>
+                             <span className="text-[10px] font-bold text-amber-500">{advancedInsights.statLeaders.finalsSpecialist.finalsWon} titles</span>
+                           </div>
+                           <span className="text-lg opacity-80">🏆</span>
                         </div>
                       </div>
-                    ) : (
-                      <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-[26px] p-4 shadow-xs flex items-center justify-center min-h-[120px]">
-                         <p className="text-xs font-medium text-slate-400">Play more matches for advanced insights!</p>
+                    )}
+
+                    {/* Iron Man */}
+                    {advancedInsights.statLeaders.ironMan && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Iron Man</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.ironMan.name}</span>
+                             <span className="text-[10px] font-bold text-indigo-500">{advancedInsights.statLeaders.ironMan.leagueMatchesPlayed + advancedInsights.statLeaders.ironMan.finalsPlayed} played</span>
+                           </div>
+                           <span className="text-lg opacity-80">🔋</span>
+                        </div>
                       </div>
-                    );
-                  })()
-                )}
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
