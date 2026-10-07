@@ -1,7 +1,7 @@
 "use client";
 // app/live/[slug]/page.tsx — Real-time live spectator stream for Day Sessions and Tournaments
 
-import React, { useEffect, useState, use, useMemo } from "react";
+import React, { useEffect, useState, use, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { io as socketIo, Socket } from "socket.io-client";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
@@ -62,6 +62,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
   } | null>(null);
 
   const [loading, setLoading] = useState(true);
+  const hasLoadedInitialData = useRef(false);
   const [isWaiting, setIsWaiting] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
@@ -102,7 +103,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
     const state = useStore.getState();
     const isCurrentDate = state.dayTable.date === targetDate;
 
-    if (isCurrentDate && (state.currentTournament || state.pastTournaments.length > 0)) {
+    if (!hasLoadedInitialData.current && isCurrentDate && (state.currentTournament || state.pastTournaments.length > 0)) {
       const allTourneys = [...state.pastTournaments];
       if (state.currentTournament) {
         allTourneys.push(state.currentTournament);
@@ -341,6 +342,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         setIsWaiting(false);
         setLoading(false);
         setLastUpdated(new Date().toLocaleTimeString());
+        hasLoadedInitialData.current = true;
       } else if (!dayData) {
         setIsWaiting(true);
         setLoading(false);
@@ -381,8 +383,11 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         setIsWaiting(false);
         setLoading(false);
         setLastUpdated(new Date().toLocaleTimeString());
+        hasLoadedInitialData.current = true;
       } else {
         // Fallback to local store
+        if (hasLoadedInitialData.current) return;
+        
         const state = useStore.getState();
         const found =
           (state.currentTournament?.shareSlug === tourneySlug || state.currentTournament?.id === tourneySlug)
