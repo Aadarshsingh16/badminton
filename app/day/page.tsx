@@ -108,11 +108,26 @@ export default function DayPage() {
     return list;
   }, [pastTournaments, cloudDayData]);
 
-  // Sort players by day total (use local dayTable if host has it, else cloud day table totals)
+  // Sort players by cumulative day points (derive directly from completed tournaments or cloud day totals)
   const sortedPlayers = useMemo(() => {
-    const effectiveTotals = Object.keys(dayTable.totals).length > 0
-      ? dayTable.totals
-      : (cloudDayData?.totals || {});
+    if (effectiveTournaments.length > 0) {
+      const computedTotals: { [playerId: string]: number } = {};
+      for (const t of effectiveTournaments) {
+        const tTable = computeTournamentTable(t);
+        const ptsMap = t.dayPointsAwarded || {};
+        tTable.forEach((row, rowIdx) => {
+          const pts = ptsMap[row.playerId] ?? row.dayPoints ?? Math.max(1, tTable.length - rowIdx);
+          computedTotals[row.playerId] = (computedTotals[row.playerId] ?? 0) + pts;
+        });
+      }
+      return Object.entries(computedTotals)
+        .sort(([, a], [, b]) => b - a)
+        .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
+    }
+
+    const effectiveTotals = Object.keys(cloudDayData?.totals || {}).length > 0
+      ? (cloudDayData?.totals || {})
+      : dayTable.totals;
 
     if (Object.keys(effectiveTotals).length > 0) {
       return Object.entries(effectiveTotals)
@@ -121,7 +136,7 @@ export default function DayPage() {
     }
 
     return [];
-  }, [dayTable.totals, cloudDayData]);
+  }, [effectiveTournaments, dayTable.totals, cloudDayData]);
 
   const hasTournaments = effectiveTournaments.length > 0;
   const hasData = sortedPlayers.length > 0;
