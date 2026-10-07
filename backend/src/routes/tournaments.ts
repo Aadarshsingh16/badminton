@@ -395,6 +395,54 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
       [tournamentId]
     );
 
+    // Recompute clean cumulative day totals across all tournaments for this day
+    let updatedTotals: Record<string, number> = {};
+    const tourneyDayRes = await pool.query(
+      `SELECT t.day_id, COALESCE(d.date::text, t.created_at::date::text) as session_date
+       FROM tournaments t LEFT JOIN day_tables d ON t.day_id = d.id WHERE t.id = $1`,
+      [tournamentId]
+    );
+    const dayId = tourneyDayRes.rows[0]?.day_id;
+    const sessionDate = tourneyDayRes.rows[0]?.session_date;
+
+    if (dayId || sessionDate) {
+      const tourneysInDay = await pool.query(
+        `SELECT t.id, t.config, t.player_ids
+         FROM tournaments t
+         WHERE (t.day_id = $1 OR t.created_at::date::text = $2) AND t.status = 'completed'`,
+        [dayId || null, sessionDate || null]
+      );
+
+      for (const tRow of tourneysInDay.rows) {
+        const matchesRes = await pool.query(
+          `SELECT id, round, is_final, player_a, player_b, court_side, score_a, score_b, points_a, points_b, played
+           FROM matches WHERE tournament_id = $1`,
+          [tRow.id]
+        );
+        const tCfg = typeof tRow.config === "string" ? JSON.parse(tRow.config) : (tRow.config || DEFAULT_CONFIG);
+        const tStandings = computeTable(matchesRes.rows, tRow.player_ids || [], tCfg);
+        for (const row of tStandings) {
+          if (row.playerId) {
+            updatedTotals[row.playerId] = (updatedTotals[row.playerId] || 0) + (row.dayPoints || 0);
+          }
+        }
+      }
+
+      if (Object.keys(updatedTotals).length > 0) {
+        if (dayId) {
+          await pool.query(
+            `UPDATE day_tables SET totals = $1 WHERE id = $2`,
+            [JSON.stringify(updatedTotals), dayId]
+          );
+        } else if (sessionDate) {
+          await pool.query(
+            `UPDATE day_tables SET totals = $1 WHERE date::text = $2`,
+            [JSON.stringify(updatedTotals), sessionDate]
+          );
+        }
+      }
+    }
+
     await pool.query("COMMIT");
 
     const finalMatch = mRes.rows[0];
@@ -412,6 +460,7 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
         final: finalMatch,
         tournamentId,
         date: day_date,
+        totals: updatedTotals,
       });
     }
 
