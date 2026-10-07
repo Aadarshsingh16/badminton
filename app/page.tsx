@@ -229,19 +229,28 @@ export default function PlayPage() {
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setPinIsInvalid(false);
-                setShowPinModal(true);
-              }}
-              title="Scorekeeper PIN"
-              className="w-10 h-10 rounded-full bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center text-slate-700 relative"
-            >
-              <span className="text-sm">🔑</span>
-              {apiSync.hasPin() && (
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowShareModal(true)}
+                title="Share today's live stream"
+                className="w-10 h-10 rounded-full bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center text-slate-700 text-sm cursor-pointer"
+              >
+                <span>📡</span>
+              </button>
+              <button
+                onClick={() => {
+                  setPinIsInvalid(false);
+                  setShowPinModal(true);
+                }}
+                title="Scorekeeper PIN"
+                className="w-10 h-10 rounded-full bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center text-slate-700 relative cursor-pointer"
+              >
+                <span className="text-sm">🔑</span>
+                {apiSync.hasPin() && (
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Featured Hero Bento Card (Inspiration Image 3 - UX Lab card) */}
@@ -738,12 +747,6 @@ export default function PlayPage() {
             config={currentTournament.config}
           />
         )}
-        {/* Share modal */}
-        <ShareModal
-          open={showShareModal}
-          onClose={() => setShowShareModal(false)}
-          slug={currentTournament.shareSlug ?? currentTournament.id}
-        />
       </div>
     );
   }
@@ -1120,6 +1123,12 @@ export default function PlayPage() {
   return (
     <>
       {renderPhaseContent()}
+      <ShareModal
+        open={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        slug={currentTournament?.shareSlug ?? currentTournament?.id}
+        date={dayTable.date || new Date().toISOString().slice(0, 10)}
+      />
       <PinModal
         open={showPinModal}
         isInvalid={pinIsInvalid}

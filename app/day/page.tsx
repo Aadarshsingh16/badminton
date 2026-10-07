@@ -10,6 +10,7 @@ import { computeTournamentTable } from "@/lib/ranking";
 import { Player, Tournament } from "@/lib/types";
 
 import { PinModal } from "@/components/PinModal";
+import { ShareModal } from "@/components/ShareModal";
 import { apiSync } from "@/lib/apiSync";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
 import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
@@ -29,6 +30,7 @@ export default function DayPage() {
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinAction, setPinAction] = useState<"finish" | "reset">("finish");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [cloudDayData, setCloudDayData] = useState<{
@@ -229,21 +231,26 @@ export default function DayPage() {
           <div className="flex items-center gap-2">
             {isViewer ? (
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-purple-900 bg-purple-100/90 border border-purple-200 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                <span className="text-[11px] font-bold text-indigo-900 bg-indigo-100/90 border border-indigo-200 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Live View
                 </span>
-                {viewerSlug && (
-                  <Link
-                    href={`/live/${viewerSlug}`}
-                    className="text-[11px] font-bold text-white bg-slate-950 px-3 py-1 rounded-full flex items-center gap-1 shadow-xs hover:bg-slate-800 transition-all"
-                  >
-                    <span>🏸 Stream</span>
-                  </Link>
-                )}
+                <Link
+                  href={`/live/${dayTable.date || new Date().toISOString().split("T")[0]}`}
+                  className="text-[11px] font-bold text-white bg-slate-950 px-3 py-1 rounded-full flex items-center gap-1 shadow-xs hover:bg-slate-800 transition-all"
+                >
+                  <span>🏸 Stream</span>
+                </Link>
               </div>
             ) : (
               <>
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  title="Share day live stream"
+                  className="w-8 h-8 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
+                >
+                  <span className="text-xs">📡</span>
+                </button>
                 {hasData && (
                   <button
                     onClick={() => setShowFinishDayModal(true)}
@@ -256,7 +263,7 @@ export default function DayPage() {
                 <button
                   onClick={() => setShowConfirmReset(true)}
                   title="Reset Day"
-                  className="w-8 h-8 rounded-full bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/80 hover:border-rose-200 flex items-center justify-center transition-colors shadow-xs"
+                  className="w-8 h-8 rounded-full bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/80 hover:border-rose-200 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
                 >
                   <span className="text-xs">🗑️</span>
                 </button>
@@ -865,6 +872,14 @@ export default function DayPage() {
           )}
         </div>
       )}
+
+      {/* Share Modal for Day */}
+      <ShareModal
+        open={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        date={dayTable.date || new Date().toISOString().split("T")[0]}
+        slug={currentTournament?.shareSlug ?? currentTournament?.id}
+      />
     </div>
   );
 }
