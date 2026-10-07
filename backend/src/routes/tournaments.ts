@@ -404,7 +404,7 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
 
   try {
     const tRes = await pool.query(
-      `SELECT t.share_slug, t.config, COALESCE(d.date::text, t.created_at::date::text) AS day_date
+      `SELECT t.share_slug, t.config, COALESCE(d.date::text, t.created_at::date::text) AS day_date, t.player_ids
        FROM tournaments t
        LEFT JOIN day_tables d ON t.day_id = d.id
        WHERE t.id = $1`,
@@ -412,15 +412,21 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
     );
     if (tRes.rowCount === 0) return res.status(404).json({ error: "Tournament not found" });
 
-    const { share_slug, config, day_date } = tRes.rows[0];
+    const { share_slug, config, day_date, player_ids } = tRes.rows[0];
     const tournamentConfig: TournamentConfig = { ...DEFAULT_CONFIG, ...(config ?? {}) };
 
     const winScore = Math.max(scoreA, scoreB);
     const loseScore = Math.min(scoreA, scoreB);
     const winnerIsA = scoreA > scoreB;
 
-    const ptsA = 0;
-    const ptsB = 0;
+    const N = Array.isArray(player_ids) ? player_ids.length : 0;
+    const margin = winScore - loseScore;
+    const bonusMargin = tournamentConfig.finalBonusMargin ?? 4;
+    const winnerPoints = N;
+    const loserPoints = margin >= bonusMargin ? Math.max(1, N - 2) : Math.max(1, N - 1);
+
+    const ptsA = winnerIsA ? winnerPoints : loserPoints;
+    const ptsB = winnerIsA ? loserPoints : winnerPoints;
 
     await pool.query("BEGIN");
 

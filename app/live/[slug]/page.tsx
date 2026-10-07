@@ -242,34 +242,8 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                   const rawT = tJson.tournament;
                   const rawMatches = (tJson.matches || []).map(normalizeMatch);
                   const rrMatches = rawMatches.filter((m: any) => !m.isFinal && m.round !== -1);
-                  let fMatch = rawMatches.find((m: any) => m.isFinal || m.round === -1) || null;
+                  const fMatch = rawMatches.find((m: any) => m.isFinal || m.round === -1) || null;
                   
-                  const pIds = Array.from(new Set([
-                    ...rrMatches.flatMap((m: any) => [m.playerA, m.playerB]),
-                    ...(fMatch ? [fMatch.playerA, fMatch.playerB] : [])
-                  ])).filter(Boolean) as string[];
-
-                  if (fMatch && fMatch.played) {
-                    const N = pIds.length;
-                    const winnerIsA = (fMatch.scoreA ?? 0) > (fMatch.scoreB ?? 0);
-                    const winnerId = winnerIsA ? fMatch.playerA : fMatch.playerB;
-                    const loserId = winnerIsA ? fMatch.playerB : fMatch.playerA;
-                    const margin = Math.abs((fMatch.scoreA ?? 0) - (fMatch.scoreB ?? 0));
-                    const bonusMargin = rawT.config?.finalBonusMargin ?? 4;
-                    fMatch.pointsAwarded = {
-                      [winnerId]: N,
-                      [loserId]: margin >= bonusMargin ? Math.max(1, N - 2) : Math.max(1, N - 1)
-                    };
-                  }
-
-                  const localStandings = computeTournamentTable({
-                    id: rawT.id,
-                    playerIds: pIds,
-                    matches: rrMatches,
-                    final: fMatch,
-                    config: rawT.config,
-                  } as any);
-
                   resolvedActiveT = {
                     id: rawT.id,
                     shareSlug: rawT.shareSlug || rawT.share_slug || rawT.id,
@@ -278,7 +252,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                     config: rawT.config,
                     matches: rrMatches,
                     final: fMatch,
-                    standings: localStandings,
+                    standings: tJson.standings || [],
                   };
                   if (Array.isArray(tJson.players) && tJson.players.length > 0) {
                     resolvedPlayers = tJson.players;
