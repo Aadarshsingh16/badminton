@@ -150,6 +150,7 @@ class ApiSyncService {
           matches: tournament.matches,
           final: tournament.final,
           config: tournament.config,
+          date: tournament.date,
         }),
       });
 

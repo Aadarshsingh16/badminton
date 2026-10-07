@@ -110,7 +110,7 @@ export function computeTable(matches: any[], playerIds: string[], config: Tourna
 
 // POST /tournaments — create a new tournament (scorekeeper only)
 tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
-  const { id: customId, shareSlug: customSlug, playerIds, matches, final, config } = req.body;
+  const { id: customId, shareSlug: customSlug, playerIds, matches, final, config, date: customDate } = req.body;
 
   if (!Array.isArray(playerIds) || playerIds.length < 2) {
     return res.status(400).json({ error: "playerIds must be an array of at least 2 players" });
@@ -123,8 +123,10 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
   try {
     await pool.query("BEGIN");
 
-    // Ensure day_table exists for today
-    const todayStr = new Date().toISOString().split("T")[0];
+    // Ensure day_table exists for the session date
+    const todayStr = (customDate && /^\d{4}-\d{2}-\d{2}$/.test(customDate))
+      ? customDate
+      : new Date().toISOString().split("T")[0];
     const dayRes = await pool.query(
       `INSERT INTO day_tables (date) VALUES ($1)
        ON CONFLICT (date) DO UPDATE SET date = EXCLUDED.date

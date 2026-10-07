@@ -68,6 +68,7 @@ export interface Tournament {
   shareSlug?: string;        // random short slug for /live/[slug]
   config: TournamentConfig;  // scoring rules for this tournament
   isPractice?: boolean;      // practice/test mode flag
+  date?: string;             // day session date (e.g. "2026-10-07")
 }
 
 export interface DayTable {

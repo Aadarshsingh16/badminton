@@ -373,7 +373,7 @@ export const useStore = create<AppState>()(
       setPendingConfig: (config) => set({ pendingConfig: config }),
 
       startTournament: () => {
-        const { selectedPlayerIds, pendingConfig } = get();
+        const { selectedPlayerIds, pendingConfig, dayTable } = get();
         if (selectedPlayerIds.length < 3) return;
 
         const isPractice = !!pendingConfig.isPractice;
@@ -396,6 +396,7 @@ export const useStore = create<AppState>()(
           shareSlug: Math.random().toString(36).slice(2, 10),
           config: { ...pendingConfig },
           isPractice,
+          date: dayTable.date || today(),
         };
 
         set({
@@ -413,6 +414,7 @@ export const useStore = create<AppState>()(
             playerIds: tournament.playerIds,
             matches: tournament.matches,
             config: tournament.config,
+            date: tournament.date,
           });
           apiSync.syncTournamentDirectly(tournament, get().players);
         }
