@@ -386,7 +386,7 @@ export function TournamentSetup({ playerCount, matchCount, initialDate, onConfir
       {/* Sticky Bottom CTA Bar */}
       <div className="sticky bottom-0 p-5 bg-gradient-to-t from-[#F7F9FD] via-[#F7F9FD]/95 to-transparent pt-3 z-30">
         <motion.button
-          onClick={() => onConfirm(cfg)}
+          onClick={() => onConfirm(cfg, sessionDate)}
           whileTap={{ scale: 0.98 }}
           className={`w-full py-4 rounded-full font-black text-white text-base shadow-lg transition-all flex items-center justify-center gap-2 ${
             cfg.isPractice
