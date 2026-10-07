@@ -34,13 +34,10 @@ export default function DayPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [cloudDayData, setCloudDayData] = useState<{
-    miniLeaderboard: Array<{ playerId: string; name: string; points: number; matches: number; wins: number }>;
+    totals: Record<string, number>;
     tournaments: any[];
-    totalMatches: number;
-    totalPoints: number;
+    dayStandings: any[];
   } | null>(null);
-  const [isViewer, setIsViewer] = useState(false);
-  const [viewerSlug, setViewerSlugState] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const fetchCloudDay = async () => {
@@ -48,15 +45,13 @@ export default function DayPage() {
     try {
       const backendUrl = getBackendUrl();
       const dateParam = dayTable.date || new Date().toISOString().split("T")[0];
-      const res = await fetch(`${backendUrl}/history?from=${dateParam}&to=${dateParam}`);
+      const res = await fetch(`${backendUrl}/day-tables/${dateParam}`);
       if (res.ok) {
         const json = await res.json();
-        const todayGroup = json.days?.[0];
         setCloudDayData({
-          miniLeaderboard: json.miniLeaderboard || [],
-          tournaments: todayGroup?.tournaments || [],
-          totalMatches: json.totalMatches || 0,
-          totalPoints: json.totalPoints || 0,
+          totals: json.totals || {},
+          tournaments: json.tournaments || [],
+          dayStandings: json.dayStandings || [],
         });
       }
     } catch (err) {
@@ -67,10 +62,6 @@ export default function DayPage() {
   };
 
   useEffect(() => {
-    const viewer = isViewerMode() && !currentTournament;
-    setIsViewer(viewer);
-    setViewerSlugState(getViewerSlug());
-
     fetchCloudDay();
   }, [currentTournament, dayTable.date]);
 
@@ -85,7 +76,7 @@ export default function DayPage() {
       if (rec.length > 0) list = rec;
     }
 
-    if (isViewer && list.length === 0 && cloudDayData?.tournaments && cloudDayData.tournaments.length > 0) {
+    if (list.length === 0 && cloudDayData?.tournaments && cloudDayData.tournaments.length > 0) {
       return cloudDayData.tournaments.map((ct: any) => {
         const mappedMatches = (ct.matches || []).map((m: any) => ({
           ...m,
@@ -99,42 +90,38 @@ export default function DayPage() {
         const pIds = Array.from(new Set(mappedMatches.flatMap((m: any) => [m.playerA, m.playerB]))).filter(Boolean) as string[];
 
         return {
-          id: ct.tournamentId,
+          id: ct.id || ct.tournamentId,
           shareSlug: ct.shareSlug,
           playerIds: pIds,
           matches: rrMatches,
           final: finalMatch,
-          config: { winScore: 5, bonusMargin: 4, matchBonusPoints: 1, shutoutBonusPoints: 1, finalBonusPoints: 2 },
+          config: ct.config || { winScore: 5, bonusMargin: 4, matchBonusPoints: 1, shutoutBonusPoints: 1, finalBonusPoints: 2 },
           isPractice: false,
           dayPointsAwarded: {},
           byes: {},
           closed: true,
-          createdAt: new Date().toISOString(),
+          createdAt: ct.createdAt || new Date().toISOString(),
         } as unknown as Tournament;
       });
     }
 
     return list;
-  }, [pastTournaments, cloudDayData, isViewer]);
+  }, [pastTournaments, cloudDayData]);
 
-  // Sort players by day total (use local dayTable if host has it, else cloud day summary for viewers)
+  // Sort players by day total (use local dayTable if host has it, else cloud day table totals)
   const sortedPlayers = useMemo(() => {
-    if (Object.keys(dayTable.totals).length > 0 && !isViewer) {
-      return Object.entries(dayTable.totals)
+    const effectiveTotals = Object.keys(dayTable.totals).length > 0
+      ? dayTable.totals
+      : (cloudDayData?.totals || {});
+
+    if (Object.keys(effectiveTotals).length > 0) {
+      return Object.entries(effectiveTotals)
         .sort(([, a], [, b]) => b - a)
         .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
     }
 
-    if (isViewer && cloudDayData?.miniLeaderboard && cloudDayData.miniLeaderboard.length > 0) {
-      return cloudDayData.miniLeaderboard.map((item, idx) => ({
-        id: item.playerId,
-        pts: item.points,
-        rank: idx + 1,
-      }));
-    }
-
     return [];
-  }, [dayTable.totals, cloudDayData, isViewer]);
+  }, [dayTable.totals, cloudDayData]);
 
   const hasTournaments = effectiveTournaments.length > 0;
   const hasData = sortedPlayers.length > 0;
@@ -229,70 +216,32 @@ export default function DayPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {isViewer ? (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-indigo-900 bg-indigo-100/90 border border-indigo-200 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Live View
-                </span>
-                <Link
-                  href={`/live/${dayTable.date || new Date().toISOString().split("T")[0]}`}
-                  className="text-[11px] font-bold text-white bg-slate-950 px-3 py-1 rounded-full flex items-center gap-1 shadow-xs hover:bg-slate-800 transition-all"
-                >
-                  <span>🏸 Stream</span>
-                </Link>
-              </div>
-            ) : (
-              <>
-                <button
-                  onClick={() => setShowShareModal(true)}
-                  title="Share day live stream"
-                  className="w-8 h-8 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
-                >
-                  <span className="text-xs">📡</span>
-                </button>
-                {hasData && (
-                  <button
-                    onClick={() => setShowFinishDayModal(true)}
-                    className="text-xs bg-slate-950 hover:bg-slate-800 text-white font-black px-3.5 py-1.5 rounded-full shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
-                  >
-                    <span>👑</span>
-                    <span>Finish Day</span>
-                  </button>
-                )}
-                <button
-                  onClick={() => setShowConfirmReset(true)}
-                  title="Reset Day"
-                  className="w-8 h-8 rounded-full bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/80 hover:border-rose-200 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
-                >
-                  <span className="text-xs">🗑️</span>
-                </button>
-              </>
+            <button
+              onClick={() => setShowShareModal(true)}
+              title="Share day live stream"
+              className="w-8 h-8 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
+            >
+              <span className="text-xs">📡</span>
+            </button>
+            {hasData && (
+              <button
+                onClick={() => setShowFinishDayModal(true)}
+                className="text-xs bg-slate-950 hover:bg-slate-800 text-white font-black px-3.5 py-1.5 rounded-full shadow-sm active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>👑</span>
+                <span>Finish Day</span>
+              </button>
             )}
+            <button
+              onClick={() => setShowConfirmReset(true)}
+              title="Reset Day"
+              className="w-8 h-8 rounded-full bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/80 hover:border-rose-200 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+            >
+              <span className="text-xs">🗑️</span>
+            </button>
           </div>
         </div>
       </div>
-
-      {/* Spectator Mode Banner */}
-      {isViewer && (
-        <div className="mx-5 mt-3 px-4 py-2.5 rounded-[22px] bg-purple-50 border border-purple-200/80 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <span>📡</span>
-            <span className="text-purple-900 font-medium">
-              Viewing live session for <strong>{dayTable.date || new Date().toISOString().split("T")[0]}</strong>
-            </span>
-          </div>
-          {viewerSlug && (
-            <Link
-              href={`/live/${viewerSlug}`}
-              className="text-purple-700 font-black text-xs hover:underline flex items-center gap-0.5"
-            >
-              <span>Court</span>
-              <span>&rarr;</span>
-            </Link>
-          )}
-        </div>
-      )}
 
       {/* Finish Day Celebration Modal */}
       <AnimatePresence>

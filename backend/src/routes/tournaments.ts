@@ -374,8 +374,8 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
     const loseScore = Math.min(scoreA, scoreB);
     const winnerIsA = scoreA > scoreB;
 
-    const ptsA = pointsForFinal(winScore, loseScore, winnerIsA, tournamentConfig);
-    const ptsB = pointsForFinal(winScore, loseScore, !winnerIsA, tournamentConfig);
+    const ptsA = 0;
+    const ptsB = 0;
 
     await pool.query("BEGIN");
 

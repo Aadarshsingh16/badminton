@@ -618,15 +618,12 @@ export const useStore = create<AppState>()(
         const loseScore = Math.min(scoreA, scoreB);
         const config = currentTournament.config;
 
-        const ptsA = pointsForFinal(winScore, loseScore, winnerIsA, config);
-        const ptsB = pointsForFinal(winScore, loseScore, !winnerIsA, config);
-
         const updatedFinal: Match = {
           ...final,
           scoreA,
           scoreB,
           played: true,
-          pointsAwarded: { [idA]: ptsA, [idB]: ptsB },
+          pointsAwarded: { [idA]: 0, [idB]: 0 },
         };
 
         set({

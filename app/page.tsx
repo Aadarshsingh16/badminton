@@ -98,16 +98,6 @@ export default function PlayPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // If a spectator arrives at root "/", seamlessly redirect back to live court
-  React.useEffect(() => {
-    if (!currentTournament && isViewerMode()) {
-      const slug = getViewerSlug();
-      if (slug) {
-        window.location.replace(`/live/${slug}`);
-      }
-    }
-  }, [currentTournament]);
-
   // Proactively sync active tournament to cloud so spectator stream is guaranteed to exist
   React.useEffect(() => {
     if (currentTournament && !currentTournament.isPractice) {
@@ -153,45 +143,6 @@ export default function PlayPage() {
   };
 
   const renderPhaseContent = () => {
-    // ——— Spectator Returning Screen ———
-    if (!currentTournament && isViewerMode()) {
-      const viewerSlug = getViewerSlug();
-      return (
-        <div className="min-h-[80vh] flex flex-col items-center justify-center text-center px-6">
-          <div className="w-16 h-16 rounded-[28px] bg-indigo-50 border border-indigo-200 flex items-center justify-center text-3xl mb-4 shadow-xs">
-            📡
-          </div>
-          <span className="text-[11px] font-black uppercase tracking-wider text-indigo-600 mb-1">
-            Spectator Mode Active
-          </span>
-          <h2 className="text-slate-900 font-black text-2xl mb-2">Connecting to Live Court...</h2>
-          <p className="text-slate-500 text-xs max-w-xs mb-6 font-medium">
-            You are in live spectator mode. Taking you back to the court action.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2.5 w-full max-w-xs">
-            {viewerSlug && (
-              <a
-                href={`/live/${viewerSlug}`}
-                className="w-full py-3.5 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-black text-xs shadow-md transition-all flex items-center justify-center gap-1.5 active:scale-95"
-              >
-                <span>👁️</span>
-                <span>Open Live Court</span>
-              </a>
-            )}
-            <button
-              onClick={() => {
-                clearViewerMode();
-                window.location.reload();
-              }}
-              className="w-full py-3.5 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 font-bold text-xs transition-colors shadow-2xs"
-            >
-              Switch to Host Mode ⚙️
-            </button>
-          </div>
-        </div>
-      );
-    }
-
     // ——— Player Select Screen ———
     if (phase === "player-select") {
       const canStart = selectedPlayerIds.length >= 3;
