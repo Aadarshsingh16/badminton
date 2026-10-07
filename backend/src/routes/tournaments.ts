@@ -196,10 +196,17 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
 
     await pool.query("COMMIT");
 
+    io.to(`day:${todayStr}`).emit("day:update", {
+      type: "tournament:started",
+      tournamentId: tournament.id,
+      shareSlug: slug,
+      date: todayStr,
+    });
+
     res.status(201).json({
       ...tournament,
       matches: insertedMatches,
-      shareUrl: `/live/${slug}`,
+      shareUrl: `/live/${todayStr}`,
     });
   } catch (err: any) {
     await pool.query("ROLLBACK");
