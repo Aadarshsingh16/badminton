@@ -221,8 +221,11 @@ tournamentsRouter.get("/:slug", async (req, res) => {
 
   try {
     const tRes = await pool.query(
-      `SELECT id, share_slug, day_id, player_ids, status, config, created_at, completed_at
-       FROM tournaments WHERE share_slug = $1 OR id = $1`,
+      `SELECT t.id, t.share_slug, t.day_id, t.player_ids, t.status, t.config, t.created_at, t.completed_at,
+              COALESCE(d.date::text, t.created_at::date::text) AS "dayDate"
+       FROM tournaments t
+       LEFT JOIN day_tables d ON t.day_id = d.id
+       WHERE t.share_slug = $1 OR t.id = $1`,
       [slug]
     );
 
@@ -287,11 +290,17 @@ tournamentsRouter.patch("/:id/matches/:matchId", requireScorekeeper, async (req,
   }
 
   try {
-    // Get tournament config
-    const tRes = await pool.query("SELECT share_slug, config FROM tournaments WHERE id = $1", [tournamentId]);
+    // Get tournament config and associated day
+    const tRes = await pool.query(
+      `SELECT t.share_slug, t.config, COALESCE(d.date::text, t.created_at::date::text) AS day_date
+       FROM tournaments t
+       LEFT JOIN day_tables d ON t.day_id = d.id
+       WHERE t.id = $1`,
+      [tournamentId]
+    );
     if (tRes.rowCount === 0) return res.status(404).json({ error: "Tournament not found" });
 
-    const { share_slug, config } = tRes.rows[0];
+    const { share_slug, config, day_date } = tRes.rows[0];
     const tournamentConfig: TournamentConfig = { ...DEFAULT_CONFIG, ...(config ?? {}) };
 
     const winScore = Math.max(scoreA, scoreB);
@@ -321,18 +330,13 @@ tournamentsRouter.patch("/:id/matches/:matchId", requireScorekeeper, async (req,
       match: updatedMatch,
     });
 
-    if (day_id) {
-      pool.query("SELECT date::text FROM day_tables WHERE id = $1", [day_id]).then((dRes) => {
-        const dStr = dRes.rows[0]?.date;
-        if (dStr) {
-          io.to(`day:${dStr}`).emit("day:update", {
-            type: "match:updated",
-            match: updatedMatch,
-            tournamentId,
-            date: dStr,
-          });
-        }
-      }).catch(() => {});
+    if (day_date) {
+      io.to(`day:${day_date}`).emit("day:update", {
+        type: "match:updated",
+        match: updatedMatch,
+        tournamentId,
+        date: day_date,
+      });
     }
 
     res.json(updatedMatch);
@@ -352,10 +356,16 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
   }
 
   try {
-    const tRes = await pool.query("SELECT share_slug, config, day_id FROM tournaments WHERE id = $1", [tournamentId]);
+    const tRes = await pool.query(
+      `SELECT t.share_slug, t.config, COALESCE(d.date::text, t.created_at::date::text) AS day_date
+       FROM tournaments t
+       LEFT JOIN day_tables d ON t.day_id = d.id
+       WHERE t.id = $1`,
+      [tournamentId]
+    );
     if (tRes.rowCount === 0) return res.status(404).json({ error: "Tournament not found" });
 
-    const { share_slug, config, day_id } = tRes.rows[0];
+    const { share_slug, config, day_date } = tRes.rows[0];
     const tournamentConfig: TournamentConfig = { ...DEFAULT_CONFIG, ...(config ?? {}) };
 
     const winScore = Math.max(scoreA, scoreB);
@@ -394,18 +404,13 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
       status: "completed",
     });
 
-    if (day_id) {
-      pool.query("SELECT date::text FROM day_tables WHERE id = $1", [day_id]).then((dRes) => {
-        const dStr = dRes.rows[0]?.date;
-        if (dStr) {
-          io.to(`day:${dStr}`).emit("day:update", {
-            type: "final:completed",
-            final: finalMatch,
-            tournamentId,
-            date: dStr,
-          });
-        }
-      }).catch(() => {});
+    if (day_date) {
+      io.to(`day:${day_date}`).emit("day:update", {
+        type: "final:completed",
+        final: finalMatch,
+        tournamentId,
+        date: day_date,
+      });
     }
 
     res.json({
