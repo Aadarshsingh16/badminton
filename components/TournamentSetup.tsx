@@ -8,7 +8,8 @@ import { TournamentConfig, DEFAULT_CONFIG } from "@/lib/types";
 interface TournamentSetupProps {
   playerCount: number;
   matchCount: number;          // how many round-robin matches will be generated
-  onConfirm: (config: TournamentConfig) => void;
+  initialDate?: string;
+  onConfirm: (config: TournamentConfig, sessionDate: string) => void;
   onBack: () => void;
 }
 
@@ -56,8 +57,11 @@ function Stepper({
   );
 }
 
-export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: TournamentSetupProps) {
+export function TournamentSetup({ playerCount, matchCount, initialDate, onConfirm, onBack }: TournamentSetupProps) {
   const [cfg, setCfg] = useState<TournamentConfig>({ ...DEFAULT_CONFIG });
+  const [sessionDate, setSessionDate] = useState<string>(
+    initialDate || new Date().toISOString().split("T")[0]
+  );
 
   const update = (key: keyof TournamentConfig, value: number) =>
     setCfg((c) => ({ ...c, [key]: value }));
