@@ -286,12 +286,53 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
             .sort((a, b) => b.points - a.points);
         }
 
+        // 4. Resolve full tournament details (matches, standings) for legacy backends
+        const fullyResolvedTournaments = [];
+        const baseTournaments = json.tournaments || (resolvedActiveT ? [resolvedActiveT] : []);
+        for (const t of baseTournaments) {
+          if (resolvedActiveT && t.id === resolvedActiveT.id) {
+            fullyResolvedTournaments.push(resolvedActiveT);
+          } else if (Array.isArray(t.matches) && t.matches.length > 0) {
+            fullyResolvedTournaments.push(t);
+          } else {
+            try {
+              const tRes = await fetch(`${backendUrl}/tournaments/${t.id}`);
+              if (tRes.ok) {
+                const tJson = await tRes.json();
+                const rawT = tJson.tournament;
+                const rawMatches = (tJson.matches || []).map(normalizeMatch);
+                fullyResolvedTournaments.push({
+                  id: rawT.id,
+                  shareSlug: rawT.shareSlug || rawT.share_slug || rawT.id,
+                  status: rawT.status || "completed",
+                  createdAt: rawT.createdAt || rawT.created_at || new Date().toISOString(),
+                  config: rawT.config,
+                  matches: rawMatches.filter((m: any) => !m.isFinal && m.round !== -1),
+                  final: rawMatches.find((m: any) => m.isFinal || m.round === -1) || null,
+                  standings: tJson.standings || [],
+                });
+                if (Array.isArray(tJson.players)) {
+                  for (const p of tJson.players) {
+                    if (!resolvedPlayers.some(rp => rp.id === p.id)) {
+                      resolvedPlayers.push(p);
+                    }
+                  }
+                }
+              } else {
+                fullyResolvedTournaments.push(t);
+              }
+            } catch (err) {
+              fullyResolvedTournaments.push(t);
+            }
+          }
+        }
+
         setDayData({
           date: fetchDate,
           closed: !!json.closed,
           totals: resolvedTotals,
           activeTournament: resolvedActiveT,
-          tournaments: json.tournaments || (resolvedActiveT ? [resolvedActiveT] : []),
+          tournaments: fullyResolvedTournaments,
           players: resolvedPlayers,
           dayStandings: resolvedStandings,
         });
