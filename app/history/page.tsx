@@ -337,12 +337,9 @@ export default function HistoryPage() {
   }, [pastTournaments.length, completedDays?.length]);
 
   useEffect(() => {
-    if (activeSubTab === "log") {
-      fetchHistory();
-    } else {
-      fetchLeaderboards();
-    }
-  }, [activeSubTab, rangeFilter, playerFilter, patternFilter, sortBy]);
+    fetchHistory();
+    fetchLeaderboards();
+  }, [rangeFilter, playerFilter, patternFilter, sortBy]);
 
   // Local fallback synthesis if backend returned no records or offline
   const localHistoryFallback = useMemo<HistoryData>(() => {
@@ -850,41 +847,43 @@ export default function HistoryPage() {
 
         <div className="flex items-center gap-1.5">
           {/* Smooth Filter Menu Trigger */}
-          <button
-            onClick={() => setShowFilterMenu(true)}
-            className={`px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer ${
-              hasActiveFilter
-                ? "bg-slate-950 text-white shadow-xs"
-                : "bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          {activeSubTab === "log" && (
+            <button
+              onClick={() => setShowFilterMenu(true)}
+              className={`px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer ${
+                hasActiveFilter
+                  ? "bg-slate-950 text-white shadow-xs"
+                  : "bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50"
+              }`}
             >
-              <line x1="4" y1="21" x2="4" y2="14" />
-              <line x1="4" y1="10" x2="4" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="12" />
-              <line x1="12" y1="8" x2="12" y2="3" />
-              <line x1="20" y1="21" x2="20" y2="16" />
-              <line x1="20" y1="12" x2="20" y2="3" />
-              <line x1="1" y1="14" x2="7" y2="14" />
-              <line x1="9" y1="8" x2="15" y2="8" />
-              <line x1="17" y1="16" x2="23" y2="16" />
-            </svg>
-            <span>Filters</span>
-            {hasActiveFilter && (
-              <span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] font-black flex items-center justify-center -mr-0.5">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="4" y1="21" x2="4" y2="14" />
+                <line x1="4" y1="10" x2="4" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12" y2="3" />
+                <line x1="20" y1="21" x2="20" y2="16" />
+                <line x1="20" y1="12" x2="20" y2="3" />
+                <line x1="1" y1="14" x2="7" y2="14" />
+                <line x1="9" y1="8" x2="15" y2="8" />
+                <line x1="17" y1="16" x2="23" y2="16" />
+              </svg>
+              <span>Filters</span>
+              {hasActiveFilter && (
+                <span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] font-black flex items-center justify-center -mr-0.5">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Refresh Button */}
           <button
