@@ -286,52 +286,49 @@ export function TournamentSetup({ playerCount, matchCount, initialDate, onConfir
           <div className="flex items-center justify-between">
             <div>
               <p className="text-amber-900 text-[10px] uppercase tracking-wider font-black">
-                🏆 Day Points Breakdown (N = {playerCount} Players)
+                🏆 Day Points Breakdown ({playerCount} Players)
               </p>
               <p className="text-slate-500 text-[11px] mt-0.5 leading-tight">
-                Winner gets <strong>N</strong> Day Points. Loser gets <strong>N-1</strong> pts<br/>
-                <em>(or <strong>N-2</strong> pts if they lose by a blowout)</em>.
+                Points are awarded based on the final match margin.
               </p>
             </div>
             <span className="text-[10px] text-amber-800 font-bold">First to {cfg.finalWinScore}</span>
           </div>
 
           <div className="space-y-1.5 text-xs">
-            {[
-              { label: `${cfg.finalWinScore}–0 (Blowout)`, margin: cfg.finalWinScore },
-              { label: `${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin} (Blowout)`, margin: cfg.finalBonusMargin },
-              { label: `${cfg.finalWinScore}–${cfg.finalWinScore - cfg.finalBonusMargin + 1} (Close)`, margin: cfg.finalBonusMargin - 1 },
-              { label: `${cfg.finalWinScore}–${cfg.finalWinScore - 1} (Close)`, margin: 1 },
-            ].filter((v, i, arr) => arr.findIndex((x) => x.label === v.label) === i).map(({ label, margin }) => {
-              const isBlowout = margin >= cfg.finalBonusMargin;
-              const winnerPts = playerCount;
-              const loserPtsVal = isBlowout ? Math.max(1, playerCount - 2) : Math.max(1, playerCount - 1);
-              const loserFormula = isBlowout ? "N-2" : "N-1";
-              return (
-                <div
-                  key={label}
-                  className="flex justify-between items-center bg-white rounded-xl px-3 py-2 border border-amber-200/60 shadow-2xs"
-                >
-                  <span className="text-slate-700 font-mono font-bold text-[11px]">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-700 font-bold text-[11px]">
-                      1st: <strong className="text-emerald-700 font-black">N ({winnerPts})</strong>
-                    </span>
-                    <span className="text-slate-300">·</span>
-                    <span className="text-slate-700 font-bold text-[11px]">
-                      2nd:{" "}
-                      <strong className={isBlowout ? "text-amber-700 font-black" : "text-slate-800 font-black"}>
-                        {loserFormula} ({loserPtsVal}) {isBlowout ? "🚨" : ""}
-                      </strong>
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+            <div className="flex justify-between items-center bg-white rounded-xl px-3 py-2 border border-amber-200/60 shadow-2xs">
+              <span className="text-slate-700 font-mono font-bold text-[11px]">
+                Margin &ge; {cfg.finalBonusMargin} (Blowout)
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-700 font-bold text-[11px]">
+                  1st: <strong className="text-emerald-700 font-black">{playerCount} pts</strong>
+                </span>
+                <span className="text-slate-300">·</span>
+                <span className="text-slate-700 font-bold text-[11px]">
+                  2nd: <strong className="text-amber-700 font-black">{Math.max(1, playerCount - 2)} pts 🚨</strong>
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center bg-white rounded-xl px-3 py-2 border border-amber-200/60 shadow-2xs">
+              <span className="text-slate-700 font-mono font-bold text-[11px]">
+                Margin &lt; {cfg.finalBonusMargin} (Close)
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-700 font-bold text-[11px]">
+                  1st: <strong className="text-emerald-700 font-black">{playerCount} pts</strong>
+                </span>
+                <span className="text-slate-300">·</span>
+                <span className="text-slate-700 font-bold text-[11px]">
+                  2nd: <strong className="text-slate-800 font-black">{Math.max(1, playerCount - 1)} pts</strong>
+                </span>
+              </div>
+            </div>
           </div>
 
           <p className="text-[10px] text-slate-500 pt-1 leading-relaxed">
-            💡 <strong>Rest of the table:</strong> 3rd place gets N-2 ({Math.max(1, playerCount - 2)} pts), 4th gets N-3 ({Math.max(1, Math.max(0, playerCount - 3))} pts), down to 1 pt for last place.
+            💡 <strong>Rest of the table:</strong> 3rd place gets {Math.max(1, playerCount - 2)} pts, 4th gets {Math.max(1, Math.max(0, playerCount - 3))} pts, down to 1 pt for last place.
           </p>
         </motion.div>
 
