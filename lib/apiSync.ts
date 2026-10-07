@@ -175,8 +175,7 @@ class ApiSyncService {
   public purgeTournament(tournamentId: string) {
     this.queue = this.queue.filter(
       (item) =>
-        !item.url.includes(`/tournaments/${tournamentId}`) &&
-        !(item.body && item.body.id === tournamentId)
+        !(item.url === "/tournaments" && item.body && item.body.id === tournamentId)
     );
     this.saveQueue();
   }
