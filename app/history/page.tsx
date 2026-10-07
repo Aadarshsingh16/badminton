@@ -837,29 +837,6 @@ export default function HistoryPage() {
     };
   }, [displayedHistory, displayedLeaderboard, players]);
 
-  const baseLeaderboard =
-    leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;
-
-  const displayedLeaderboard = useMemo(() => {
-    if (!baseLeaderboard) return [];
-    const lb = [...baseLeaderboard];
-    
-    if (leaderboardCategory === "day") {
-      lb.sort((a, b) => b.dayPointsTotal - a.dayPointsTotal || b.leaguePoints - a.leaguePoints);
-    } else if (leaderboardCategory === "finals") {
-      lb.sort((a, b) => b.finalsWon - a.finalsWon || b.finalsPlayed - a.finalsPlayed || b.dayPointsTotal - a.dayPointsTotal);
-    } else if (leaderboardCategory === "league") {
-      if (sortBy === "wins") {
-        lb.sort((a, b) => b.leagueWins - a.leagueWins || b.leaguePoints - a.leaguePoints);
-      } else if (sortBy === "matches") {
-        lb.sort((a, b) => b.leagueMatchesPlayed - a.leagueMatchesPlayed || b.leaguePoints - a.leaguePoints);
-      } else {
-        lb.sort((a, b) => b.leaguePoints - a.leaguePoints || b.leaguePointDiff - a.leaguePointDiff);
-      }
-    }
-    
-    return lb;
-  }, [baseLeaderboard, leaderboardCategory, sortBy]);
 
   const displayedDayHonors =
     dayHonors && (dayHonors.dayChampions?.length > 0 || dayHonors.dayLastPlaces?.length > 0)
