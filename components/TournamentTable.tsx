@@ -216,13 +216,13 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                   {row.pointDiff > 0 ? `+${row.pointDiff}` : row.pointDiff}
                 </span>
                 <motion.span
-                  key={showFinalLabel && row.dayPoints !== undefined ? row.dayPoints : row.points}
+                  key={showFinalLabel ? (row.dayPoints ?? Math.max(1, rows.length - idx)) : row.points}
                   initial={{ scale: 1.2 }}
                   animate={{ scale: 1 }}
                   transition={{ duration: 0.25 }}
                   className="text-base font-black w-10 text-center tabular-nums text-slate-900"
                 >
-                  {showFinalLabel && row.dayPoints !== undefined ? row.dayPoints : row.points}
+                  {showFinalLabel ? (row.dayPoints ?? Math.max(1, rows.length - idx)) : row.points}
                 </motion.span>
 
                 {canExpand && (

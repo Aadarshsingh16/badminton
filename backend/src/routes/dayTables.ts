@@ -111,7 +111,31 @@ dayTablesRouter.get("/:date", async (req, res) => {
     }
 
     // Merge day totals
-    const mergedTotals: Record<string, number> = { ...(extraDayTotals || {}), ...(day.totals || {}) };
+    let mergedTotals: Record<string, number> = { ...(extraDayTotals || {}), ...(day.totals || {}) };
+
+    // Self-healing fallback: If mergedTotals has no points but tournaments have completed,
+    // recalculate totals directly from completed tournament standings!
+    const hasPoints = Object.values(mergedTotals).some((pts) => (pts as number) > 0);
+    if (!hasPoints && tournamentsData.length > 0) {
+      const calcTotals: Record<string, number> = {};
+      for (const t of tournamentsData) {
+        if (t.status === "completed" && Array.isArray(t.standings)) {
+          for (const row of t.standings) {
+            if (row.playerId) {
+              calcTotals[row.playerId] = (calcTotals[row.playerId] || 0) + (row.dayPoints || 0);
+            }
+          }
+        }
+      }
+      if (Object.values(calcTotals).some((pts) => pts > 0)) {
+        mergedTotals = calcTotals;
+        if (day.id) {
+          pool.query(`UPDATE day_tables SET totals = $1 WHERE id = $2`, [JSON.stringify(calcTotals), day.id]).catch(() => {});
+        } else if (targetDate) {
+          pool.query(`UPDATE day_tables SET totals = $1 WHERE date::text = $2`, [JSON.stringify(calcTotals), targetDate]).catch(() => {});
+        }
+      }
+    }
 
     // Include any players in day totals
     Object.keys(mergedTotals).forEach((id) => allPlayerIds.add(id));

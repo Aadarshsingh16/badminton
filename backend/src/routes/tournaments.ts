@@ -64,13 +64,11 @@ export function computeTable(matches: any[], playerIds: string[], config: Tourna
       stats[finalMatch.playerA].matchesPlayed++;
       stats[finalMatch.playerA].pointDiff += finalMatch.scoreA - finalMatch.scoreB;
       if (finalMatch.scoreA > finalMatch.scoreB) stats[finalMatch.playerA].wins++;
-      if (finalMatch.pointsA !== null) stats[finalMatch.playerA].points += finalMatch.pointsA;
     }
     if (stats[finalMatch.playerB]) {
       stats[finalMatch.playerB].matchesPlayed++;
       stats[finalMatch.playerB].pointDiff += finalMatch.scoreB - finalMatch.scoreA;
       if (finalMatch.scoreB > finalMatch.scoreA) stats[finalMatch.playerB].wins++;
-      if (finalMatch.pointsB !== null) stats[finalMatch.playerB].points += finalMatch.pointsB;
     }
 
     const rows = Object.entries(stats).map(([playerId, s]) => ({

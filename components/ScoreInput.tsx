@@ -135,6 +135,7 @@ export function ScoreInput({
 
   // Sync sheet open state with global store so BottomTabBar smoothly hides/shows
   const setIsScoreSheetOpen = useStore((s) => s.setIsScoreSheetOpen);
+  const totalTournamentPlayers = useStore((s) => s.currentTournament?.playerIds?.length || s.players.length) || 3;
 
   useEffect(() => {
     setIsScoreSheetOpen(open);
@@ -316,25 +317,47 @@ export function ScoreInput({
               <motion.div
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex justify-center gap-3 mb-4"
+                className="flex justify-center gap-3 mb-4 flex-wrap"
               >
                 {[
                   { player: playerA, score: scoreA, won: aWins },
                   { player: playerB, score: scoreB, won: bWins },
-                ].map(({ player, score, won }) => {
-                  const pts = isFinal
-                    ? (won
-                        ? (margin >= config.finalBonusMargin ? config.finalWinBase + config.finalWinBonus : config.finalWinBase)
-                        : (margin >= config.finalBonusMargin ? config.finalLoserPenalty : 0))
-                    : (won
-                        ? (margin >= config.bonusMargin ? config.winPoints + config.bonusPoints : config.winPoints)
-                        : 0);
+                ].map(({ player, won }) => {
+                  if (isFinal) {
+                    const N = totalTournamentPlayers;
+                    const bonusMargin = config?.finalBonusMargin ?? DEFAULT_CONFIG.finalBonusMargin;
+                    const hasPenalty = margin >= bonusMargin;
+                    const dayPts = won ? N : (hasPenalty ? Math.max(1, (N - 1) - 1) : Math.max(1, N - 1));
+                    const label = won ? "1st 🏆" : (hasPenalty ? "2nd, -1 penalty" : "2nd");
+                    return (
+                      <div
+                        key={player.id}
+                        className={`text-xs px-3 py-1 rounded-full font-black border ${
+                          won
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : hasPenalty
+                            ? "bg-amber-50 text-amber-800 border-amber-300"
+                            : "bg-slate-100 text-slate-700 border-slate-200"
+                        }`}
+                      >
+                        {player.name}: {dayPts} Day Pts ({label})
+                      </div>
+                    );
+                  }
+
+                  const pts = won
+                    ? (margin >= config.bonusMargin ? config.winPoints + config.bonusPoints : config.winPoints)
+                    : 0;
+
                   return (
-                    <div key={player.id} className={`text-xs px-3 py-1 rounded-full font-black border ${
-                      pts > 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : pts < 0 ? "bg-rose-50 text-rose-700 border-rose-200"
-                      : "bg-slate-100 text-slate-500 border-slate-200"
-                    }`}>
+                    <div
+                      key={player.id}
+                      className={`text-xs px-3 py-1 rounded-full font-black border ${
+                        pts > 0
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-slate-100 text-slate-500 border-slate-200"
+                      }`}
+                    >
                       {player.name}: {pts > 0 ? "+" : ""}{pts} pts
                     </div>
                   );
