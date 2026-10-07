@@ -9,7 +9,8 @@ import { DEFAULT_CONFIG } from "./types";
  * Used during the league phase and to identify finalists / non-finalist order.
  */
 export function computeRoundRobinTable(tournament: Tournament): TournamentRow[] {
-  const { playerIds, matches } = tournament;
+  if (!tournament) return [];
+  const { playerIds = [], matches = [] } = tournament;
   const N = playerIds.length;
 
   const stats: {
@@ -80,8 +81,10 @@ export function computeRoundRobinTable(tournament: Tournament): TournamentRow[] 
  *   Winner always finishes 1st, runner-up finishes 2nd, and 3rd..Nth are ordered by their league finish.
  */
 export function computeTournamentTable(tournament: Tournament): TournamentRow[] {
-  const { playerIds, matches, final, config } = tournament;
+  if (!tournament) return [];
+  const { playerIds = [], matches = [], final, config } = tournament;
   const N = playerIds.length;
+
 
   // If the final has not been played yet, return round-robin standings
   if (!final?.played || final.scoreA === undefined || final.scoreB === undefined) {
