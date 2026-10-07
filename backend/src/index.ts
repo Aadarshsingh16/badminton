@@ -37,7 +37,7 @@ app.get("/health", async (_req, res) => {
     status: "ok",
     timestamp: new Date().toISOString(),
     database: dbStatus,
-    version: "1.0.0",
+    version: "1.1.0",
   });
 });
 

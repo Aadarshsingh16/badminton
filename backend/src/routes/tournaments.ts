@@ -472,7 +472,8 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
             `UPDATE day_tables SET totals = $1 WHERE id = $2`,
             [JSON.stringify(updatedTotals), dayId]
           );
-        } else if (sessionDate) {
+        }
+        if (sessionDate) {
           await pool.query(
             `UPDATE day_tables SET totals = $1 WHERE date::text = $2`,
             [JSON.stringify(updatedTotals), sessionDate]

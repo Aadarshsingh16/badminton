@@ -650,13 +650,85 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
   } : null);
 
   const allPlayers = dayData?.players || singleTourneyData?.players || [];
-  const dayStandings = dayData?.dayStandings || [];
   const allTournaments = dayData?.tournaments || (activeTournament ? [activeTournament] : []);
 
   const currentMatches = activeTournament?.matches || [];
   const currentFinal = activeTournament?.final || null;
   const playedMatches = currentMatches.filter((m) => m.played);
   const isTournamentCompleted = activeTournament?.status === "completed" || (currentFinal?.played ?? false);
+
+  const computedStandings = useMemo<TournamentRow[]>(() => {
+    if (!activeTournament) return [];
+    if (!activeTournament.standings || activeTournament.standings.length === 0 || isTournamentCompleted) {
+      const pIds = Array.from(
+        new Set([
+          ...activeTournament.matches.flatMap((m) => [m.playerA, m.playerB]),
+          ...(activeTournament.final ? [activeTournament.final.playerA, activeTournament.final.playerB] : []),
+        ])
+      ).filter(Boolean);
+      if (pIds.length >= 2) {
+        return computeTournamentTable({
+          id: activeTournament.id,
+          playerIds: pIds,
+          matches: activeTournament.matches,
+          final: activeTournament.final,
+          config: activeTournament.config,
+        } as any);
+      }
+    }
+    return activeTournament.standings;
+  }, [activeTournament, isTournamentCompleted]);
+
+  const dayStandings = useMemo<DayStandingItem[]>(() => {
+    const rawStandings = dayData?.dayStandings || [];
+    const hasAnyPoints = rawStandings.some((s) => s.points > 0);
+    if (hasAnyPoints) return rawStandings;
+
+    // Resilient fallback: calculate day totals directly from completed tournaments
+    const totals: Record<string, number> = {};
+    for (const t of allTournaments) {
+      const isDone = t.status === "completed" || (t.final?.played ?? false);
+      if (!isDone) continue;
+
+      const pIds = Array.from(
+        new Set([
+          ...t.matches.flatMap((m) => [m.playerA, m.playerB]),
+          ...(t.final ? [t.final.playerA, t.final.playerB] : []),
+        ])
+      ).filter(Boolean);
+
+      const table = computeTournamentTable({
+        id: t.id,
+        playerIds: pIds,
+        matches: t.matches,
+        final: t.final,
+        config: t.config,
+      } as any);
+
+      for (const row of table) {
+        if (row.playerId) {
+          const pts = row.dayPoints ?? Math.max(1, table.length - row.rank + 1);
+          totals[row.playerId] = (totals[row.playerId] || 0) + pts;
+        }
+      }
+    }
+
+    if (Object.keys(totals).length === 0) return rawStandings;
+
+    return Object.entries(totals)
+      .map(([playerId, points]) => {
+        const p = allPlayers.find((x) => x.id === playerId) || getPlayer(playerId, allPlayers);
+        return {
+          playerId,
+          name: p.name || playerId,
+          avatar: p.avatar || "custom",
+          avatarEmoji: p.avatarEmoji,
+          avatarColor: p.avatarColor,
+          points,
+        };
+      })
+      .sort((a, b) => b.points - a.points);
+  }, [dayData?.dayStandings, allTournaments, allPlayers]);
 
   const activeIndex = allTournaments.findIndex((t) => t.id === activeTournament?.id);
   const tournamentDisplayNumber = activeIndex >= 0 ? activeIndex + 1 : allTournaments.length;
@@ -892,7 +964,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                 ) : (
                   <div className="bg-slate-900 border border-white/10 rounded-3xl p-2 overflow-hidden">
                     <TournamentTable
-                      rows={activeTournament.standings}
+                      rows={computedStandings}
                       players={allPlayers}
                       showFinalLabel={isTournamentCompleted}
                     />
@@ -1105,7 +1177,13 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                           </div>
                         )}
                         <TournamentTable
-                          rows={t.standings}
+                          rows={t.standings && t.standings.length > 0 && t.standings[0]?.dayPoints !== undefined ? t.standings : computeTournamentTable({
+                            id: t.id,
+                            playerIds: Array.from(new Set([...t.matches.flatMap((m) => [m.playerA, m.playerB]), ...(t.final ? [t.final.playerA, t.final.playerB] : [])])).filter(Boolean),
+                            matches: t.matches,
+                            final: t.final,
+                            config: t.config,
+                          } as any)}
                           players={allPlayers}
                           showFinalLabel={t.status === "completed"}
                         />
