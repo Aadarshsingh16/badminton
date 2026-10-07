@@ -286,10 +286,11 @@ export function TournamentSetup({ playerCount, matchCount, initialDate, onConfir
           <div className="flex items-center justify-between">
             <div>
               <p className="text-amber-900 text-[10px] uppercase tracking-wider font-black">
-                🏆 Day Points Breakdown ({playerCount} Players)
+                🏆 Day Points Breakdown (N = {playerCount} Players)
               </p>
-              <p className="text-slate-500 text-[11px] mt-0.5">
-                Winner finishes 1st ({playerCount} pts). Loser finishes 2nd.
+              <p className="text-slate-500 text-[11px] mt-0.5 leading-tight">
+                Winner gets <strong>N</strong> Day Points. Loser gets <strong>N-1</strong> pts<br/>
+                <em>(or <strong>N-2</strong> pts if they lose by a blowout)</em>.
               </p>
             </div>
             <span className="text-[10px] text-amber-800 font-bold">First to {cfg.finalWinScore}</span>
@@ -305,6 +306,7 @@ export function TournamentSetup({ playerCount, matchCount, initialDate, onConfir
               const isBlowout = margin >= cfg.finalBonusMargin;
               const winnerPts = playerCount;
               const loserPtsVal = isBlowout ? Math.max(1, playerCount - 2) : Math.max(1, playerCount - 1);
+              const loserFormula = isBlowout ? "N-2" : "N-1";
               return (
                 <div
                   key={label}
@@ -313,13 +315,13 @@ export function TournamentSetup({ playerCount, matchCount, initialDate, onConfir
                   <span className="text-slate-700 font-mono font-bold text-[11px]">{label}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-700 font-bold text-[11px]">
-                      1st: <strong className="text-emerald-700 font-black">{winnerPts} pts</strong>
+                      1st: <strong className="text-emerald-700 font-black">N ({winnerPts})</strong>
                     </span>
                     <span className="text-slate-300">·</span>
                     <span className="text-slate-700 font-bold text-[11px]">
                       2nd:{" "}
                       <strong className={isBlowout ? "text-amber-700 font-black" : "text-slate-800 font-black"}>
-                        {loserPtsVal} pts {isBlowout ? "(-1 penalty)" : ""}
+                        {loserFormula} ({loserPtsVal}) {isBlowout ? "🚨" : ""}
                       </strong>
                     </span>
                   </div>
@@ -329,7 +331,7 @@ export function TournamentSetup({ playerCount, matchCount, initialDate, onConfir
           </div>
 
           <p className="text-[10px] text-slate-500 pt-1 leading-relaxed">
-            💡 3rd place gets {Math.max(1, playerCount - 2)} pts, 4th gets {Math.max(1, playerCount - 3)} pts, down to 1 pt for last place. Points add to the running Day Table!
+            💡 <strong>Rest of the table:</strong> 3rd place gets N-2 ({Math.max(1, playerCount - 2)} pts), 4th gets N-3 ({Math.max(1, Math.max(0, playerCount - 3))} pts), down to 1 pt for last place.
           </p>
         </motion.div>
 
