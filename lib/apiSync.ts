@@ -259,36 +259,50 @@ class ApiSyncService {
           body: item.body ? JSON.stringify(item.body) : undefined,
         });
 
+        // Always re-read queue before mutating in case a new item was pushed while awaiting fetch
+        let currentQueue = JSON.parse(localStorage.getItem("badminton_sync_queue_v1") || "[]");
+        let qItem = currentQueue.find((q: QueuedItem) => q.id === item.id);
+        
+        if (!qItem) continue; // It was deleted elsewhere
+
         if (res.ok || res.status === 409 || res.status === 400 || res.status === 422) {
           // Success, already exists, or unprocessable -> remove from queue
-          this.queue = this.queue.filter((q) => q.id !== item.id);
+          this.queue = currentQueue.filter((q: QueuedItem) => q.id !== item.id);
           this.saveQueue();
         } else if (res.status === 404) {
           // If tournament wasn't created yet, don't drop immediately; retry with backoff
-          item.attempts++;
-          const backoff = Math.min(20000, Math.pow(2, item.attempts) * 1000);
-          item.nextRetry = now + backoff;
+          qItem.attempts++;
+          const backoff = Math.min(20000, Math.pow(2, qItem.attempts) * 1000);
+          qItem.nextRetry = now + backoff;
+          this.queue = currentQueue;
           this.saveQueue();
         } else if (res.status === 401) {
           console.warn("Sync unauthorized (check scorekeeper PIN):", item.url);
           // Wait 15s before retrying unauthorized requests
-          item.nextRetry = now + 15000;
-          item.attempts++;
+          qItem.nextRetry = now + 15000;
+          qItem.attempts++;
+          this.queue = currentQueue;
           this.saveQueue();
           this.notifyUnauthorized();
         } else {
           // Server error / waking up -> retry with exponential backoff
-          item.attempts++;
-          const backoff = Math.min(30000, Math.pow(2, item.attempts) * 1500);
-          item.nextRetry = now + backoff;
+          qItem.attempts++;
+          const backoff = Math.min(30000, Math.pow(2, qItem.attempts) * 1500);
+          qItem.nextRetry = now + backoff;
+          this.queue = currentQueue;
           this.saveQueue();
         }
       } catch (err) {
         // Network offline or failed connection
-        item.attempts++;
-        const backoff = Math.min(30000, Math.pow(2, item.attempts) * 1500);
-        item.nextRetry = now + backoff;
-        this.saveQueue();
+        let currentQueue = JSON.parse(localStorage.getItem("badminton_sync_queue_v1") || "[]");
+        let qItem = currentQueue.find((q: QueuedItem) => q.id === item.id);
+        if (qItem) {
+          qItem.attempts++;
+          const backoff = Math.min(30000, Math.pow(2, qItem.attempts) * 1500);
+          qItem.nextRetry = now + backoff;
+          this.queue = currentQueue;
+          this.saveQueue();
+        }
       }
     }
 
