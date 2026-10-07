@@ -1,3 +1,4 @@
+
 // lib/viewerMode.ts — Persistent spectator mode tracking across tabs and navigation
 
 import React from "react";

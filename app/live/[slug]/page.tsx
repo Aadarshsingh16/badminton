@@ -141,8 +141,83 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
     try {
       const res = await fetch(`${backendUrl}/day-tables/${targetDate}`);
       if (res.ok) {
-        const json: DaySessionData = await res.json();
-        setDayData(json);
+        const json: any = await res.json();
+
+        // 1. Resolve players
+        let resolvedPlayers: Player[] = Array.isArray(json.players) ? json.players : [];
+
+        // 2. Resolve active tournament
+        let resolvedActiveT: LiveTournamentData | null = null;
+
+        if (json.activeTournament && Array.isArray(json.activeTournament.matches) && json.activeTournament.matches.length > 0) {
+          resolvedActiveT = json.activeTournament;
+        } else if (Array.isArray(json.tournaments) && json.tournaments.length > 0) {
+          // Find tournament marked 'active', or the latest tournament
+          const activeMeta = json.tournaments.find((t: any) => t.status === "active") || json.tournaments[json.tournaments.length - 1];
+          if (activeMeta) {
+            if (Array.isArray(activeMeta.matches) && activeMeta.matches.length > 0) {
+              resolvedActiveT = activeMeta;
+            } else {
+              // Fetch full details for this tournament from backend!
+              try {
+                const tRes = await fetch(`${backendUrl}/tournaments/${activeMeta.id}`);
+                if (tRes.ok) {
+                  const tJson = await tRes.json();
+                  const rrMatches = (tJson.matches || []).filter((m: any) => !m.isFinal && m.round !== -1);
+                  const fMatch = (tJson.matches || []).find((m: any) => m.isFinal || m.round === -1) || null;
+                  resolvedActiveT = {
+                    id: tJson.tournament.id,
+                    shareSlug: tJson.tournament.shareSlug || tJson.tournament.id,
+                    status: tJson.tournament.status || "active",
+                    createdAt: tJson.tournament.created_at || new Date().toISOString(),
+                    config: tJson.tournament.config,
+                    matches: rrMatches,
+                    final: fMatch,
+                    standings: tJson.standings || [],
+                  };
+                  if (Array.isArray(tJson.players) && tJson.players.length > 0) {
+                    resolvedPlayers = tJson.players;
+                  }
+                }
+              } catch (err) {
+                console.warn("Failed to fetch full active tournament:", err);
+              }
+            }
+          }
+        }
+
+        // 3. Resolve day standings
+        const resolvedTotals = json.totals || {};
+        let resolvedStandings: DayStandingItem[] = [];
+
+        if (Array.isArray(json.dayStandings) && json.dayStandings.length > 0) {
+          resolvedStandings = json.dayStandings;
+        } else if (Object.keys(resolvedTotals).length > 0) {
+          resolvedStandings = Object.entries(resolvedTotals)
+            .map(([playerId, points]) => {
+              const p = resolvedPlayers.find((x) => x.id === playerId) || getPlayer(playerId, resolvedPlayers);
+              return {
+                playerId,
+                name: p.name || playerId,
+                avatar: p.avatar || "custom",
+                avatarEmoji: p.avatarEmoji,
+                avatarColor: p.avatarColor,
+                points: points as number,
+              };
+            })
+            .sort((a, b) => b.points - a.points);
+        }
+
+        setDayData({
+          date: targetDate,
+          closed: !!json.closed,
+          totals: resolvedTotals,
+          activeTournament: resolvedActiveT,
+          tournaments: json.tournaments || (resolvedActiveT ? [resolvedActiveT] : []),
+          players: resolvedPlayers,
+          dayStandings: resolvedStandings,
+        });
+
         setIsWaiting(false);
         setLoading(false);
         setLastUpdated(new Date().toLocaleTimeString());
