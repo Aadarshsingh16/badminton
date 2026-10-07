@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area, Legend } from "recharts";
 import {
   useStore,
   recoverTournamentsFromSyncQueue,
@@ -710,6 +711,110 @@ export default function HistoryPage() {
       totalPoints: filteredMatches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
     };
   }, [historyData, localHistoryFallback]);
+
+  const advancedInsights = useMemo(() => {
+    if (!displayedHistory || !displayedHistory.days) return null;
+
+    const formMap: Record<string, string[]> = {};
+    const h2h: Record<string, Record<string, { wins: number; losses: number }>> = {};
+    
+    // Sort all matches chronologically (days are already sorted descending, so reverse it or just push to front to get newest first)
+    const allChronologicalMatches: (MatchHistoryItem & { date: string })[] = [];
+    displayedHistory.days.forEach(d => {
+      d.tournaments.forEach(t => {
+        t.matches.forEach(m => {
+          allChronologicalMatches.push({ ...m, date: d.date });
+        });
+      });
+    });
+    
+    // allChronologicalMatches is descending (newest first). Let's iterate.
+    allChronologicalMatches.forEach(m => {
+      if (!formMap[m.playerA]) formMap[m.playerA] = [];
+      if (!formMap[m.playerB]) formMap[m.playerB] = [];
+      
+      const aWon = m.scoreA > m.scoreB;
+      const bWon = m.scoreB > m.scoreA;
+      
+      if (formMap[m.playerA].length < 5) formMap[m.playerA].push(aWon ? "W" : "L");
+      if (formMap[m.playerB].length < 5) formMap[m.playerB].push(bWon ? "W" : "L");
+      
+      if (!h2h[m.playerA]) h2h[m.playerA] = {};
+      if (!h2h[m.playerA][m.playerB]) h2h[m.playerA][m.playerB] = { wins: 0, losses: 0 };
+      if (!h2h[m.playerB]) h2h[m.playerB] = {};
+      if (!h2h[m.playerB][m.playerA]) h2h[m.playerB][m.playerA] = { wins: 0, losses: 0 };
+      
+      if (aWon) {
+        h2h[m.playerA][m.playerB].wins++;
+        h2h[m.playerB][m.playerA].losses++;
+      } else if (bWon) {
+        h2h[m.playerB][m.playerA].wins++;
+        h2h[m.playerA][m.playerB].losses++;
+      }
+    });
+
+    const nemesisList = players.map(p => {
+      const opps = h2h[p.id];
+      if (!opps) return null;
+      let worstOppId = "";
+      let worstWinRate = 1;
+      let worstLosses = 0;
+      
+      for (const [oppId, stats] of Object.entries(opps)) {
+        if (stats.losses + stats.wins >= 2) {
+           const rate = stats.wins / (stats.wins + stats.losses);
+           if (rate < worstWinRate || (rate === worstWinRate && stats.losses > worstLosses)) {
+             worstWinRate = rate;
+             worstOppId = oppId;
+             worstLosses = stats.losses;
+           }
+        }
+      }
+      
+      if (worstWinRate <= 0.4 && worstLosses >= 2) {
+         return {
+           playerId: p.id,
+           nemesisId: worstOppId,
+           winRate: Math.round(worstWinRate * 100),
+           losses: worstLosses
+         };
+      }
+      return null;
+    }).filter(Boolean);
+
+    // Chart 1: Win Rate Comparison
+    const winRateChartData = displayedLeaderboard
+      .filter(l => l.leagueMatchesPlayed >= 1)
+      .map(l => ({
+        name: l.name,
+        "Win Rate %": l.leagueWinRate,
+        wins: l.leagueWins,
+      }));
+
+    // Chart 2: Offensive vs Defensive power
+    const pointPowerData = players.map(p => {
+      let scored = 0;
+      let conceded = 0;
+      let count = 0;
+      allChronologicalMatches.forEach(m => {
+        if (m.playerA === p.id) { scored += m.scoreA; conceded += m.scoreB; count++; }
+        else if (m.playerB === p.id) { scored += m.scoreB; conceded += m.scoreA; count++; }
+      });
+      return {
+        name: p.name,
+        Scored: count > 0 ? Number((scored / count).toFixed(1)) : 0,
+        Conceded: count > 0 ? Number((conceded / count).toFixed(1)) : 0,
+        count
+      };
+    }).filter(d => d.count >= 2);
+
+    return {
+      formMap,
+      nemesisList,
+      winRateChartData,
+      pointPowerData
+    };
+  }, [displayedHistory, displayedLeaderboard, players]);
 
   const baseLeaderboard =
     leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;
