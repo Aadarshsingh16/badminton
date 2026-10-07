@@ -195,9 +195,7 @@ export function BottomTabBar() {
         {tabs.map((tab, idx) => {
           const isFirstTab = idx === 0;
           const isActive = isFirstTab
-            ? isViewer
-              ? pathname.startsWith("/live") || pathname === "/"
-              : pathname === "/"
+            ? pathname === "/"
             : pathname.startsWith(tab.href);
 
           return (
