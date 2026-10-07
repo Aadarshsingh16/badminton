@@ -421,13 +421,14 @@ export default function PlayPage() {
       <TournamentSetup
         playerCount={selectedPlayerIds.length}
         matchCount={setupMatchCount}
-        onConfirm={(cfg) => {
+        initialDate={dayTable.date || today()}
+        onConfirm={(cfg, sessionDate) => {
           setPendingConfig(cfg);
           if (cfg.isPractice) {
-            startTournament();
+            startTournament(sessionDate);
           } else {
             ensurePin(() => {
-              startTournament();
+              startTournament(sessionDate);
             });
           }
         }}
