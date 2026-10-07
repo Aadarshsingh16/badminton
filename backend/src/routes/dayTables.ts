@@ -92,14 +92,7 @@ dayTablesRouter.get("/:date", async (req, res) => {
 
       const pIds = Array.from(new Set(tMatches.flatMap((m: any) => [m.playerA, m.playerB]))).filter(Boolean);
       const cfg: TournamentConfig = typeof t.config === "string" ? JSON.parse(t.config) : (t.config || DEFAULT_CONFIG);
-      const standings = computeTable({
-        id: t.id,
-        createdAt: t.createdAt,
-        playerIds: pIds,
-        matches: tMatches.filter((m: any) => !m.isFinal && m.round !== -1),
-        final: tMatches.find((m: any) => m.isFinal || m.round === -1) || undefined,
-        config: cfg,
-      } as any);
+      const standings = computeTable(tMatches, pIds, cfg);
 
       const finalMatch = tMatches.find((m: any) => m.isFinal || m.round === -1);
       const regularMatches = tMatches.filter((m: any) => !m.isFinal && m.round !== -1);
