@@ -217,8 +217,9 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
             standings: actRaw.standings || [],
           };
         } else if (Array.isArray(json.tournaments) && json.tournaments.length > 0) {
-          // Find tournament marked 'active', or the latest tournament
-          const activeMeta = json.tournaments.find((t: any) => t.status === "active") || json.tournaments[json.tournaments.length - 1];
+          // Find tournament marked 'active' starting from the latest, or the latest tournament
+          const reversedTourneys = [...json.tournaments].reverse();
+          const activeMeta = reversedTourneys.find((t: any) => t.status === "active") || json.tournaments[json.tournaments.length - 1];
           if (activeMeta) {
             if (Array.isArray(activeMeta.matches) && activeMeta.matches.length > 0) {
               const normMatches = (activeMeta.matches || []).map(normalizeMatch);
@@ -592,51 +593,6 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
     };
   }, [slug, isDateSlug]);
 
-  // Loading Screen
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4" />
-        <h2 className="text-white font-bold text-lg">Connecting to Court Stream...</h2>
-        <p className="text-white/40 text-xs mt-1">Live courtside sync via Socket.io</p>
-      </div>
-    );
-  }
-
-  // Waiting Screen (no games started yet today)
-  if (isWaiting && !dayData && !singleTourneyData) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <motion.div
-          animate={{ scale: [1, 1.08, 1], rotate: [0, 6, -6, 0] }}
-          transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-          className="w-16 h-16 rounded-3xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-3xl mb-4 shadow-lg shadow-indigo-500/20"
-        >
-          🏸
-        </motion.div>
-        <h2 className="text-white font-black text-xl mb-2">Court Stream Connecting</h2>
-        <p className="text-white/60 text-xs max-w-xs mb-5 leading-relaxed">
-          Waiting for the scorekeeper to broadcast tournament matches for {slug}. This screen will auto-refresh the moment court play begins!
-        </p>
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-300 text-xs font-semibold mb-6">
-          <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
-          Listening for live match updates...
-        </div>
-        <button
-          onClick={() => {
-            setLoading(true);
-            if (isDateSlug) fetchDaySession(slug);
-            else fetchSingleTournament(slug);
-          }}
-          className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
-        >
-          <span>↻</span>
-          <span>Refresh Live Stream</span>
-        </button>
-      </div>
-    );
-  }
-
   // Determine active view payload
   const activeTournament = dayData?.activeTournament || (singleTourneyData ? {
     id: singleTourneyData.tournament.id,
@@ -732,6 +688,51 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
 
   const activeIndex = allTournaments.findIndex((t) => t.id === activeTournament?.id);
   const tournamentDisplayNumber = activeIndex >= 0 ? activeIndex + 1 : allTournaments.length;
+
+  // Loading Screen
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4" />
+        <h2 className="text-white font-bold text-lg">Connecting to Court Stream...</h2>
+        <p className="text-white/40 text-xs mt-1">Live courtside sync via Socket.io</p>
+      </div>
+    );
+  }
+
+  // Waiting Screen (no games started yet today)
+  if (isWaiting && !dayData && !singleTourneyData) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+        <motion.div
+          animate={{ scale: [1, 1.08, 1], rotate: [0, 6, -6, 0] }}
+          transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+          className="w-16 h-16 rounded-3xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-3xl mb-4 shadow-lg shadow-indigo-500/20"
+        >
+          🏸
+        </motion.div>
+        <h2 className="text-white font-black text-xl mb-2">Court Stream Connecting</h2>
+        <p className="text-white/60 text-xs max-w-xs mb-5 leading-relaxed">
+          Waiting for the scorekeeper to broadcast tournament matches for {slug}. This screen will auto-refresh the moment court play begins!
+        </p>
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-300 text-xs font-semibold mb-6">
+          <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
+          Listening for live match updates...
+        </div>
+        <button
+          onClick={() => {
+            setLoading(true);
+            if (isDateSlug) fetchDaySession(slug);
+            else fetchSingleTournament(slug);
+          }}
+          className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+        >
+          <span>↻</span>
+          <span>Refresh Live Stream</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col max-w-md mx-auto border-x border-white/5">

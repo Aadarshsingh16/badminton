@@ -133,6 +133,13 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
     );
     const dayId = dayRes.rows[0].id;
 
+    // Mark previous active tournaments for this day as completed
+    await pool.query(
+      `UPDATE tournaments SET status = 'completed', completed_at = now() 
+       WHERE day_id = $1 AND status = 'active'`,
+      [dayId]
+    );
+
     // Insert or update tournament
     const tourneyRes = await pool.query(
       `INSERT INTO tournaments (id, share_slug, day_id, player_ids, status, config)
