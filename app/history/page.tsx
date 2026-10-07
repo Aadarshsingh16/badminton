@@ -1522,127 +1522,142 @@ export default function HistoryPage() {
           )}
 
           {/* Analytics Category */}
-          {leaderboardCategory === "analytics" && displayedLeaderboard.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(() => {
-                const maxWinMargin = Math.max(...displayedLeaderboard.map(e => e.highestWinMargin));
-                const blowoutPlayers = displayedLeaderboard.filter(e => e.highestWinMargin === maxWinMargin && maxWinMargin > 0);
+          {leaderboardCategory === "analytics" && advancedInsights && displayedLeaderboard.length > 0 && (
+            <div className="flex flex-col gap-4">
+              {/* Row 1: Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Win Rate Bar Chart */}
+                <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs flex flex-col">
+                  <h3 className="text-xs font-extrabold text-slate-900 mb-1">League Win Rate Comparison</h3>
+                  <p className="text-[10px] text-slate-400 font-medium mb-4">Players with 1+ league matches</p>
+                  <div className="h-48 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={advancedInsights.winRateChartData} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} stroke="#f1f5f9" />
+                        <XAxis type="number" domain={[0, 100]} hide />
+                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 700 }} />
+                        <Bar dataKey="Win Rate %" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
 
-                return maxWinMargin > 0 ? (
-                  <div className="bg-[#F0FDF4] border border-emerald-200/80 rounded-[26px] p-4 shadow-xs">
+                {/* Offensive vs Defensive Chart */}
+                <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs flex flex-col">
+                  <h3 className="text-xs font-extrabold text-slate-900 mb-1">Offense vs Defense</h3>
+                  <p className="text-[10px] text-slate-400 font-medium mb-4">Average points scored vs conceded</p>
+                  <div className="h-48 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={advancedInsights.pointPowerData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                        <YAxis hide />
+                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 700 }} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 600 }} />
+                        <Bar dataKey="Scored" fill="#10b981" radius={[4, 4, 0, 0]} barSize={16} />
+                        <Bar dataKey="Conceded" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: Advanced Insights Bento Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Form Guide */}
+                <div className="bg-[#FFFBEB] border border-amber-200/80 rounded-[26px] p-4 shadow-xs">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-sm shadow-2xs">🔥</div>
+                    <div>
+                      <h3 className="text-xs font-extrabold text-amber-900">Current Form Guide</h3>
+                      <p className="text-[10px] text-amber-700 font-semibold">Last 5 matches (Newest first)</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {players.map(p => advancedInsights.formMap[p.id] && advancedInsights.formMap[p.id].length > 0 ? (
+                      <div key={p.id} className="flex items-center justify-between p-2 rounded-xl bg-white border border-amber-200/50 shadow-2xs">
+                        <div className="flex items-center gap-2">
+                          <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
+                          <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
+                        </div>
+                        <div className="flex gap-1">
+                          {advancedInsights.formMap[p.id].map((res, i) => (
+                            <span key={i} className={`w-5 h-5 flex items-center justify-center rounded-full text-[9px] font-black ${res === "W" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>{res}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null).filter(Boolean).slice(0, 4)}
+                  </div>
+                </div>
+
+                {/* Nemesis or Unbreakable */}
+                {advancedInsights.nemesisList.length > 0 ? (
+                  <div className="bg-[#F4F4F5] border border-slate-200 rounded-[26px] p-4 shadow-xs">
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-sm shadow-2xs">☄️</div>
+                      <div className="w-8 h-8 rounded-xl bg-slate-300/40 flex items-center justify-center text-sm shadow-2xs">⚔️</div>
                       <div>
-                        <h3 className="text-xs font-extrabold text-slate-900">Biggest Blowout</h3>
-                        <p className="text-[10px] text-emerald-700 font-semibold">Highest single match win margin</p>
+                        <h3 className="text-xs font-extrabold text-slate-900">Biggest Nemesis</h3>
+                        <p className="text-[10px] text-slate-600 font-semibold">Most vulnerable against opponent</p>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      {blowoutPlayers.slice(0, 3).map(p => (
-                         <div key={p.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-emerald-200/50 shadow-2xs">
-                           <div className="flex items-center gap-2">
-                             <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
-                             <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
-                           </div>
-                           <div className="px-2.5 py-0.5 bg-emerald-100 rounded-full text-[10px] font-extrabold text-emerald-800">
-                             +{p.highestWinMargin} pts
-                           </div>
-                         </div>
-                      ))}
+                      {advancedInsights.nemesisList.slice(0, 4).map(nem => {
+                        const player = players.find(p => p.id === nem.playerId);
+                        const opp = players.find(p => p.id === nem.nemesisId);
+                        if (!player || !opp) return null;
+                        return (
+                          <div key={nem.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/50 shadow-2xs">
+                            <div className="flex items-center gap-2">
+                              <AvatarSVG type={player.avatar} size={24} emoji={player.avatarEmoji} color={player.avatarColor} />
+                              <span className="text-[10px] font-extrabold text-slate-900">{player.name}</span>
+                            </div>
+                            <div className="text-[9px] font-bold text-rose-500 uppercase px-1">Lost {nem.losses} times to</div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-extrabold text-slate-900">{opp.name}</span>
+                              <AvatarSVG type={opp.avatar} size={24} emoji={opp.avatarEmoji} color={opp.avatarColor} />
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
-                ) : null;
-              })()}
+                ) : (
+                  (() => {
+                    const maxShutoutWins = Math.max(...displayedLeaderboard.map(e => e.shutoutWins));
+                    const shutoutPlayers = displayedLeaderboard.filter(e => e.shutoutWins === maxShutoutWins && maxShutoutWins > 0);
 
-              {(() => {
-                const maxShutoutWins = Math.max(...displayedLeaderboard.map(e => e.shutoutWins));
-                const shutoutPlayers = displayedLeaderboard.filter(e => e.shutoutWins === maxShutoutWins && maxShutoutWins > 0);
-
-                return maxShutoutWins > 0 ? (
-                  <div className="bg-[#EFF6FF] border border-blue-200/80 rounded-[26px] p-4 shadow-xs">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center text-sm shadow-2xs">🛡️</div>
-                      <div>
-                        <h3 className="text-xs font-extrabold text-slate-900">Unbreakable</h3>
-                        <p className="text-[10px] text-blue-700 font-semibold">Most shutout (x-0) wins</p>
+                    return maxShutoutWins > 0 ? (
+                      <div className="bg-[#EFF6FF] border border-blue-200/80 rounded-[26px] p-4 shadow-xs">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center text-sm shadow-2xs">🛡️</div>
+                          <div>
+                            <h3 className="text-xs font-extrabold text-blue-900">Unbreakable</h3>
+                            <p className="text-[10px] text-blue-700 font-semibold">Most shutout (x-0) wins</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          {shutoutPlayers.slice(0, 3).map(p => (
+                            <div key={p.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-blue-200/50 shadow-2xs">
+                              <div className="flex items-center gap-2">
+                                <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
+                                <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
+                              </div>
+                              <div className="px-2.5 py-0.5 bg-blue-100 rounded-full text-[10px] font-extrabold text-blue-800">
+                                {p.shutoutWins} shutouts
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      {shutoutPlayers.slice(0, 3).map(p => (
-                         <div key={p.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-blue-200/50 shadow-2xs">
-                           <div className="flex items-center gap-2">
-                             <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
-                             <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
-                           </div>
-                           <div className="px-2.5 py-0.5 bg-blue-100 rounded-full text-[10px] font-extrabold text-blue-800">
-                             {p.shutoutWins} shutouts
-                           </div>
-                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null;
-              })()}
-
-              {(() => {
-                const maxShutoutLosses = Math.max(...displayedLeaderboard.map(e => e.shutoutLosses));
-                const shutoutLosers = displayedLeaderboard.filter(e => e.shutoutLosses === maxShutoutLosses && maxShutoutLosses > 0);
-
-                return maxShutoutLosses > 0 ? (
-                  <div className="bg-[#FAF5FF] border border-fuchsia-200/80 rounded-[26px] p-4 shadow-xs">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-xl bg-fuchsia-500/20 flex items-center justify-center text-sm shadow-2xs">👻</div>
-                      <div>
-                        <h3 className="text-xs font-extrabold text-slate-900">Ghosted</h3>
-                        <p className="text-[10px] text-fuchsia-700 font-semibold">Most shutout (0-x) losses</p>
+                    ) : (
+                      <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-[26px] p-4 shadow-xs flex items-center justify-center min-h-[120px]">
+                         <p className="text-xs font-medium text-slate-400">Play more matches for advanced insights!</p>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      {shutoutLosers.slice(0, 3).map(p => (
-                         <div key={p.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-fuchsia-200/50 shadow-2xs">
-                           <div className="flex items-center gap-2">
-                             <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
-                             <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
-                           </div>
-                           <div className="px-2.5 py-0.5 bg-fuchsia-100 rounded-full text-[10px] font-extrabold text-fuchsia-800">
-                             {p.shutoutLosses} shutouts
-                           </div>
-                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null;
-              })()}
-              
-              {(() => {
-                const minWinRate = Math.min(...displayedLeaderboard.filter(e => e.leagueMatchesPlayed >= 3).map(e => e.leagueWinRate));
-                const unluckiest = displayedLeaderboard.filter(e => e.leagueMatchesPlayed >= 3 && e.leagueWinRate === minWinRate);
-                
-                return unluckiest.length > 0 ? (
-                  <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-[26px] p-4 shadow-xs">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-xl bg-slate-500/20 flex items-center justify-center text-sm shadow-2xs">🎲</div>
-                      <div>
-                        <h3 className="text-xs font-extrabold text-slate-900">Unlucky Draft</h3>
-                        <p className="text-[10px] text-slate-600 font-semibold">Lowest win rate (min 3 matches)</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      {unluckiest.slice(0, 3).map(p => (
-                         <div key={p.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/50 shadow-2xs">
-                           <div className="flex items-center gap-2">
-                             <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
-                             <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
-                           </div>
-                           <div className="px-2.5 py-0.5 bg-slate-100 rounded-full text-[10px] font-extrabold text-slate-700">
-                             {p.leagueWinRate}%
-                           </div>
-                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null;
-              })()}
+                    );
+                  })()
+                )}
+              </div>
             </div>
           )}
 
