@@ -55,8 +55,9 @@ export function generateRoundRobin(playerIds: string[]): {
   // Number matches sequentially 0..total-1 with alternating court sides
   const matches: Match[] = rawMatches.map((pair, idx) => {
     const flip = idx % 2 === 0;
+    const uniqueSuffix = Math.random().toString(36).slice(2, 8);
     return {
-      id: `m${idx + 1}-${pair.a}-${pair.b}`,
+      id: `m${idx + 1}-${pair.a}-${pair.b}-${uniqueSuffix}`,
       round: idx,
       playerA: pair.a,
       playerB: pair.b,
