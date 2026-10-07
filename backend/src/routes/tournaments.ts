@@ -466,7 +466,7 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
 
       for (const tRow of tourneysInDay.rows) {
         const matchesRes = await pool.query(
-          `SELECT id, round, is_final, player_a, player_b, court_side, score_a, score_b, points_a, points_b, played
+          `SELECT id, round, is_final AS "isFinal", player_a AS "playerA", player_b AS "playerB", court_side, score_a AS "scoreA", score_b AS "scoreB", points_a AS "pointsA", points_b AS "pointsB", played
            FROM matches WHERE tournament_id = $1`,
           [tRow.id]
         );
