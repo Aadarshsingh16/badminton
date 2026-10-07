@@ -1227,7 +1227,7 @@ export default function HistoryPage() {
       {activeSubTab === "leaderboards" && (
         <div className="space-y-3">
           {/* Combined Controls for Leaderboards */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             {/* Time Filter Pill */}
             <div
               className={`relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
@@ -1253,119 +1253,285 @@ export default function HistoryPage() {
               </select>
             </div>
 
-            {/* Metric Switcher Pill Row */}
-            <div className="p-1 bg-slate-200/70 rounded-full flex gap-1 items-center">
-              <span className="text-[10px] font-extrabold text-slate-500 pl-2 pr-0.5 uppercase">Rank:</span>
+            {/* Category Switcher Pill Row */}
+            <div className="flex bg-slate-200/70 p-1 rounded-full overflow-x-auto hide-scrollbar w-full sm:w-auto">
               {(
                 [
-                  { key: "points", label: "Points" },
-                  { key: "wins", label: "Wins" },
-                  { key: "matches", label: "Matches" },
+                  { key: "day", label: "Day Points", icon: "🏆" },
+                  { key: "league", label: "League", icon: "🏸" },
+                  { key: "finals", label: "Finals", icon: "🎯" },
+                  { key: "analytics", label: "Analytics", icon: "📊" },
                 ] as const
-              ).map((m) => (
+              ).map((cat) => (
                 <button
-                  key={m.key}
-                  onClick={() => setSortBy(m.key)}
-                  className={`py-1 px-2.5 text-xs font-extrabold rounded-full transition-all cursor-pointer ${
-                    sortBy === m.key
-                      ? "bg-slate-950 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-950"
+                  key={cat.key}
+                  onClick={() => setLeaderboardCategory(cat.key)}
+                  className={`py-1.5 px-3 flex items-center gap-1.5 text-xs font-extrabold rounded-full transition-all whitespace-nowrap cursor-pointer ${
+                    leaderboardCategory === cat.key
+                      ? "bg-white text-slate-950 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-200"
                   }`}
                 >
-                  {m.label}
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Standings Table Card */}
-          <div className="bg-white border border-slate-200/80 rounded-[28px] overflow-hidden shadow-xs">
-            <div className="p-3.5 border-b border-slate-100 flex items-center justify-between">
-              <div className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
-                <span>📊</span> Overall Standings ({rangeFilter.toUpperCase()})
-              </div>
-              <div className="text-[10px] font-semibold text-slate-400">
-                {displayedLeaderboard.length > 0 ? displayedLeaderboard.length : players.length} active players
+          {leaderboardCategory === "league" && (
+            <div className="flex justify-end mb-1">
+              <div className="p-1 bg-slate-200/70 rounded-full flex gap-1 items-center">
+                <span className="text-[10px] font-extrabold text-slate-500 pl-2 pr-0.5 uppercase">Rank:</span>
+                {(
+                  [
+                    { key: "points", label: "Points" },
+                    { key: "wins", label: "Wins" },
+                    { key: "matches", label: "Matches" },
+                  ] as const
+                ).map((m) => (
+                  <button
+                    key={m.key}
+                    onClick={() => setSortBy(m.key)}
+                    className={`py-1 px-2.5 text-xs font-extrabold rounded-full transition-all cursor-pointer ${
+                      sortBy === m.key
+                        ? "bg-slate-950 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-950"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
               </div>
             </div>
+          )}
 
-            {displayedLeaderboard.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-xs">
-                No ranked matches recorded for this range.
+          {leaderboardCategory !== "analytics" && (
+            <div className="bg-white border border-slate-200/80 rounded-[28px] overflow-hidden shadow-xs">
+              <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+                  {leaderboardCategory === "day" && <span>🏆 Overall Day Leaderboard</span>}
+                  {leaderboardCategory === "league" && <span>🏸 League (Round-Robin) Standings</span>}
+                  {leaderboardCategory === "finals" && <span>🎯 Championship (Finals) Record</span>}
+                </div>
+                <div className="text-[10px] font-semibold text-slate-400">
+                  {displayedLeaderboard.length > 0 ? displayedLeaderboard.length : players.length} active
+                </div>
               </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {displayedLeaderboard.map((entry, index) => {
-                  const isTop1 = index === 0;
-                  const isTop2 = index === 1;
-                  const isTop3 = index === 2;
 
-                  return (
-                    <div
-                      key={entry.playerId}
-                      className={`p-3 flex items-center justify-between gap-3 transition-colors ${
-                        isTop1
-                          ? "bg-amber-50/50"
-                          : isTop2
-                          ? "bg-slate-50/40"
-                          : isTop3
-                          ? "bg-orange-50/30"
-                          : "hover:bg-slate-50"
-                      }`}
-                    >
-                      {/* Rank & Avatar & Name */}
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-6 text-center font-bold text-xs">
-                          {isTop1 ? "🥇" : isTop2 ? "🥈" : isTop3 ? "🥉" : `#${index + 1}`}
+              {displayedLeaderboard.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-xs">
+                  No ranked matches recorded for this range.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {displayedLeaderboard.map((entry, index) => {
+                    const isTop1 = index === 0;
+                    const isTop2 = index === 1;
+                    const isTop3 = index === 2;
+
+                    return (
+                      <div
+                        key={entry.playerId}
+                        className={`p-3 flex items-center justify-between gap-3 transition-colors ${
+                          isTop1
+                            ? "bg-amber-50/50"
+                            : isTop2
+                            ? "bg-slate-50/40"
+                            : isTop3
+                            ? "bg-orange-50/30"
+                            : "hover:bg-slate-50"
+                        }`}
+                      >
+                        {/* Rank & Avatar & Name */}
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-6 text-center font-bold text-xs">
+                            {isTop1 ? "🥇" : isTop2 ? "🥈" : isTop3 ? "🥉" : `#${index + 1}`}
+                          </div>
+                          <AvatarSVG
+                            type={entry.avatar}
+                            size={36}
+                            emoji={entry.avatarEmoji}
+                            color={entry.avatarColor}
+                          />
+                          <div className="min-w-0 flex flex-col justify-center">
+                            <div className="text-xs font-extrabold text-slate-900 truncate leading-tight">
+                              {entry.name}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5 mt-0.5">
+                              {leaderboardCategory === "day" && (
+                                <span>{entry.finalsWon} finals won • {entry.leagueWins} league wins</span>
+                              )}
+                              {leaderboardCategory === "league" && (
+                                <>
+                                  <span>{entry.leagueWins}W - {entry.leagueMatchesPlayed - entry.leagueWins}L</span>
+                                  <span>•</span>
+                                  <span>{entry.leagueWinRate}% win</span>
+                                </>
+                              )}
+                              {leaderboardCategory === "finals" && (
+                                <span>{entry.finalsWon} Won / {entry.finalsPlayed} Played</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <AvatarSVG
-                          type={entry.avatar}
-                          size={36}
-                          emoji={entry.avatarEmoji}
-                          color={entry.avatarColor}
-                        />
-                        <div className="min-w-0">
-                          <div className="text-xs font-extrabold text-slate-900 truncate">{entry.name}</div>
-                          <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
-                            <span>
-                              {entry.wins}W - {entry.matchesPlayed - entry.wins}L
-                            </span>
-                            <span>•</span>
-                            <span>{entry.winRate}% win</span>
+
+                        {/* Metric Highlights */}
+                        <div className="text-right flex flex-col justify-center">
+                          <div className="text-sm font-black text-slate-950 leading-tight">
+                            {leaderboardCategory === "day" && `${entry.dayPointsTotal} pts`}
+                            {leaderboardCategory === "league" && (
+                              sortBy === "points" ? `${entry.leaguePoints} pts` :
+                              sortBy === "wins" ? `${entry.leagueWins} wins` :
+                              `${entry.leagueMatchesPlayed} matches`
+                            )}
+                            {leaderboardCategory === "finals" && `${entry.finalsWon} wins`}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                            {leaderboardCategory === "day" && `Total Day Points`}
+                            {leaderboardCategory === "league" && (
+                              <>
+                                Diff:{" "}
+                                <span className={entry.leaguePointDiff > 0 ? "text-emerald-600 font-bold" : entry.leaguePointDiff < 0 ? "text-rose-500 font-bold" : "text-slate-400"}>
+                                  {entry.leaguePointDiff > 0 ? `+${entry.leaguePointDiff}` : entry.leaguePointDiff}
+                                </span>
+                              </>
+                            )}
+                            {leaderboardCategory === "finals" && `${entry.finalsPlayed} appearances`}
                           </div>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
-                      {/* Metric Highlights */}
-                      <div className="text-right">
-                        <div className="text-sm font-black text-slate-950">
-                          {sortBy === "points"
-                            ? `${entry.totalPoints} pts`
-                            : sortBy === "wins"
-                            ? `${entry.wins} wins`
-                            : `${entry.matchesPlayed} matches`}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-semibold">
-                          Diff:{" "}
-                          <span
-                            className={
-                              entry.pointDiff > 0
-                                ? "text-emerald-600 font-bold"
-                                : entry.pointDiff < 0
-                                ? "text-rose-500 font-bold"
-                                : "text-slate-400"
-                            }
-                          >
-                            {entry.pointDiff > 0 ? `+${entry.pointDiff}` : entry.pointDiff}
-                          </span>
-                        </div>
+          {/* Analytics Category */}
+          {leaderboardCategory === "analytics" && displayedLeaderboard.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(() => {
+                const maxWinMargin = Math.max(...displayedLeaderboard.map(e => e.highestWinMargin));
+                const blowoutPlayers = displayedLeaderboard.filter(e => e.highestWinMargin === maxWinMargin && maxWinMargin > 0);
+
+                return maxWinMargin > 0 ? (
+                  <div className="bg-[#F0FDF4] border border-emerald-200/80 rounded-[26px] p-4 shadow-xs">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-sm shadow-2xs">☄️</div>
+                      <div>
+                        <h3 className="text-xs font-extrabold text-slate-900">Biggest Blowout</h3>
+                        <p className="text-[10px] text-emerald-700 font-semibold">Highest single match win margin</p>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    <div className="space-y-2">
+                      {blowoutPlayers.slice(0, 3).map(p => (
+                         <div key={p.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-emerald-200/50 shadow-2xs">
+                           <div className="flex items-center gap-2">
+                             <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
+                             <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
+                           </div>
+                           <div className="px-2.5 py-0.5 bg-emerald-100 rounded-full text-[10px] font-extrabold text-emerald-800">
+                             +{p.highestWinMargin} pts
+                           </div>
+                         </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              {(() => {
+                const maxShutoutWins = Math.max(...displayedLeaderboard.map(e => e.shutoutWins));
+                const shutoutPlayers = displayedLeaderboard.filter(e => e.shutoutWins === maxShutoutWins && maxShutoutWins > 0);
+
+                return maxShutoutWins > 0 ? (
+                  <div className="bg-[#EFF6FF] border border-blue-200/80 rounded-[26px] p-4 shadow-xs">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center text-sm shadow-2xs">🛡️</div>
+                      <div>
+                        <h3 className="text-xs font-extrabold text-slate-900">Unbreakable</h3>
+                        <p className="text-[10px] text-blue-700 font-semibold">Most shutout (x-0) wins</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {shutoutPlayers.slice(0, 3).map(p => (
+                         <div key={p.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-blue-200/50 shadow-2xs">
+                           <div className="flex items-center gap-2">
+                             <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
+                             <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
+                           </div>
+                           <div className="px-2.5 py-0.5 bg-blue-100 rounded-full text-[10px] font-extrabold text-blue-800">
+                             {p.shutoutWins} shutouts
+                           </div>
+                         </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              {(() => {
+                const maxShutoutLosses = Math.max(...displayedLeaderboard.map(e => e.shutoutLosses));
+                const shutoutLosers = displayedLeaderboard.filter(e => e.shutoutLosses === maxShutoutLosses && maxShutoutLosses > 0);
+
+                return maxShutoutLosses > 0 ? (
+                  <div className="bg-[#FAF5FF] border border-fuchsia-200/80 rounded-[26px] p-4 shadow-xs">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-xl bg-fuchsia-500/20 flex items-center justify-center text-sm shadow-2xs">👻</div>
+                      <div>
+                        <h3 className="text-xs font-extrabold text-slate-900">Ghosted</h3>
+                        <p className="text-[10px] text-fuchsia-700 font-semibold">Most shutout (0-x) losses</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {shutoutLosers.slice(0, 3).map(p => (
+                         <div key={p.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-fuchsia-200/50 shadow-2xs">
+                           <div className="flex items-center gap-2">
+                             <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
+                             <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
+                           </div>
+                           <div className="px-2.5 py-0.5 bg-fuchsia-100 rounded-full text-[10px] font-extrabold text-fuchsia-800">
+                             {p.shutoutLosses} shutouts
+                           </div>
+                         </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+              
+              {(() => {
+                const minWinRate = Math.min(...displayedLeaderboard.filter(e => e.leagueMatchesPlayed >= 3).map(e => e.leagueWinRate));
+                const unluckiest = displayedLeaderboard.filter(e => e.leagueMatchesPlayed >= 3 && e.leagueWinRate === minWinRate);
+                
+                return unluckiest.length > 0 ? (
+                  <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-[26px] p-4 shadow-xs">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-xl bg-slate-500/20 flex items-center justify-center text-sm shadow-2xs">🎲</div>
+                      <div>
+                        <h3 className="text-xs font-extrabold text-slate-900">Unlucky Draft</h3>
+                        <p className="text-[10px] text-slate-600 font-semibold">Lowest win rate (min 3 matches)</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {unluckiest.slice(0, 3).map(p => (
+                         <div key={p.playerId} className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/50 shadow-2xs">
+                           <div className="flex items-center gap-2">
+                             <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
+                             <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
+                           </div>
+                           <div className="px-2.5 py-0.5 bg-slate-100 rounded-full text-[10px] font-extrabold text-slate-700">
+                             {p.leagueWinRate}%
+                           </div>
+                         </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+          )}
 
           {/* Day Champions & Day Last-Place Hall of Fame Bento Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
