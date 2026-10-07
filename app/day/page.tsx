@@ -206,7 +206,7 @@ export default function DayPage() {
         const rowIdx = tTable.findIndex((r) => r.playerId === playerId);
         if (rowIdx === -1) return null;
         const row = tTable[rowIdx];
-        const dayPts = t.dayPointsAwarded?.[playerId] ?? row.points;
+        const dayPts = t.dayPointsAwarded?.[playerId] ?? row.dayPoints ?? Math.max(1, tTable.length - rowIdx);
         return { tournament: t, rank: rowIdx + 1, points: row.points, dayPts, rowIdx };
       })
       .filter(Boolean) as { tournament: Tournament; rank: number; points: number; dayPts: number; rowIdx: number }[];
