@@ -118,6 +118,38 @@ export function TournamentSetup({ playerCount, matchCount, initialDate, onConfir
           </p>
         </div>
 
+        {/* Session Date Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-2.5"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/80 inline-flex items-center gap-1">
+              <span>📅</span>
+              <span>Session Date</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setSessionDate(new Date().toISOString().split("T")[0])}
+              className="text-[11px] text-indigo-600 font-bold hover:underline cursor-pointer"
+            >
+              Set to Today
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="date"
+              value={sessionDate}
+              onChange={(e) => setSessionDate(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            />
+          </div>
+          <p className="text-[11px] text-slate-500 font-medium">
+            This tournament will be linked to the <strong>{sessionDate}</strong> Day Table.
+          </p>
+        </motion.div>
+
         {/* Round-robin rules card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
