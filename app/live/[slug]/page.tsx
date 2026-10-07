@@ -8,7 +8,7 @@ import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { TournamentTable } from "@/components/TournamentTable";
 import { MatchCard } from "@/components/MatchCard";
 import { Player, Match, Tournament, TournamentRow } from "@/lib/types";
-import { useStore } from "@/lib/store";
+import { useStore, getLocalDateString } from "@/lib/store";
 import { computeTournamentTable } from "@/lib/ranking";
 import { setViewerSlug, clearViewerMode } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";

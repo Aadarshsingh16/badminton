@@ -12,12 +12,24 @@ dayTablesRouter.get("/:date", async (req, res) => {
   const { date } = req.params;
 
   try {
-    const dayRes = await pool.query(
-      `SELECT id, date, closed, totals, closed_at FROM day_tables WHERE date::text = $1`,
-      [date]
-    );
+    let targetDate = date;
+    let dayRes;
 
-    const day = dayRes.rows[0] || { id: null, date, closed: false, totals: {} };
+    if (date === "current" || date === "today" || date === "latest") {
+      dayRes = await pool.query(
+        `SELECT id, date, closed, totals, closed_at FROM day_tables ORDER BY date DESC LIMIT 1`
+      );
+      if (dayRes.rows[0]) {
+        targetDate = typeof dayRes.rows[0].date === "string" ? dayRes.rows[0].date : dayRes.rows[0].date.toISOString().split("T")[0];
+      }
+    } else {
+      dayRes = await pool.query(
+        `SELECT id, date, closed, totals, closed_at FROM day_tables WHERE date::text = $1`,
+        [date]
+      );
+    }
+
+    const day = dayRes?.rows[0] || { id: null, date: targetDate, closed: false, totals: {} };
 
     // Fetch tournaments belonging to this day or created on this date
     let tourneysRes;
@@ -31,14 +43,39 @@ dayTablesRouter.get("/:date", async (req, res) => {
       tourneysRes = await pool.query(
         `SELECT id, share_slug AS "shareSlug", status, config, created_at AS "createdAt", completed_at AS "completedAt"
          FROM tournaments WHERE created_at::date::text = $1 ORDER BY created_at ASC`,
-        [date]
+        [targetDate]
       );
+    }
+
+    // Fallback: If no active tournament found in this day's tournaments, check if there is an active tournament globally!
+    const hasActiveInDay = tourneysRes.rows.some((t: any) => t.status === "active");
+    const tourneyRows = [...tourneysRes.rows];
+    let extraDayTotals: Record<string, number> | null = null;
+
+    if (!hasActiveInDay) {
+      const actGlobalRes = await pool.query(
+        `SELECT t.id, t.share_slug AS "shareSlug", t.day_id AS "dayId", t.status, t.config,
+                t.created_at AS "createdAt", t.completed_at AS "completedAt", d.totals AS "dayTotals"
+         FROM tournaments t
+         LEFT JOIN day_tables d ON t.day_id = d.id
+         WHERE t.status = 'active'
+         ORDER BY t.created_at DESC LIMIT 1`
+      );
+      if (actGlobalRes.rowCount && actGlobalRes.rowCount > 0) {
+        const globalRow = actGlobalRes.rows[0];
+        if (!tourneyRows.some((t) => t.id === globalRow.id)) {
+          tourneyRows.push(globalRow);
+        }
+        if (globalRow.dayTotals && typeof globalRow.dayTotals === "object") {
+          extraDayTotals = globalRow.dayTotals;
+        }
+      }
     }
 
     const tournamentsData: any[] = [];
     const allPlayerIds = new Set<string>();
 
-    for (const t of tourneysRes.rows) {
+    for (const t of tourneyRows) {
       const mRes = await pool.query(
         `SELECT id, round, is_final AS "isFinal", player_a AS "playerA", player_b AS "playerB",
                 court_side AS "courtSide", score_a AS "scoreA", score_b AS "scoreB",
@@ -73,10 +110,11 @@ dayTablesRouter.get("/:date", async (req, res) => {
       });
     }
 
-    // Include any players in day.totals
-    if (day.totals && typeof day.totals === "object") {
-      Object.keys(day.totals).forEach((id) => allPlayerIds.add(id));
-    }
+    // Merge day totals
+    const mergedTotals: Record<string, number> = { ...(extraDayTotals || {}), ...(day.totals || {}) };
+
+    // Include any players in day totals
+    Object.keys(mergedTotals).forEach((id) => allPlayerIds.add(id));
 
     const playerIdsArr = Array.from(allPlayerIds);
     let players: any[] = [];
@@ -103,7 +141,7 @@ dayTablesRouter.get("/:date", async (req, res) => {
     const activeTournament = tournamentsData.find((t) => t.status === "active") || tournamentsData[tournamentsData.length - 1] || null;
 
     // Day standings sorted by total day points
-    const dayStandings = Object.entries(day.totals || {}).map(([playerId, totalPts]: any) => {
+    const dayStandings = Object.entries(mergedTotals).map(([playerId, totalPts]: any) => {
       const p = players.find((x) => x.id === playerId);
       return {
         playerId,
@@ -116,9 +154,9 @@ dayTablesRouter.get("/:date", async (req, res) => {
     }).sort((a, b) => (b.points as number) - (a.points as number));
 
     res.json({
-      date,
+      date: targetDate,
       closed: !!day.closed,
-      totals: day.totals || {},
+      totals: mergedTotals,
       activeTournament,
       tournaments: tournamentsData,
       players,

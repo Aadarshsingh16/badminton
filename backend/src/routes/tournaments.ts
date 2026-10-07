@@ -205,8 +205,16 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
       date: todayStr,
     });
 
+    io.emit("live:update", {
+      type: "tournament:started",
+      tournamentId: tournament.id,
+      shareSlug: slug,
+      date: todayStr,
+    });
+
     res.status(201).json({
       ...tournament,
+      shareSlug: slug,
       matches: insertedMatches,
       shareUrl: `/live/${todayStr}`,
     });
@@ -222,20 +230,42 @@ tournamentsRouter.get("/:slug", async (req, res) => {
   const { slug } = req.params;
 
   try {
-    const tRes = await pool.query(
-      `SELECT t.id, t.share_slug, t.day_id, t.player_ids, t.status, t.config, t.created_at, t.completed_at,
-              COALESCE(d.date::text, t.created_at::date::text) AS "dayDate"
-       FROM tournaments t
-       LEFT JOIN day_tables d ON t.day_id = d.id
-       WHERE t.share_slug = $1 OR t.id = $1`,
-      [slug]
-    );
+    let tRes;
+    if (slug === "active" || slug === "current") {
+      tRes = await pool.query(
+        `SELECT t.id, t.share_slug, t.day_id, t.player_ids, t.status, t.config, t.created_at, t.completed_at,
+                COALESCE(d.date::text, t.created_at::date::text) AS "dayDate"
+         FROM tournaments t
+         LEFT JOIN day_tables d ON t.day_id = d.id
+         WHERE t.status = 'active'
+         ORDER BY t.created_at DESC LIMIT 1`
+      );
+      if (tRes.rowCount === 0) {
+        tRes = await pool.query(
+          `SELECT t.id, t.share_slug, t.day_id, t.player_ids, t.status, t.config, t.created_at, t.completed_at,
+                  COALESCE(d.date::text, t.created_at::date::text) AS "dayDate"
+           FROM tournaments t
+           LEFT JOIN day_tables d ON t.day_id = d.id
+           ORDER BY t.created_at DESC LIMIT 1`
+        );
+      }
+    } else {
+      tRes = await pool.query(
+        `SELECT t.id, t.share_slug, t.day_id, t.player_ids, t.status, t.config, t.created_at, t.completed_at,
+                COALESCE(d.date::text, t.created_at::date::text) AS "dayDate"
+         FROM tournaments t
+         LEFT JOIN day_tables d ON t.day_id = d.id
+         WHERE t.share_slug = $1 OR t.id = $1`,
+        [slug]
+      );
+    }
 
     if (tRes.rowCount === 0) {
       return res.status(404).json({ error: "Tournament not found" });
     }
 
-    const tournament = tRes.rows[0];
+    const rawT = tRes.rows[0];
+    const tournament = { ...rawT, shareSlug: rawT.share_slug || rawT.shareSlug || rawT.id };
 
     // Fetch matches (ordered by round ASC, id ASC)
     const mRes = await pool.query(
@@ -330,6 +360,7 @@ tournamentsRouter.patch("/:id/matches/:matchId", requireScorekeeper, async (req,
     io.to(`tournament:${share_slug}`).emit("tournament:update", {
       type: "match:updated",
       match: updatedMatch,
+      tournamentId,
     });
 
     if (day_date) {
@@ -340,6 +371,15 @@ tournamentsRouter.patch("/:id/matches/:matchId", requireScorekeeper, async (req,
         date: day_date,
       });
     }
+
+    // Global live update for all spectators
+    io.emit("live:update", {
+      type: "match:updated",
+      match: updatedMatch,
+      tournamentId,
+      shareSlug: share_slug,
+      date: day_date,
+    });
 
     res.json(updatedMatch);
   } catch (err: any) {
@@ -463,6 +503,17 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
         totals: updatedTotals,
       });
     }
+
+    // Global live update for all spectators
+    io.emit("live:update", {
+      type: "final:completed",
+      final: finalMatch,
+      status: "completed",
+      tournamentId,
+      shareSlug: share_slug,
+      totals: updatedTotals,
+      date: day_date,
+    });
 
     res.json({
       tournamentId,
