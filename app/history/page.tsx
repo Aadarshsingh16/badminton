@@ -712,13 +712,36 @@ export default function HistoryPage() {
     };
   }, [historyData, localHistoryFallback]);
 
+  const baseLeaderboard =
+    leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;
+
+  const displayedLeaderboard = useMemo(() => {
+    if (!baseLeaderboard) return [];
+    const lb = [...baseLeaderboard];
+    
+    if (leaderboardCategory === "day") {
+      lb.sort((a, b) => b.dayPointsTotal - a.dayPointsTotal || b.leaguePoints - a.leaguePoints);
+    } else if (leaderboardCategory === "finals") {
+      lb.sort((a, b) => b.finalsWon - a.finalsWon || b.finalsPlayed - a.finalsPlayed || b.dayPointsTotal - a.dayPointsTotal);
+    } else if (leaderboardCategory === "league") {
+      if (sortBy === "wins") {
+        lb.sort((a, b) => b.leagueWins - a.leagueWins || b.leaguePoints - a.leaguePoints);
+      } else if (sortBy === "matches") {
+        lb.sort((a, b) => b.leagueMatchesPlayed - a.leagueMatchesPlayed || b.leaguePoints - a.leaguePoints);
+      } else {
+        lb.sort((a, b) => b.leaguePoints - a.leaguePoints || b.leaguePointDiff - a.leaguePointDiff);
+      }
+    }
+    
+    return lb;
+  }, [baseLeaderboard, leaderboardCategory, sortBy]);
+
   const advancedInsights = useMemo(() => {
     if (!displayedHistory || !displayedHistory.days) return null;
 
     const formMap: Record<string, string[]> = {};
     const h2h: Record<string, Record<string, { wins: number; losses: number }>> = {};
     
-    // Sort all matches chronologically (days are already sorted descending, so reverse it or just push to front to get newest first)
     const allChronologicalMatches: (MatchHistoryItem & { date: string })[] = [];
     displayedHistory.days.forEach(d => {
       d.tournaments.forEach(t => {
@@ -728,7 +751,6 @@ export default function HistoryPage() {
       });
     });
     
-    // allChronologicalMatches is descending (newest first). Let's iterate.
     allChronologicalMatches.forEach(m => {
       if (!formMap[m.playerA]) formMap[m.playerA] = [];
       if (!formMap[m.playerB]) formMap[m.playerB] = [];
@@ -753,7 +775,8 @@ export default function HistoryPage() {
       }
     });
 
-    const nemesisList = players.map(p => {
+    type NemesisEntry = { playerId: string; nemesisId: string; winRate: number; losses: number };
+    const nemesisList: NemesisEntry[] = players.map(p => {
       const opps = h2h[p.id];
       if (!opps) return null;
       let worstOppId = "";
@@ -780,9 +803,8 @@ export default function HistoryPage() {
          };
       }
       return null;
-    }).filter(Boolean);
+    }).filter((item): item is NemesisEntry => item !== null);
 
-    // Chart 1: Win Rate Comparison
     const winRateChartData = displayedLeaderboard
       .filter(l => l.leagueMatchesPlayed >= 1)
       .map(l => ({
@@ -791,7 +813,6 @@ export default function HistoryPage() {
         wins: l.leagueWins,
       }));
 
-    // Chart 2: Offensive vs Defensive power
     const pointPowerData = players.map(p => {
       let scored = 0;
       let conceded = 0;
