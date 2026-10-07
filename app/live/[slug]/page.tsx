@@ -79,6 +79,23 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       avatar: "custom" as any,
     };
 
+  // Helper to normalize match object from backend (snake_case and camelCase compatibility)
+  const normalizeMatch = (m: any): Match => ({
+    id: m.id,
+    round: m.round ?? 0,
+    isFinal: !!(m.isFinal || m.is_final || m.round === -1),
+    playerA: m.playerA || m.player_a,
+    playerB: m.playerB || m.player_b,
+    courtSide: m.courtSide || m.court_side || { [m.playerA || m.player_a]: 1, [m.playerB || m.player_b]: 2 },
+    scoreA: typeof m.scoreA === "number" ? m.scoreA : (typeof m.score_a === "number" ? m.score_a : undefined),
+    scoreB: typeof m.scoreB === "number" ? m.scoreB : (typeof m.score_b === "number" ? m.score_b : undefined),
+    pointsAwarded: m.pointsAwarded || {
+      [m.playerA || m.player_a]: typeof m.pointsA === "number" ? m.pointsA : (typeof m.points_a === "number" ? m.points_a : 0),
+      [m.playerB || m.player_b]: typeof m.pointsB === "number" ? m.pointsB : (typeof m.points_b === "number" ? m.points_b : 0),
+    },
+    played: !!m.played,
+  });
+
   // 1. Fetch Day Session data
   const fetchDaySession = async (targetDate: string) => {
     // Check local store first (for instant host or offline preview)
@@ -143,21 +160,36 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       let res = await fetch(`${backendUrl}/day-tables/${fetchDate}`);
       let json: any = res.ok ? await res.json() : null;
 
-      // If requested date has 0 tournaments, seamlessly check today's date or store's session date!
-      if (!json || !Array.isArray(json.tournaments) || json.tournaments.length === 0) {
-        const todayDate = new Date().toISOString().split("T")[0];
+      // If requested date has 0 tournaments or no active tournament, check candidate dates!
+      const hasTourneys = json && Array.isArray(json.tournaments) && json.tournaments.length > 0;
+      const hasActive = hasTourneys && (
+        (json.activeTournament && json.activeTournament.status === "active") ||
+        json.tournaments.some((t: any) => t.status === "active")
+      );
+
+      if (!hasActive) {
+        const localToday = getLocalDateString();
+        const utcToday = new Date().toISOString().split("T")[0];
         const storeDate = state.dayTable?.date;
-        const candidateDates = [todayDate, storeDate].filter((d) => d && d !== fetchDate) as string[];
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+        const candidateDates = [localToday, utcToday, storeDate, yesterday, "current"].filter(
+          (d) => d && d !== fetchDate
+        ) as string[];
 
         for (const altDate of candidateDates) {
           try {
             const altRes = await fetch(`${backendUrl}/day-tables/${altDate}`);
             if (altRes.ok) {
               const altJson = await altRes.json();
-              if (Array.isArray(altJson.tournaments) && altJson.tournaments.length > 0) {
+              const altHasTourneys = Array.isArray(altJson.tournaments) && altJson.tournaments.length > 0;
+              const altHasActive = altHasTourneys && (
+                (altJson.activeTournament && altJson.activeTournament.status === "active") ||
+                altJson.tournaments.some((t: any) => t.status === "active")
+              );
+              if (altHasActive || (!hasTourneys && altHasTourneys)) {
                 json = altJson;
                 fetchDate = altDate;
-                break;
+                if (altHasActive) break;
               }
             }
           } catch {}
@@ -172,27 +204,50 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         let resolvedActiveT: LiveTournamentData | null = null;
 
         if (json.activeTournament && Array.isArray(json.activeTournament.matches) && json.activeTournament.matches.length > 0) {
-          resolvedActiveT = json.activeTournament;
+          const actRaw = json.activeTournament;
+          const normMatches = (actRaw.matches || []).map(normalizeMatch);
+          resolvedActiveT = {
+            id: actRaw.id,
+            shareSlug: actRaw.shareSlug || actRaw.share_slug || actRaw.id,
+            status: actRaw.status || "active",
+            createdAt: actRaw.createdAt || actRaw.created_at || new Date().toISOString(),
+            config: actRaw.config,
+            matches: normMatches.filter((m: any) => !m.isFinal && m.round !== -1),
+            final: actRaw.final ? normalizeMatch(actRaw.final) : null,
+            standings: actRaw.standings || [],
+          };
         } else if (Array.isArray(json.tournaments) && json.tournaments.length > 0) {
           // Find tournament marked 'active', or the latest tournament
           const activeMeta = json.tournaments.find((t: any) => t.status === "active") || json.tournaments[json.tournaments.length - 1];
           if (activeMeta) {
             if (Array.isArray(activeMeta.matches) && activeMeta.matches.length > 0) {
-              resolvedActiveT = activeMeta;
+              const normMatches = (activeMeta.matches || []).map(normalizeMatch);
+              resolvedActiveT = {
+                id: activeMeta.id,
+                shareSlug: activeMeta.shareSlug || activeMeta.share_slug || activeMeta.id,
+                status: activeMeta.status || "active",
+                createdAt: activeMeta.createdAt || activeMeta.created_at || new Date().toISOString(),
+                config: activeMeta.config,
+                matches: normMatches.filter((m: any) => !m.isFinal && m.round !== -1),
+                final: activeMeta.final ? normalizeMatch(activeMeta.final) : null,
+                standings: activeMeta.standings || [],
+              };
             } else {
               // Fetch full details for this tournament from backend!
               try {
                 const tRes = await fetch(`${backendUrl}/tournaments/${activeMeta.id}`);
                 if (tRes.ok) {
                   const tJson = await tRes.json();
-                  const rrMatches = (tJson.matches || []).filter((m: any) => !m.isFinal && m.round !== -1);
-                  const fMatch = (tJson.matches || []).find((m: any) => m.isFinal || m.round === -1) || null;
+                  const rawT = tJson.tournament;
+                  const rawMatches = (tJson.matches || []).map(normalizeMatch);
+                  const rrMatches = rawMatches.filter((m: any) => !m.isFinal && m.round !== -1);
+                  const fMatch = rawMatches.find((m: any) => m.isFinal || m.round === -1) || null;
                   resolvedActiveT = {
-                    id: tJson.tournament.id,
-                    shareSlug: tJson.tournament.shareSlug || tJson.tournament.id,
-                    status: tJson.tournament.status || "active",
-                    createdAt: tJson.tournament.created_at || new Date().toISOString(),
-                    config: tJson.tournament.config,
+                    id: rawT.id,
+                    shareSlug: rawT.shareSlug || rawT.share_slug || rawT.id,
+                    status: rawT.status || "active",
+                    createdAt: rawT.createdAt || rawT.created_at || new Date().toISOString(),
+                    config: rawT.config,
                     matches: rrMatches,
                     final: fMatch,
                     standings: tJson.standings || [],
@@ -261,18 +316,21 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       const res = await fetch(`${backendUrl}/tournaments/${tourneySlug}`);
       if (res.ok) {
         const json = await res.json();
+        const rawT = json.tournament;
+        const normMatches = (json.matches || []).map(normalizeMatch);
         setSingleTourneyData({
-          tournament: json.tournament,
-          matches: json.matches,
+          tournament: { ...rawT, shareSlug: rawT.shareSlug || rawT.share_slug || rawT.id },
+          matches: normMatches,
           players: json.players,
           standings: json.standings,
-          dayDate: json.tournament?.dayDate,
+          dayDate: rawT?.dayDate || rawT?.day_date,
         });
 
         // If tournament is part of a day session, automatically load full day data as well!
         const sessionDate =
-          json.tournament?.dayDate ||
-          (json.tournament?.created_at ? json.tournament.created_at.split("T")[0] : null);
+          rawT?.dayDate ||
+          rawT?.day_date ||
+          (rawT?.created_at ? rawT.created_at.split("T")[0] : null);
 
         if (sessionDate) {
           fetchDaySession(sessionDate);
@@ -323,6 +381,131 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
 
     // Connect Socket.io
     let socket: Socket | null = null;
+
+    // Real-time Match Score Handler (updates match card + table standings in place immediately!)
+    const handleMatchScoreUpdate = (payload: any) => {
+      const rawM = payload?.match;
+      if (!rawM || !rawM.id) return;
+      const updatedM = normalizeMatch(rawM);
+
+      setDayData((prev) => {
+        if (!prev) return prev;
+        const active = prev.activeTournament;
+        if (!active) return prev;
+
+        let updatedMatches = [...active.matches];
+        let updatedFinal = active.final;
+        let matchFound = false;
+
+        if (updatedM.isFinal) {
+          updatedFinal = { ...(active.final || {}), ...updatedM, played: true };
+          matchFound = true;
+        } else {
+          const idx = updatedMatches.findIndex((m) => m.id === updatedM.id);
+          if (idx !== -1) {
+            updatedMatches[idx] = { ...updatedMatches[idx], ...updatedM, played: true };
+            matchFound = true;
+          }
+        }
+
+        if (!matchFound) return prev;
+
+        const standings = computeTournamentTable({
+          ...active,
+          matches: updatedMatches,
+          final: updatedFinal,
+        } as any);
+
+        return {
+          ...prev,
+          activeTournament: {
+            ...active,
+            matches: updatedMatches,
+            final: updatedFinal,
+            standings,
+          },
+        };
+      });
+
+      setSingleTourneyData((prev) => {
+        if (!prev) return prev;
+        let updatedMatches = [...prev.matches];
+        const idx = updatedMatches.findIndex((m) => m.id === updatedM.id);
+        if (idx !== -1) {
+          updatedMatches[idx] = { ...updatedMatches[idx], ...updatedM, played: true };
+        } else {
+          updatedMatches.push(updatedM);
+        }
+        const standings = computeTournamentTable({
+          ...prev.tournament,
+          matches: updatedMatches,
+        } as any);
+        return {
+          ...prev,
+          matches: updatedMatches,
+          standings,
+        };
+      });
+
+      setLastUpdated(new Date().toLocaleTimeString());
+    };
+
+    // Real-time Tournament Concluded Handler
+    const handleTournamentConcluded = (payload: any) => {
+      if (payload?.final) {
+        const normFinal = normalizeMatch(payload.final);
+        setDayData((prev) => {
+          if (!prev?.activeTournament) return prev;
+          const active = prev.activeTournament;
+          return {
+            ...prev,
+            activeTournament: {
+              ...active,
+              final: normFinal,
+              status: "completed",
+            },
+          };
+        });
+      }
+
+      if (payload?.totals) {
+        setDayData((prev) => {
+          if (!prev) return prev;
+          const updatedStandings = Object.entries(payload.totals)
+            .map(([playerId, points]) => {
+              const p = prev.players.find((x) => x.id === playerId) || getPlayer(playerId, prev.players);
+              return {
+                playerId,
+                name: p.name || playerId,
+                avatar: p.avatar || "custom",
+                avatarEmoji: p.avatarEmoji,
+                avatarColor: p.avatarColor,
+                points: points as number,
+              };
+            })
+            .sort((a, b) => b.points - a.points);
+          return {
+            ...prev,
+            totals: payload.totals,
+            dayStandings: updatedStandings,
+          };
+        });
+      }
+
+      // Re-fetch to ensure all server data matches
+      if (isDateSlug) fetchDaySession(slug);
+      else fetchSingleTournament(slug);
+    };
+
+    // Real-time Tournament Started Handler
+    const handleTournamentStarted = (payload: any) => {
+      if (isDateSlug) {
+        fetchDaySession(slug);
+      } else if (payload?.tournamentId || payload?.shareSlug) {
+        fetchSingleTournament(payload.shareSlug || payload.tournamentId);
+      }
+    };
+
     try {
       socket = socketIo(backendUrl, {
         transports: ["websocket", "polling"],
@@ -334,6 +517,10 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         setSocketConnected(true);
         if (isDateSlug) {
           socket?.emit("join:day", slug);
+          const localToday = getLocalDateString();
+          if (localToday !== slug) {
+            socket?.emit("join:day", localToday);
+          }
         } else {
           socket?.emit("join:tournament", slug);
         }
@@ -343,35 +530,57 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         setSocketConnected(false);
       });
 
-      // Handle Day updates
-      socket.on("day:update", () => {
-        if (isDateSlug) {
-          fetchDaySession(slug);
-        } else if (singleTourneyData?.dayDate) {
-          fetchDaySession(singleTourneyData.dayDate);
+      // Global live stream updates (bypasses room mismatch)
+      socket.on("live:update", (data: any) => {
+        if (data?.type === "match:updated") {
+          handleMatchScoreUpdate(data);
+        } else if (data?.type === "tournament:started") {
+          handleTournamentStarted(data);
+        } else if (data?.type === "tournament:concluded" || data?.type === "final:completed") {
+          handleTournamentConcluded(data);
+        } else {
+          if (isDateSlug) fetchDaySession(slug);
+          else fetchSingleTournament(slug);
         }
       });
 
-      // Handle tournament updates
-      socket.on("tournament:update", () => {
-        if (!isDateSlug) {
-          fetchSingleTournament(slug);
+      // Room-specific day updates
+      socket.on("day:update", (data: any) => {
+        if (data?.type === "match:updated") {
+          handleMatchScoreUpdate(data);
+        } else if (data?.type === "tournament:started") {
+          handleTournamentStarted(data);
+        } else if (data?.type === "tournament:concluded" || data?.type === "final:completed") {
+          handleTournamentConcluded(data);
         } else {
-          fetchDaySession(slug);
+          if (isDateSlug) fetchDaySession(slug);
+          else fetchSingleTournament(slug);
+        }
+      });
+
+      // Tournament updates
+      socket.on("tournament:update", (data: any) => {
+        if (data?.type === "match:updated") {
+          handleMatchScoreUpdate(data);
+        } else if (data?.type === "tournament:concluded" || data?.type === "final:completed") {
+          handleTournamentConcluded(data);
+        } else {
+          if (!isDateSlug) fetchSingleTournament(slug);
+          else fetchDaySession(slug);
         }
       });
     } catch (err) {
       console.warn("Socket.io initialization error:", err);
     }
 
-    // 4s polling fallback
+    // 3s polling fallback
     const interval = setInterval(() => {
       if (isDateSlug) {
         fetchDaySession(slug);
       } else {
         fetchSingleTournament(slug);
       }
-    }, 4000);
+    }, 3000);
 
     return () => {
       clearInterval(interval);

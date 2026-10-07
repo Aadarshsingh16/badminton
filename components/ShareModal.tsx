@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { apiSync } from "@/lib/apiSync";
-import { useStore } from "@/lib/store";
+import { useStore, getLocalDateString } from "@/lib/store";
 
 interface ShareModalProps {
   open: boolean;
@@ -20,7 +20,7 @@ export function ShareModal({ open, onClose, slug, date }: ShareModalProps) {
   const [isCloudSynced, setIsCloudSynced] = useState(false);
 
   const state = useStore();
-  const effectiveDate = date || (slug && /^\d{4}-\d{2}-\d{2}$/.test(slug) ? slug : (state.dayTable.date || new Date().toISOString().slice(0, 10)));
+  const effectiveDate = date || (slug && /^\d{4}-\d{2}-\d{2}$/.test(slug) ? slug : (state.dayTable.date || getLocalDateString()));
   const tournamentSlug = slug && !/^\d{4}-\d{2}-\d{2}$/.test(slug) ? slug : (state.currentTournament?.shareSlug || state.currentTournament?.id || "");
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";

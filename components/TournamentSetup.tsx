@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { TournamentConfig, DEFAULT_CONFIG } from "@/lib/types";
+import { getLocalDateString } from "@/lib/store";
 
 interface TournamentSetupProps {
   playerCount: number;
@@ -60,7 +61,7 @@ function Stepper({
 export function TournamentSetup({ playerCount, matchCount, initialDate, onConfirm, onBack }: TournamentSetupProps) {
   const [cfg, setCfg] = useState<TournamentConfig>({ ...DEFAULT_CONFIG });
   const [sessionDate, setSessionDate] = useState<string>(
-    initialDate || new Date().toISOString().split("T")[0]
+    initialDate || getLocalDateString()
   );
 
   const update = (key: keyof TournamentConfig, value: number) =>
@@ -131,7 +132,7 @@ export function TournamentSetup({ playerCount, matchCount, initialDate, onConfir
             </span>
             <button
               type="button"
-              onClick={() => setSessionDate(new Date().toISOString().split("T")[0])}
+              onClick={() => setSessionDate(getLocalDateString())}
               className="text-[11px] text-indigo-600 font-bold hover:underline cursor-pointer"
             >
               Set to Today

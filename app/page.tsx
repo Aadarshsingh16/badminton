@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useStore, FIXED_PLAYERS } from "@/lib/store";
+import { useStore, FIXED_PLAYERS, getLocalDateString } from "@/lib/store";
 import { computeTournamentTable } from "@/lib/ranking";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarPicker } from "@/components/AvatarPicker";
@@ -421,7 +421,7 @@ export default function PlayPage() {
       <TournamentSetup
         playerCount={selectedPlayerIds.length}
         matchCount={setupMatchCount}
-        initialDate={dayTable.date || new Date().toISOString().split("T")[0]}
+        initialDate={dayTable.date || getLocalDateString()}
         onConfirm={(cfg, sessionDate) => {
           setPendingConfig(cfg);
           if (cfg.isPractice) {
@@ -1079,7 +1079,7 @@ export default function PlayPage() {
         open={showShareModal}
         onClose={() => setShowShareModal(false)}
         slug={currentTournament?.shareSlug ?? currentTournament?.id}
-        date={dayTable.date || new Date().toISOString().slice(0, 10)}
+        date={dayTable.date || getLocalDateString()}
       />
       <PinModal
         open={showPinModal}
