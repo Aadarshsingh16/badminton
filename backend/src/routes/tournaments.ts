@@ -8,7 +8,7 @@ import { pointsForMatch, pointsForFinal, TournamentConfig, DEFAULT_CONFIG } from
 export const tournamentsRouter = Router();
 
 // Helper to compute tournament standings table
-function computeTable(matches: any[], playerIds: string[], config: TournamentConfig = DEFAULT_CONFIG) {
+export function computeTable(matches: any[], playerIds: string[], config: TournamentConfig = DEFAULT_CONFIG) {
   const stats: { [id: string]: { points: number; wins: number; matchesPlayed: number; pointDiff: number } } = {};
   const N = playerIds.length;
 

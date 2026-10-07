@@ -50,9 +50,14 @@ io.on("connection", (socket) => {
     console.log(`📡 Socket ${socket.id} joined tournament room: ${slug}`);
   });
 
-  socket.on("leave:tournament", (slug: string) => {
-    socket.leave(`tournament:${slug}`);
-    console.log(`📡 Socket ${socket.id} left tournament room: ${slug}`);
+  socket.on("join:day", (date: string) => {
+    socket.join(`day:${date}`);
+    console.log(`📡 Socket ${socket.id} joined day room: ${date}`);
+  });
+
+  socket.on("leave:day", (date: string) => {
+    socket.leave(`day:${date}`);
+    console.log(`📡 Socket ${socket.id} left day room: ${date}`);
   });
 
   socket.on("disconnect", () => {
