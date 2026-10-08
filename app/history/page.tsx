@@ -143,10 +143,14 @@ export default function HistoryPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
 
+  const [isMounted, setIsMounted] = useState(false);
+
   const [isViewer, setIsViewer] = useState(false);
   const [viewerSlug, setViewerSlugState] = useState<string | null>(null);
 
   useEffect(() => {
+    setIsMounted(true);
+
     setIsViewer(isViewerMode() && !currentTournament);
     setViewerSlugState(getViewerSlug());
   }, [currentTournament]);
@@ -881,6 +885,8 @@ export default function HistoryPage() {
     (playerFilter !== "all" ? 1 : 0) +
     (patternFilter !== "all" ? 1 : 0);
 
+  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
+
   return (
     <div className="min-h-full flex flex-col px-4 pt-4 pb-20">
       {/* Spectator Mode Banner */}
@@ -1146,6 +1152,8 @@ export default function HistoryPage() {
                     const isExpanded = expandedTournaments[tourney.tournamentId] ?? true;
                     const hasFinal = tourney.matches.some((m) => m.isFinal);
 
+  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
+
                     return (
                       <div
                         key={tourney.tournamentId}
@@ -1219,6 +1227,8 @@ export default function HistoryPage() {
                               const bWon = m.scoreB > m.scoreA;
                               const diff = Math.abs(m.scoreA - m.scoreB);
                               const isBlowout = diff >= 4;
+
+  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
 
                               return (
                                 <div
@@ -1416,6 +1426,8 @@ export default function HistoryPage() {
                     const isTop1 = index === 0;
                     const isTop2 = index === 1;
                     const isTop3 = index === 2;
+
+  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
 
                     return (
                       <div
@@ -1911,6 +1923,8 @@ export default function HistoryPage() {
                 <div className="grid grid-cols-4 gap-1.5">
                   {rangeOptions.map((opt) => {
                     const selected = rangeFilter === opt.value;
+  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
+
                     return (
                       <button
                         key={opt.value}
@@ -1948,6 +1962,8 @@ export default function HistoryPage() {
                   </button>
                   {players.map((p) => {
                     const selected = playerFilter === p.id;
+  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
+
                     return (
                       <button
                         key={p.id}
@@ -1975,6 +1991,8 @@ export default function HistoryPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {patternOptions.map((opt) => {
                     const selected = patternFilter === opt.value;
+  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
+
                     return (
                       <button
                         key={opt.value}
