@@ -1596,13 +1596,13 @@ export default function HistoryPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-2 h-full overflow-y-auto no-scrollbar pb-1">
                     {/* Shutout King */}
-                    {advancedInsights.statLeaders.shutoutKing?.shutoutWins > 0 && (
+                    {(advancedInsights.statLeaders.shutoutKing?.shutoutWins ?? 0) > 0 && (
                       <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
                         <span className="text-[9px] font-bold text-slate-400 uppercase">Shutout King</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.shutoutKing.name}</span>
-                             <span className="text-[10px] font-bold text-blue-500">{advancedInsights.statLeaders.shutoutKing.shutoutWins} shutouts</span>
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.shutoutKing?.name}</span>
+                             <span className="text-[10px] font-bold text-blue-500">{advancedInsights.statLeaders.shutoutKing?.shutoutWins} shutouts</span>
                            </div>
                            <span className="text-lg opacity-80">🛡️</span>
                         </div>
@@ -1610,13 +1610,13 @@ export default function HistoryPage() {
                     )}
                     
                     {/* Biggest Margin */}
-                    {advancedInsights.statLeaders.highestMargin?.highestWinMargin > 0 && (
+                    {(advancedInsights.statLeaders.highestMargin?.highestWinMargin ?? 0) > 0 && (
                       <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
                         <span className="text-[9px] font-bold text-slate-400 uppercase">Biggest Win</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.highestMargin.name}</span>
-                             <span className="text-[10px] font-bold text-emerald-500">+{advancedInsights.statLeaders.highestMargin.highestWinMargin} margin</span>
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.highestMargin?.name}</span>
+                             <span className="text-[10px] font-bold text-emerald-500">+{advancedInsights.statLeaders.highestMargin?.highestWinMargin} margin</span>
                            </div>
                            <span className="text-lg opacity-80">🚀</span>
                         </div>
@@ -1624,13 +1624,13 @@ export default function HistoryPage() {
                     )}
 
                     {/* Finals Specialist */}
-                    {advancedInsights.statLeaders.finalsSpecialist?.finalsWon > 0 && (
+                    {(advancedInsights.statLeaders.finalsSpecialist?.finalsWon ?? 0) > 0 && (
                       <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
                         <span className="text-[9px] font-bold text-slate-400 uppercase">Finals Clutch</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsSpecialist.name}</span>
-                             <span className="text-[10px] font-bold text-amber-500">{advancedInsights.statLeaders.finalsSpecialist.finalsWon} titles</span>
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsSpecialist?.name}</span>
+                             <span className="text-[10px] font-bold text-amber-500">{advancedInsights.statLeaders.finalsSpecialist?.finalsWon} titles</span>
                            </div>
                            <span className="text-lg opacity-80">🏆</span>
                         </div>
@@ -1643,8 +1643,8 @@ export default function HistoryPage() {
                         <span className="text-[9px] font-bold text-slate-400 uppercase">Iron Man</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.ironMan.name}</span>
-                             <span className="text-[10px] font-bold text-indigo-500">{advancedInsights.statLeaders.ironMan.leagueMatchesPlayed + advancedInsights.statLeaders.ironMan.finalsPlayed} played</span>
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.ironMan?.name}</span>
+                             <span className="text-[10px] font-bold text-indigo-500">{(advancedInsights.statLeaders.ironMan?.leagueMatchesPlayed ?? 0) + (advancedInsights.statLeaders.ironMan?.finalsPlayed ?? 0)} played</span>
                            </div>
                            <span className="text-lg opacity-80">🔋</span>
                         </div>
