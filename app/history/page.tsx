@@ -884,8 +884,9 @@ export default function HistoryPage() {
     (rangeFilter !== "all" ? 1 : 0) +
     (playerFilter !== "all" ? 1 : 0) +
     (patternFilter !== "all" ? 1 : 0);
-
-  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
+  if (!isMounted) {
+    return <div className="min-h-full bg-[#f8fafc]"></div>;
+  }
 
   return (
     <div className="min-h-full flex flex-col px-4 pt-4 pb-20">
@@ -1152,7 +1153,6 @@ export default function HistoryPage() {
                     const isExpanded = expandedTournaments[tourney.tournamentId] ?? true;
                     const hasFinal = tourney.matches.some((m) => m.isFinal);
 
-  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
 
                     return (
                       <div
@@ -1228,7 +1228,6 @@ export default function HistoryPage() {
                               const diff = Math.abs(m.scoreA - m.scoreB);
                               const isBlowout = diff >= 4;
 
-  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
 
                               return (
                                 <div
@@ -1427,7 +1426,6 @@ export default function HistoryPage() {
                     const isTop2 = index === 1;
                     const isTop3 = index === 2;
 
-  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
 
                     return (
                       <div
@@ -1923,7 +1921,6 @@ export default function HistoryPage() {
                 <div className="grid grid-cols-4 gap-1.5">
                   {rangeOptions.map((opt) => {
                     const selected = rangeFilter === opt.value;
-  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
 
                     return (
                       <button
@@ -1962,7 +1959,6 @@ export default function HistoryPage() {
                   </button>
                   {players.map((p) => {
                     const selected = playerFilter === p.id;
-  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
 
                     return (
                       <button
@@ -1991,7 +1987,6 @@ export default function HistoryPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {patternOptions.map((opt) => {
                     const selected = patternFilter === opt.value;
-  if (!isMounted) return <div className="min-h-full bg-[#f8fafc]"></div>;
 
                     return (
                       <button
