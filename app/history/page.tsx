@@ -798,12 +798,12 @@ export default function HistoryPage() {
     }).filter(d => d.count >= 2).sort((a, b) => b["Avg Diff"] - a["Avg Diff"]);
     
     // Calculate Stat Leaders
-    const statLeaders = {
+    const statLeaders = displayedLeaderboard.length > 0 ? {
       shutoutKing: displayedLeaderboard.reduce((prev, current) => (prev.shutoutWins > current.shutoutWins) ? prev : current, displayedLeaderboard[0]),
       highestMargin: displayedLeaderboard.reduce((prev, current) => (prev.highestWinMargin > current.highestWinMargin) ? prev : current, displayedLeaderboard[0]),
       ironMan: displayedLeaderboard.reduce((prev, current) => ((prev.leagueMatchesPlayed + prev.finalsPlayed) > (current.leagueMatchesPlayed + current.finalsPlayed)) ? prev : current, displayedLeaderboard[0]),
       finalsSpecialist: displayedLeaderboard.reduce((prev, current) => (prev.finalsWon > current.finalsWon) ? prev : current, displayedLeaderboard[0]),
-    };
+    } : { shutoutKing: null, highestMargin: null, ironMan: null, finalsSpecialist: null };
 
     return {
       formMap,
