@@ -777,18 +777,21 @@ export const useStore = create<AppState>()(
         set({ phase: "player-select", currentTournament: null });
       },
 
-      startNewDay: () => {
+      startNewDay: (overrideTotals?: Record<string, number>, overrideTournaments?: string[]) => {
         const { dayTable, completedDays } = get();
         const newCompletedDays = [...completedDays];
 
-        if (dayTable.tournaments.length > 0 || Object.keys(dayTable.totals).length > 0) {
-          const sorted = Object.entries(dayTable.totals).sort(([, a], [, b]) => b - a);
+        const finalTotals = overrideTotals ?? dayTable.totals;
+        const finalTournaments = overrideTournaments ?? dayTable.tournaments;
+
+        if (finalTournaments.length > 0 || Object.keys(finalTotals).length > 0) {
+          const sorted = Object.entries(finalTotals).sort(([, a], [, b]) => b - a);
           const newSummary: CompletedDaySummary = {
             date: dayTable.date,
-            totals: { ...dayTable.totals },
+            totals: { ...finalTotals },
             topPlayerId: sorted[0]?.[0],
             spoonPlayerId: sorted.length > 1 ? sorted[sorted.length - 1]?.[0] : undefined,
-            tournamentIds: [...dayTable.tournaments],
+            tournamentIds: [...finalTournaments],
           };
           newCompletedDays.push(newSummary);
           try {

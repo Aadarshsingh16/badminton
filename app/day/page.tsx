@@ -158,7 +158,7 @@ export default function DayPage() {
 
     setShowConfetti(true);
     setShowFinishDayModal(false);
-    startNewDay();
+    startNewDay(effectiveTotals, effectiveTournaments.map(t => t.id));
   };
 
   const handleResetDay = async () => {
