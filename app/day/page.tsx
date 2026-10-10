@@ -148,10 +148,12 @@ export default function DayPage() {
       return;
     }
 
+    const effectiveTotals = Object.fromEntries(sortedPlayers.map(p => [p.id, p.pts]));
+
     // Close day table on backend and crown champions
     apiSync.enqueue("/day-tables/close", "POST", {
       date: dayTable.date,
-      totals: dayTable.totals,
+      totals: effectiveTotals,
     });
 
     setShowConfetti(true);

@@ -221,6 +221,9 @@ dayTablesRouter.post("/close", requireScorekeeper, async (req, res) => {
       const topPlayerId = entries[0][0];
       const bottomPlayerId = entries[entries.length - 1][0];
 
+      // Delete existing day_results for this date to prevent duplicates
+      await pool.query(`DELETE FROM day_results WHERE date = $1`, [date]);
+
       // Insert or update day_results
       await pool.query(
         `INSERT INTO day_results (day_table_id, date, top_player_id, bottom_player_id)
