@@ -80,6 +80,13 @@ export function SyncStatusBadge() {
                     if (st.currentTournament && !st.currentTournament.isPractice) {
                       apiSync.syncTournamentDirectly(st.currentTournament, st.players);
                     }
+                    if (st.pastTournaments && st.pastTournaments.length > 0) {
+                      for (const t of st.pastTournaments) {
+                        if (!t.isPractice) {
+                          apiSync.syncTournamentDirectly(t, st.players);
+                        }
+                      }
+                    }
                     apiSync.forceSyncAll();
                     setShowMenu(false);
                   }}

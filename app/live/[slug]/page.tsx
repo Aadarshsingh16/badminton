@@ -385,31 +385,8 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         setLastUpdated(new Date().toLocaleTimeString());
         hasLoadedInitialData.current = true;
       } else {
-        // Fallback to local store
-        if (hasLoadedInitialData.current) return;
-        
-        const state = useStore.getState();
-        const found =
-          (state.currentTournament?.shareSlug === tourneySlug || state.currentTournament?.id === tourneySlug)
-            ? state.currentTournament
-            : state.pastTournaments.find((t) => t.shareSlug === tourneySlug || t.id === tourneySlug);
-
-        if (found) {
-          const standings = computeTournamentTable(found);
-          setSingleTourneyData({
-            tournament: found,
-            matches: [...found.matches, ...(found.final ? [found.final] : [])],
-            players: state.players,
-            standings,
-            dayDate: state.dayTable.date,
-          });
-          setIsWaiting(false);
-          setLoading(false);
-          setLastUpdated(new Date().toLocaleTimeString());
-        } else {
-          setIsWaiting(true);
-          setLoading(false);
-        }
+        setIsWaiting(true);
+        setLoading(false);
       }
     } catch {
       setIsWaiting(true);
@@ -477,6 +454,11 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
 
       setSingleTourneyData((prev) => {
         if (!prev) return prev;
+        
+        // Prevent matches from OTHER tournaments from polluting this single tournament view
+        if (rawM.tournamentId && rawM.tournamentId !== prev.tournament.id) return prev;
+        if (rawM.tournament_id && rawM.tournament_id !== prev.tournament.id) return prev;
+
         let updatedMatches = [...prev.matches];
         const idx = updatedMatches.findIndex((m) => m.id === updatedM.id);
         if (idx !== -1) {

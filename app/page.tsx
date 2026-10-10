@@ -60,6 +60,7 @@ export default function PlayPage() {
   const [showShuffleConfirm, setShowShuffleConfirm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinIsInvalid, setPinIsInvalid] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [isFinalSheetOpen, setIsFinalSheetOpen] = useState(true);
@@ -67,9 +68,13 @@ export default function PlayPage() {
 
   // Listen for unauthorized 401s from backend sync
   React.useEffect(() => {
+    setIsAuthenticated(apiSync.hasPin());
+    if (!apiSync.hasPin()) setShowPinModal(true);
+
     return apiSync.onUnauthorized(() => {
       setPinIsInvalid(true);
       setShowPinModal(true);
+      setIsAuthenticated(false);
     });
   }, []);
 
@@ -143,6 +148,39 @@ export default function PlayPage() {
   };
 
   const renderPhaseContent = () => {
+    if (!isAuthenticated) {
+      return (
+        <div className="min-h-full flex flex-col px-4 pt-4 pb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-xl select-none">
+                🏸
+              </div>
+              <div>
+                <h1 className="text-slate-900 font-extrabold text-base leading-tight">Badminton Club</h1>
+                <p className="text-slate-400 text-xs font-medium">Admin Dashboard</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-4 mt-20">
+            <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center text-4xl mb-6 shadow-sm border border-slate-200">
+              🔒
+            </div>
+            <h2 className="text-xl font-black text-slate-900 mb-2">Admin Access Required</h2>
+            <p className="text-sm text-slate-500 max-w-[260px] mb-8">
+              You must enter the Scorekeeper PIN to manage tournaments. Otherwise, you can still view live matches or history.
+            </p>
+            <button
+              onClick={() => setShowPinModal(true)}
+              className="bg-slate-950 text-white px-8 py-3.5 rounded-full font-bold text-sm shadow-lg hover:bg-black active:scale-95 transition-all"
+            >
+              Enter PIN to Unlock
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     // ——— Player Select Screen ———
     if (phase === "player-select") {
       const canStart = selectedPlayerIds.length >= 3;
@@ -1087,8 +1125,10 @@ export default function PlayPage() {
         onClose={() => {
           setShowPinModal(false);
           setPendingAction(null);
+          if (apiSync.hasPin()) setIsAuthenticated(true);
         }}
         onSuccess={() => {
+          setIsAuthenticated(true);
           if (pendingAction) {
             const act = pendingAction;
             setPendingAction(null);
