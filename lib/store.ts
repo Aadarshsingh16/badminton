@@ -765,6 +765,8 @@ export const useStore = create<AppState>()(
 
         if (!skipSync) {
           apiSync.enqueue(`/tournaments/${id}`, "DELETE", {});
+          // Also fire an immediate DELETE so it's not lost if queue is cleared
+          apiSync.deleteTournamentFromBackend(id);
           if (updatedDayTournaments.length === 0) {
             apiSync.enqueue(`/day-tables/${dayTable.date || today()}`, "DELETE", {});
           }

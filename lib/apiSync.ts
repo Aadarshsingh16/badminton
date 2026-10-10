@@ -170,6 +170,79 @@ class ApiSyncService {
   }
 
   /**
+   * Deeply recovers ALL tournaments from every localStorage source,
+   * ignoring deletion tombstones. Used for emergency "Restore & Sync All".
+   * Returns a deduplicated array of tournaments found in local storage.
+   */
+  public recoverAllTournamentsFromStorage(): any[] {
+    if (typeof window === "undefined") return [];
+    const tournamentsMap: { [id: string]: any } = {};
+
+    // 1. Read from permanent local archive
+    try {
+      const rawArchive = localStorage.getItem("badminton_archived_tournaments_v1");
+      if (rawArchive) {
+        const archived = JSON.parse(rawArchive);
+        if (Array.isArray(archived)) {
+          for (const t of archived) {
+            if (t && t.id) tournamentsMap[t.id] = t;
+          }
+        }
+      }
+    } catch {}
+
+    // 2. Read from zustand persisted store (the main app state)
+    const storeKeys = ["badminton-app-state-v2", "badminton-store"];
+    for (const storeKey of storeKeys) {
+      try {
+        const rawStore = localStorage.getItem(storeKey);
+        if (rawStore) {
+          const parsed = JSON.parse(rawStore);
+          const storeState = parsed?.state || parsed;
+          if (storeState?.pastTournaments && Array.isArray(storeState.pastTournaments)) {
+            for (const t of storeState.pastTournaments) {
+              if (t && t.id) tournamentsMap[t.id] = t;
+            }
+          }
+          if (storeState?.currentTournament && storeState.currentTournament.id) {
+            tournamentsMap[storeState.currentTournament.id] = storeState.currentTournament;
+          }
+        }
+      } catch {}
+    }
+
+    // 3. Reconstruct from sync queue
+    try {
+      const rawQueue = localStorage.getItem("badminton_sync_queue_v1");
+      if (rawQueue) {
+        const queue = JSON.parse(rawQueue);
+        if (Array.isArray(queue)) {
+          for (const item of queue) {
+            if (item.method === "POST" && item.url.includes("/tournaments") && item.body) {
+              const b = item.body;
+              if (b.id && !tournamentsMap[b.id]) {
+                tournamentsMap[b.id] = {
+                  id: b.id,
+                  createdAt: Date.now(),
+                  playerIds: b.playerIds || [],
+                  matches: b.matches || [],
+                  byes: [],
+                  closed: true,
+                  shareSlug: b.shareSlug || "shared",
+                  config: b.config || {},
+                  date: b.date,
+                };
+              }
+            }
+          }
+        }
+      }
+    } catch {}
+
+    return Object.values(tournamentsMap).filter(t => !t.isPractice);
+  }
+
+  /**
    * Purge all queued mutation requests for a specific tournament
    * so deleted tournaments are never retried or resurrected.
    */
@@ -179,6 +252,22 @@ class ApiSyncService {
         !(item.url === "/tournaments" && item.body && item.body.id === tournamentId)
     );
     this.saveQueue();
+  }
+
+  /**
+   * Immediately fires a DELETE request to the backend for a tournament.
+   * This is fire-and-forget — the queued DELETE is a backup.
+   */
+  public deleteTournamentFromBackend(tournamentId: string) {
+    const backendUrl = this.getBackendUrl();
+    const pin = this.getPin();
+    fetch(`${backendUrl}/tournaments/${tournamentId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "x-scorekeeper-pin": pin,
+      },
+    }).catch(() => {});
   }
 
   /**
