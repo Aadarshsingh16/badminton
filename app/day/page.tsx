@@ -110,6 +110,15 @@ export default function DayPage() {
 
   // Sort players by cumulative day points (derive directly from completed tournaments or cloud day totals)
   const sortedPlayers = useMemo(() => {
+    // 1. Backend is the true source of truth. If we have cloud totals, use them directly.
+    const backendTotals = cloudDayData?.totals || {};
+    if (Object.keys(backendTotals).length > 0) {
+      return Object.entries(backendTotals)
+        .sort(([, a], [, b]) => (b as number) - (a as number))
+        .map(([id, pts], idx) => ({ id, pts: pts as number, rank: idx + 1 }));
+    }
+
+    // 2. Fallback to local recalculation (e.g. offline mode or before first sync)
     if (effectiveTournaments.length > 0) {
       const computedTotals: { [playerId: string]: number } = {};
       for (const t of effectiveTournaments) {
@@ -125,12 +134,9 @@ export default function DayPage() {
         .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
     }
 
-    const effectiveTotals = Object.keys(cloudDayData?.totals || {}).length > 0
-      ? (cloudDayData?.totals || {})
-      : dayTable.totals;
-
-    if (Object.keys(effectiveTotals).length > 0) {
-      return Object.entries(effectiveTotals)
+    // 3. Absolute fallback to persisted day table state
+    if (Object.keys(dayTable.totals).length > 0) {
+      return Object.entries(dayTable.totals)
         .sort(([, a], [, b]) => b - a)
         .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
     }

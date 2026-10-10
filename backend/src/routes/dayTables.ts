@@ -110,16 +110,14 @@ dayTablesRouter.get("/:date", async (req, res) => {
       });
     }
 
-    // Merge day totals
-    let mergedTotals: Record<string, number> = { ...(extraDayTotals || {}), ...(day.totals || {}) };
+    // Always recalculate day totals from live tournament standings to ensure backend is the true source of truth
+    const calcTotals: Record<string, number> = {};
+    let hasCompletedTournaments = false;
 
-    // Self-healing fallback: If mergedTotals has no points but tournaments have completed,
-    // recalculate totals directly from completed tournament standings!
-    const hasPoints = Object.values(mergedTotals).some((pts) => (pts as number) > 0);
-    if (!hasPoints && tournamentsData.length > 0) {
-      const calcTotals: Record<string, number> = {};
+    if (tournamentsData.length > 0) {
       for (const t of tournamentsData) {
         if (t.status === "completed" && Array.isArray(t.standings)) {
+          hasCompletedTournaments = true;
           for (const row of t.standings) {
             if (row.playerId) {
               calcTotals[row.playerId] = (calcTotals[row.playerId] || 0) + (row.dayPoints || 0);
@@ -127,12 +125,21 @@ dayTablesRouter.get("/:date", async (req, res) => {
           }
         }
       }
-      if (Object.values(calcTotals).some((pts) => pts > 0)) {
-        mergedTotals = calcTotals;
+    }
+
+    // Merge calculated totals (if any tournaments are completed) or fallback to saved totals
+    let mergedTotals: Record<string, number> = hasCompletedTournaments
+      ? calcTotals
+      : { ...(extraDayTotals || {}), ...(day.totals || {}) };
+
+    // Self-healing: if the database totals are stale compared to our true live calculated totals, update the database
+    if (hasCompletedTournaments) {
+      const isDifferent = JSON.stringify(mergedTotals) !== JSON.stringify(day.totals || {});
+      if (isDifferent) {
         if (day.id) {
-          pool.query(`UPDATE day_tables SET totals = $1 WHERE id = $2`, [JSON.stringify(calcTotals), day.id]).catch(() => {});
+          pool.query(`UPDATE day_tables SET totals = $1 WHERE id = $2`, [JSON.stringify(mergedTotals), day.id]).catch(() => {});
         } else if (targetDate) {
-          pool.query(`UPDATE day_tables SET totals = $1 WHERE date::text = $2`, [JSON.stringify(calcTotals), targetDate]).catch(() => {});
+          pool.query(`UPDATE day_tables SET totals = $1 WHERE date::text = $2`, [JSON.stringify(mergedTotals), targetDate]).catch(() => {});
         }
       }
     }
