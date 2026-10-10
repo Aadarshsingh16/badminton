@@ -41,6 +41,13 @@ app.get("/health", async (_req, res) => {
   });
 });
 
+import { requireScorekeeper } from "./middleware/auth";
+
+// ── Auth verification ────────────────────────────────────────────────────────
+app.post("/auth/verify", requireScorekeeper, (_req, res) => {
+  res.json({ ok: true });
+});
+
 // ── Socket.io room subscriptions ─────────────────────────────────────────────
 io.on("connection", (socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);

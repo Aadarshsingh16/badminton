@@ -95,7 +95,7 @@ class ApiSyncService {
       const stored = localStorage.getItem("scorekeeper_pin");
       if (stored && stored.trim()) return stored.trim();
     }
-    return "badminton2024";
+    return "";
   }
 
   public setPin(pin: string) {

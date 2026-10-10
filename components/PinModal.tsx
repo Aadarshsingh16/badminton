@@ -23,7 +23,9 @@ export function PinModal({ open, onClose, onSuccess, isInvalid = false }: PinMod
     }
   }, [open, isInvalid]);
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const trimmed = pin.trim();
     if (!trimmed) {
@@ -31,10 +33,32 @@ export function PinModal({ open, onClose, onSuccess, isInvalid = false }: PinMod
       return;
     }
 
-    apiSync.setPin(trimmed);
+    setIsVerifying(true);
     setError("");
-    onClose();
-    if (onSuccess) onSuccess();
+
+    try {
+      const res = await fetch(`${apiSync.getBackendUrl()}/auth/verify`, {
+        method: "POST",
+        headers: { "x-scorekeeper-pin": trimmed },
+      });
+
+      if (res.ok) {
+        apiSync.setPin(trimmed);
+        setError("");
+        onClose();
+        if (onSuccess) onSuccess();
+      } else {
+        setError("Invalid PIN. Access denied.");
+      }
+    } catch (err) {
+      // If backend is offline, we fallback to accepting it locally. It will fail on sync if wrong anyway.
+      apiSync.setPin(trimmed);
+      setError("");
+      onClose();
+      if (onSuccess) onSuccess();
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   return (
@@ -97,9 +121,17 @@ export function PinModal({ open, onClose, onSuccess, isInvalid = false }: PinMod
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 rounded-full bg-slate-950 hover:bg-black text-white text-xs font-extrabold shadow-md active:scale-95 transition-all"
+                  disabled={isVerifying}
+                  className="flex-1 py-3 rounded-full bg-slate-950 hover:bg-black disabled:bg-slate-500 text-white text-xs font-extrabold shadow-md active:scale-95 transition-all flex justify-center items-center gap-2"
                 >
-                  Save PIN
+                  {isVerifying ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Verifying...</span>
+                    </>
+                  ) : (
+                    "Save PIN"
+                  )}
                 </button>
               </div>
             </form>
