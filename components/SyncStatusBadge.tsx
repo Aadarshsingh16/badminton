@@ -75,15 +75,15 @@ export function SyncStatusBadge() {
 
               <div className="space-y-2 pt-1">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const st = useStore.getState();
                     if (st.currentTournament && !st.currentTournament.isPractice) {
-                      apiSync.syncTournamentDirectly(st.currentTournament, st.players);
+                      await apiSync.syncTournamentDirectly(st.currentTournament, st.players);
                     }
                     if (st.pastTournaments && st.pastTournaments.length > 0) {
                       for (const t of st.pastTournaments) {
                         if (!t.isPractice) {
-                          apiSync.syncTournamentDirectly(t, st.players);
+                          await apiSync.syncTournamentDirectly(t, st.players);
                         }
                       }
                     }

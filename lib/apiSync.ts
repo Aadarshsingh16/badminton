@@ -130,13 +130,14 @@ class ApiSyncService {
     try {
       // 1. Ensure players exist on backend
       if (Array.isArray(players) && players.length > 0) {
-        for (const p of players) {
+        const playerPromises = players.map(p => 
           fetch(`${backendUrl}/players`, {
             method: "POST",
             headers,
             body: JSON.stringify(p),
-          }).catch(() => {});
-        }
+          }).catch(() => {})
+        );
+        await Promise.all(playerPromises);
       }
 
       // 2. Upsert tournament, matches, and final if present
