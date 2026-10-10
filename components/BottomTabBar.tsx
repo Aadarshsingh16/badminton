@@ -10,7 +10,7 @@ import { getViewerSlug, isViewerMode } from "@/lib/viewerMode";
 
 export function BottomTabBar() {
   const pathname = usePathname();
-  const { dayTable, currentTournament, phase, isScoreSheetOpen } = useStore();
+  const { dayTable, currentTournament, phase, isScoreSheetOpen, appRole } = useStore();
 
   // Scroll detection state
   const [isScrolledDown, setIsScrolledDown] = useState(false);
@@ -41,6 +41,7 @@ export function BottomTabBar() {
     {
       href: "/",
       label: "Play",
+      adminOnly: true,
       badge: phase === "final" ? (
         <span className="absolute -top-1.5 -right-2 text-[10px]">🏆</span>
       ) : remainingMatches !== null && remainingMatches > 0 ? (
@@ -192,8 +193,8 @@ export function BottomTabBar() {
         aria-label="Bottom Navigation"
         className="w-full pointer-events-auto bg-white/88 backdrop-blur-2xl border border-white/80 shadow-[0_12px_32px_-6px_rgba(15,23,42,0.12),0_0_0_1px_rgba(15,23,42,0.05)] rounded-full p-1.5 flex items-center justify-between gap-1"
       >
-        {tabs.map((tab, idx) => {
-          const isFirstTab = idx === 0;
+        {tabs.filter(t => !(t.adminOnly && appRole === 'viewer')).map((tab, idx) => {
+          const isFirstTab = tab.href === "/";
           const isActive = isFirstTab
             ? pathname === "/"
             : pathname.startsWith(tab.href);

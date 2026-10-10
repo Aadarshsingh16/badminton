@@ -17,6 +17,8 @@ import { pointsForMatch, pointsForFinal } from "./scoring";
 import { computeDayPoints, isRoundRobinComplete, getFinalists } from "./ranking";
 import { apiSync } from "./apiSync";
 
+export type AppRole = 'admin' | 'viewer' | null;
+
 // Fixed players (the 6 friends)
 export const FIXED_PLAYERS: Player[] = [
   { id: "adarsh", name: "Adarsh", avatar: "clumsy" },
@@ -28,6 +30,12 @@ export const FIXED_PLAYERS: Player[] = [
 ];
 
 interface AppState {
+  // Session
+  appRole: AppRole;
+  appDate: string | null;
+  setAppSession: (role: AppRole, date: string) => void;
+  clearAppSession: () => void;
+
   // Players
   players: Player[];
   selectedPlayerIds: string[];
@@ -57,7 +65,7 @@ interface AppState {
   goToSetup: () => void;
   setPendingConfig: (config: TournamentConfig) => void;
 
-  startTournament: (sessionDate?: string) => void;
+  startTournament: () => void;
   shuffleFixtures: () => void;
   cancelTournament: () => void;
   confirmMatchScore: (matchId: string, scoreA: number, scoreB: number) => void;
@@ -332,6 +340,20 @@ export function recoverCompletedDaysFromSyncQueue(): CompletedDaySummary[] {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
+      appRole: null,
+      appDate: null,
+      setAppSession: (role, date) => {
+        set((s) => ({
+          appRole: role,
+          appDate: date,
+          dayTable: {
+            ...s.dayTable,
+            date: date,
+          },
+        }));
+      },
+      clearAppSession: () => set({ appRole: null, appDate: null }),
+
       players: FIXED_PLAYERS,
       selectedPlayerIds: [],
       currentTournament: null,
@@ -374,8 +396,9 @@ export const useStore = create<AppState>()(
         set({ phase: "setup" });
       },
 
-      setPendingConfig: (config) => set({ pendingConfig: config }),      startTournament: (sessionDate?: string) => {
-        const { selectedPlayerIds, pendingConfig, dayTable } = get();
+      setPendingConfig: (config) => set({ pendingConfig: config }),
+      startTournament: () => {
+        const { selectedPlayerIds, pendingConfig, dayTable, appDate } = get();
         if (selectedPlayerIds.length < 2) return;
 
         const isPractice = !!pendingConfig.isPractice;
@@ -387,7 +410,7 @@ export const useStore = create<AppState>()(
           [randomized[i], randomized[j]] = [randomized[j], randomized[i]];
         }
 
-        const effectiveDate = sessionDate || dayTable.date || today();
+        const effectiveDate = appDate || dayTable.date || today();
         const { matches, byes } = generateRoundRobin(randomized);
         const tournament: Tournament = {
           id: generateId(),

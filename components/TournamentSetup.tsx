@@ -9,8 +9,7 @@ import { getLocalDateString } from "@/lib/store";
 interface TournamentSetupProps {
   playerCount: number;
   matchCount: number;          // how many round-robin matches will be generated
-  initialDate?: string;
-  onConfirm: (config: TournamentConfig, sessionDate: string) => void;
+  onConfirm: (config: TournamentConfig) => void;
   onBack: () => void;
 }
 
@@ -58,11 +57,8 @@ function Stepper({
   );
 }
 
-export function TournamentSetup({ playerCount, matchCount, initialDate, onConfirm, onBack }: TournamentSetupProps) {
+export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: TournamentSetupProps) {
   const [cfg, setCfg] = useState<TournamentConfig>({ ...DEFAULT_CONFIG });
-  const [sessionDate, setSessionDate] = useState<string>(
-    initialDate || getLocalDateString()
-  );
 
   const update = (key: keyof TournamentConfig, value: number) =>
     setCfg((c) => ({ ...c, [key]: value }));
@@ -119,37 +115,7 @@ export function TournamentSetup({ playerCount, matchCount, initialDate, onConfir
           </p>
         </div>
 
-        {/* Session Date Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-2.5"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/80 inline-flex items-center gap-1">
-              <span>📅</span>
-              <span>Session Date</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setSessionDate(getLocalDateString())}
-              className="text-[11px] text-indigo-600 font-bold hover:underline cursor-pointer"
-            >
-              Set to Today
-            </button>
-          </div>
-          <div className="flex items-center gap-3">
-            <input
-              type="date"
-              value={sessionDate}
-              onChange={(e) => setSessionDate(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            />
-          </div>
-          <p className="text-[11px] text-slate-500 font-medium">
-            This tournament will be linked to the <strong>{sessionDate}</strong> Day Table.
-          </p>
-        </motion.div>
+
 
         {/* Round-robin rules card */}
         <motion.div
@@ -386,7 +352,7 @@ export function TournamentSetup({ playerCount, matchCount, initialDate, onConfir
       {/* Sticky Bottom CTA Bar */}
       <div className="sticky bottom-0 p-5 bg-gradient-to-t from-[#F7F9FD] via-[#F7F9FD]/95 to-transparent pt-3 z-30">
         <motion.button
-          onClick={() => onConfirm(cfg, sessionDate)}
+          onClick={() => onConfirm(cfg)}
           whileTap={{ scale: 0.98 }}
           className={`w-full py-4 rounded-full font-black text-white text-base shadow-lg transition-all flex items-center justify-center gap-2 ${
             cfg.isPractice

@@ -23,6 +23,8 @@ export const viewport: Viewport = {
   themeColor: "#F7F9FD",
 };
 
+import { SessionGate } from "@/components/SessionGate";
+
 export default function RootLayout({
   children,
 }: {
@@ -39,13 +41,15 @@ export default function RootLayout({
             <div className="absolute top-1/3 -right-16 w-64 h-64 bg-purple-300/15 rounded-full blur-3xl" />
           </div>
 
-          {/* Scrollable content area above the tab bar */}
-          <main className="flex-1 overflow-y-auto pb-24 relative">
-            {children}
-          </main>
+          <SessionGate>
+            {/* Scrollable content area above the tab bar */}
+            <main className="flex-1 overflow-y-auto pb-24 relative">
+              {children}
+            </main>
 
-          {/* Bottom tab bar */}
-          <BottomTabBar />
+            {/* Bottom tab bar */}
+            <BottomTabBar />
+          </SessionGate>
         </div>
       </body>
     </html>
