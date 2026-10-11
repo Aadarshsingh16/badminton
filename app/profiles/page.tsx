@@ -730,7 +730,10 @@ export default function ProfilesPage() {
     matchesPlayed: 0,
     wins: 0,
     losses: 0,
+    dayWins: 0,
     tournamentsWon: 0,
+    finalsPlayed: 0,
+    finalsLost: 0,
     woodenSpoons: 0,
     dayPointsTotal: 0,
     leaguePoints: 0,
@@ -829,10 +832,9 @@ export default function ProfilesPage() {
       {/* Interactive Avatar Carousel / Player Picker */}
       <div className="px-5 pt-4 pb-2">
         <div className="flex items-center justify-between mb-2.5 px-0.5">
-          <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-            Select Athlete
-          </p>
-          <span className="text-[11px] font-bold text-slate-400">6 of 6 Active</span>
+          <p className="text-[11px] font-black           <span className="text-[11px] font-bold text-slate-400">
+            {FIXED_PLAYERS.length} Squad Athletes
+          </span>
         </div>
 
         <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none snap-x -mx-1 px-1">
@@ -856,12 +858,20 @@ export default function ProfilesPage() {
                 }`}
                 style={{ width: "72px" }}
               >
-                {/* Crown / Spoon Badge on avatar */}
-                {pStats?.tournamentsWon > 0 && (
+                {/* Crown / Trophy / Spoon Badge on avatar */}
+                {pStats?.dayWins > 0 ? (
+                  <div className="absolute -top-1.5 -right-1 bg-amber-400 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs border border-white">
+                    👑
+                  </div>
+                ) : pStats?.tournamentsWon > 0 ? (
                   <div className="absolute -top-1.5 -right-1 bg-amber-400 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs border border-white">
                     🏆
                   </div>
-                )}
+                ) : pStats?.woodenSpoons > 0 ? (
+                  <div className="absolute -top-1.5 -right-1 bg-rose-400 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs border border-white">
+                    🥄
+                  </div>
+                ) : null}
 
                 <div className="w-12 h-12 relative flex items-center justify-center">
                   <AvatarSVG type={player.avatar} size={46} />
@@ -920,18 +930,32 @@ export default function ProfilesPage() {
                 {activeLore.title}
               </p>
 
-              {/* Origin, Trophy & Win Rate Chips */}
+              {/* Origin, Day Champ, Trophy & Win Rate Chips */}
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/90 border border-slate-200/80 text-[10px] font-bold text-slate-600 shadow-xs">
                   {activeLore.origin}
                 </span>
-                {activeStats.tournamentsWon > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100/80 border border-amber-300/80 text-[10px] font-black text-amber-900">
-                    🏆 {activeStats.tournamentsWon} Won
+                {activeStats.dayWins > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-[10px] font-black text-amber-950 shadow-xs">
+                    👑 {activeStats.dayWins} Day Champ
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-100/80 border border-indigo-200/70 text-[10px] font-black text-indigo-800">
+                {activeStats.tournamentsWon > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100/80 border border-amber-300/80 text-[10px] font-black text-amber-900 shadow-xs">
+                    🏆 {activeStats.tournamentsWon} Finals
+                  </span>
+                )}
+                {activeStats.woodenSpoons > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100/80 border border-rose-300/80 text-[10px] font-black text-rose-900 shadow-xs">
+                    🥄 {activeStats.woodenSpoons} Spoons
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-100/80 border border-indigo-200/70 text-[10px] font-black text-indigo-800 shadow-xs">
                   📈 {winRate}% WR
+                </span>
+              </div>
+            </div>
+          </div>� {winRate}% WR
                 </span>
               </div>
             </div>
