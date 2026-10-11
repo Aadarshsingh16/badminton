@@ -370,7 +370,10 @@ export default function ProfilesPage() {
         matchesPlayed: number;
         wins: number;
         losses: number;
+        dayWins: number;
         tournamentsWon: number;
+        finalsPlayed: number;
+        finalsLost: number;
         woodenSpoons: number;
         dayPointsTotal: number;
         leaguePoints: number;
@@ -383,6 +386,9 @@ export default function ProfilesPage() {
             played: number;
             won: number;
             lost: number;
+            finalsPlayed: number;
+            finalsWon: number;
+            finalsLost: number;
             shutsDelivered: number;
             shutsReceived: number;
             regularShutsDelivered: number;
@@ -401,7 +407,10 @@ export default function ProfilesPage() {
         matchesPlayed: 0,
         wins: 0,
         losses: 0,
+        dayWins: 0,
         tournamentsWon: 0,
+        finalsPlayed: 0,
+        finalsLost: 0,
         woodenSpoons: 0,
         dayPointsTotal: 0,
         leaguePoints: 0,
@@ -417,6 +426,9 @@ export default function ProfilesPage() {
             played: 0,
             won: 0,
             lost: 0,
+            finalsPlayed: 0,
+            finalsWon: 0,
+            finalsLost: 0,
             shutsDelivered: 0,
             shutsReceived: 0,
             regularShutsDelivered: 0,
@@ -477,6 +489,9 @@ export default function ProfilesPage() {
             played: 0,
             won: 0,
             lost: 0,
+            finalsPlayed: 0,
+            finalsWon: 0,
+            finalsLost: 0,
             shutsDelivered: 0,
             shutsReceived: 0,
             regularShutsDelivered: 0,
@@ -492,6 +507,9 @@ export default function ProfilesPage() {
             played: 0,
             won: 0,
             lost: 0,
+            finalsPlayed: 0,
+            finalsWon: 0,
+            finalsLost: 0,
             shutsDelivered: 0,
             shutsReceived: 0,
             regularShutsDelivered: 0,
@@ -542,6 +560,17 @@ export default function ProfilesPage() {
           stats[pA].h2h[pB].won += 1;
           stats[pB].h2h[pA].lost += 1;
 
+          if (isFinalMatch) {
+            stats[pA].finalsPlayed += 1;
+            stats[pB].finalsPlayed += 1;
+            stats[pA].finalsWon += 1;
+            stats[pB].finalsLost += 1;
+            stats[pA].h2h[pB].finalsPlayed += 1;
+            stats[pB].h2h[pA].finalsPlayed += 1;
+            stats[pA].h2h[pB].finalsWon += 1;
+            stats[pB].h2h[pA].finalsLost += 1;
+          }
+
           // Shutout Condition: Margin >= 4 (3 points earned in regular match or final blowout)
           const bonusMargin = isFinalMatch
             ? t.config?.finalBonusMargin ?? 4
@@ -566,6 +595,17 @@ export default function ProfilesPage() {
           stats[pA].losses += 1;
           stats[pB].h2h[pA].won += 1;
           stats[pA].h2h[pB].lost += 1;
+
+          if (isFinalMatch) {
+            stats[pA].finalsPlayed += 1;
+            stats[pB].finalsPlayed += 1;
+            stats[pB].finalsWon += 1;
+            stats[pA].finalsLost += 1;
+            stats[pA].h2h[pB].finalsPlayed += 1;
+            stats[pB].h2h[pA].finalsPlayed += 1;
+            stats[pB].h2h[pA].finalsWon += 1;
+            stats[pA].h2h[pB].finalsLost += 1;
+          }
 
           const bonusMargin = isFinalMatch
             ? t.config?.finalBonusMargin ?? 4
@@ -612,6 +652,8 @@ export default function ProfilesPage() {
             stats[normId].wins = (entry.leagueWins || 0) + (entry.finalsWon || 0);
             stats[normId].losses = stats[normId].matchesPlayed - stats[normId].wins;
             stats[normId].tournamentsWon = entry.finalsWon || 0;
+            stats[normId].finalsPlayed = entry.finalsPlayed || 0;
+            stats[normId].finalsLost = Math.max(0, (entry.finalsPlayed || 0) - (entry.finalsWon || 0));
             stats[normId].shutsDelivered = entry.shutoutWins || 0;
             stats[normId].shutsReceived = entry.shutoutLosses || 0;
           }
@@ -619,29 +661,40 @@ export default function ProfilesPage() {
       });
     }
 
-    // Official Day Wooden Spoons Calculation (From completed days & cloud day honors)
-    if (cloudDayHonors?.dayLastPlaces && cloudDayHonors.dayLastPlaces.length > 0) {
-      cloudDayHonors.dayLastPlaces.forEach((s: any) => {
-        const spoonId = normalizePlayerId(s.playerId);
-        if (stats[spoonId]) {
-          stats[spoonId].woodenSpoons = s.count;
-        }
-      });
-    } else if (completedDays && completedDays.length > 0) {
+    // 1. Calculate Day Champions & Wooden Spoons from completedDays
+    if (completedDays && completedDays.length > 0) {
       completedDays.forEach((cd) => {
-        const spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
+        let spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
+        let topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
+        if ((!topId || !spoonId) && cd.totals) {
+          const sorted = Object.entries(cd.totals).sort(([, a], [, b]) => b - a);
+          if (!topId && sorted.length > 0) topId = normalizePlayerId(sorted[0][0]);
+          if (!spoonId && sorted.length > 1) spoonId = normalizePlayerId(sorted[sorted.length - 1][0]);
+        }
         if (spoonId && stats[spoonId]) {
           stats[spoonId].woodenSpoons += 1;
+        }
+        if (topId && stats[topId]) {
+          stats[topId].dayWins += 1;
         }
       });
     }
 
-    // Cloud Day Champions fallback for tournamentsWon if zero
-    if (cloudDayHonors?.dayChampions) {
+    // 2. Fallback / Merge with cloudDayHonors
+    if (cloudDayHonors?.dayLastPlaces && cloudDayHonors.dayLastPlaces.length > 0) {
+      cloudDayHonors.dayLastPlaces.forEach((s: any) => {
+        const spoonId = normalizePlayerId(s.playerId);
+        if (stats[spoonId]) {
+          stats[spoonId].woodenSpoons = Math.max(stats[spoonId].woodenSpoons, s.count || 0);
+        }
+      });
+    }
+
+    if (cloudDayHonors?.dayChampions && cloudDayHonors.dayChampions.length > 0) {
       cloudDayHonors.dayChampions.forEach((c: any) => {
         const champId = normalizePlayerId(c.playerId);
-        if (stats[champId] && stats[champId].tournamentsWon === 0) {
-          stats[champId].tournamentsWon = c.count;
+        if (stats[champId]) {
+          stats[champId].dayWins = Math.max(stats[champId].dayWins, c.count || 0);
         }
       });
     }
