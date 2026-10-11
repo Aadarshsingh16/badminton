@@ -373,6 +373,7 @@ export default function ProfilesPage() {
         dayWins: number;
         tournamentsWon: number;
         finalsPlayed: number;
+        finalsWon: number;
         finalsLost: number;
         woodenSpoons: number;
         dayPointsTotal: number;
@@ -419,6 +420,7 @@ export default function ProfilesPage() {
         dayWins: 0,
         tournamentsWon: 0,
         finalsPlayed: 0,
+        finalsWon: 0,
         finalsLost: 0,
         woodenSpoons: 0,
         dayPointsTotal: 0,
@@ -786,6 +788,7 @@ export default function ProfilesPage() {
     dayWins: 0,
     tournamentsWon: 0,
     finalsPlayed: 0,
+    finalsWon: 0,
     finalsLost: 0,
     woodenSpoons: 0,
     dayPointsTotal: 0,

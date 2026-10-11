@@ -912,6 +912,87 @@ export default function HistoryPage() {
       }
     });
 
+    // 1-Point Deciders / Cardiac King (matches decided by 1 point)
+    const tightWins: Record<string, number> = {};
+    const tightMatches: Record<string, number> = {};
+    allChronologicalMatches.forEach((m) => {
+      if (Math.abs(m.scoreA - m.scoreB) === 1) {
+        tightMatches[m.playerA] = (tightMatches[m.playerA] || 0) + 1;
+        tightMatches[m.playerB] = (tightMatches[m.playerB] || 0) + 1;
+        if (m.scoreA > m.scoreB) {
+          tightWins[m.playerA] = (tightWins[m.playerA] || 0) + 1;
+        } else if (m.scoreB > m.scoreA) {
+          tightWins[m.playerB] = (tightWins[m.playerB] || 0) + 1;
+        }
+      }
+    });
+
+    let cardiacKing: { playerId: string; name: string; wins: number; matches: number } | null = null;
+    Object.entries(tightWins).forEach(([pid, wins]) => {
+      if (!cardiacKing || wins > cardiacKing.wins) {
+        const pObj = (players || []).find((p) => p.id === pid) || FIXED_PLAYERS.find((p) => p.id === pid);
+        if (pObj && wins > 0) {
+          cardiacKing = {
+            playerId: pid,
+            name: pObj.name,
+            wins,
+            matches: tightMatches[pid] || wins,
+          };
+        }
+      }
+    });
+
+    // Full Finals Leaderboard (ranking all squad members by finals won, played, WR%)
+    const finalsLeaderboard = displayedLeaderboard
+      .map((l) => ({
+        playerId: l.playerId,
+        name: l.name,
+        avatar: l.avatar,
+        avatarEmoji: l.avatarEmoji,
+        avatarColor: l.avatarColor,
+        finalsPlayed: l.finalsPlayed || 0,
+        finalsWon: l.finalsWon || 0,
+        finalsLost: Math.max(0, (l.finalsPlayed || 0) - (l.finalsWon || 0)),
+        winRate: l.finalsPlayed > 0 ? Math.round(((l.finalsWon || 0) / l.finalsPlayed) * 100) : 0,
+      }))
+      .sort((a, b) => b.finalsWon - a.finalsWon || b.finalsPlayed - a.finalsPlayed || b.winRate - a.winRate);
+
+    // Top Head-to-Head Rivalries across squad
+    const topRivalries: {
+      playerA: string;
+      playerB: string;
+      nameA: string;
+      nameB: string;
+      winsA: number;
+      winsB: number;
+      total: number;
+    }[] = [];
+    const seenPairs = new Set<string>();
+    Object.entries(h2h).forEach(([pA, opps]) => {
+      Object.entries(opps).forEach(([pB, rec]) => {
+        const key = [pA, pB].sort().join("::");
+        if (!seenPairs.has(key)) {
+          seenPairs.add(key);
+          const rev = h2h[pB]?.[pA] || { wins: 0, losses: 0 };
+          const total = rec.wins + rev.wins;
+          if (total >= 2) {
+            const nameA = players.find((p) => p.id === pA)?.name || FIXED_PLAYERS.find((p) => p.id === pA)?.name || pA;
+            const nameB = players.find((p) => p.id === pB)?.name || FIXED_PLAYERS.find((p) => p.id === pB)?.name || pB;
+            topRivalries.push({
+              playerA: pA,
+              playerB: pB,
+              nameA,
+              nameB,
+              winsA: rec.wins,
+              winsB: rev.wins,
+              total,
+            });
+          }
+        }
+      });
+    });
+    topRivalries.sort((a, b) => b.total - a.total);
+
     // Calculate Stat Leaders
     const statLeaders = displayedLeaderboard.length > 0 ? {
       shutoutKing: displayedLeaderboard.reduce((prev, current) => (prev.shutoutWins > current.shutoutWins) ? prev : current, displayedLeaderboard[0]),
@@ -922,6 +1003,7 @@ export default function HistoryPage() {
       finalsLostLeader: displayedLeaderboard.reduce((prev, current) => ((current.finalsPlayed - current.finalsWon) > (prev.finalsPlayed - prev.finalsWon)) ? current : prev, displayedLeaderboard[0]),
       shutoutLossesLeader: displayedLeaderboard.reduce((prev, current) => (current.shutoutLosses > prev.shutoutLosses) ? current : prev, displayedLeaderboard[0]),
       peakDayScoreLeader,
+      cardiacKing,
     } : {
       shutoutKing: null,
       highestMargin: null,
@@ -931,13 +1013,16 @@ export default function HistoryPage() {
       finalsLostLeader: null,
       shutoutLossesLeader: null,
       peakDayScoreLeader: null as { playerId: string; name: string; maxPts: number; date: string } | null,
+      cardiacKing: null as { playerId: string; name: string; wins: number; matches: number } | null,
     };
 
     return {
       formMap,
       statLeaders,
       winRateChartData,
-      dominanceData
+      dominanceData,
+      finalsLeaderboard,
+      topRivalries,
     };
   }, [displayedHistory, displayedLeaderboard, players, completedDays, dayTable]);
 
@@ -1830,9 +1915,164 @@ export default function HistoryPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Cardiac King (1-Point Thriller Wins) */}
+                    {advancedInsights.statLeaders.cardiacKing && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Cardiac King</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.cardiacKing.name}</span>
+                             <span className="text-[10px] font-bold text-rose-500">{advancedInsights.statLeaders.cardiacKing.wins} clutch wins (1-pt)</span>
+                           </div>
+                           <span className="text-lg opacity-80">💓</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+
+              {/* Row 3: Championship Finals Leaderboard Table */}
+              <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-sm shadow-2xs">
+                      🏆
+                    </span>
+                    <div>
+                      <h3 className="text-xs font-extrabold text-slate-900">
+                        Championship Finals Leaderboard
+                      </h3>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        Career finals played, won, lost &amp; clutch win rate
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60">
+                    All-Time Finals
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-200/80">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                        <th className="py-2.5 pl-3 pr-2">Rank &amp; Player</th>
+                        <th className="py-2.5 px-2 text-center">Finals Played</th>
+                        <th className="py-2.5 px-2 text-center">🏆 Titles Won</th>
+                        <th className="py-2.5 px-2 text-center">💔 Finals Lost</th>
+                        <th className="py-2.5 pr-3 pl-2 text-right">Finals WR%</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {advancedInsights.finalsLeaderboard.map((player, idx) => (
+                        <tr
+                          key={player.playerId}
+                          className="hover:bg-slate-50/80 transition-colors"
+                        >
+                          <td className="py-2.5 pl-3 pr-2">
+                            <div className="flex items-center gap-2">
+                              <span className="w-5 text-center font-mono font-black text-slate-400 text-xs">
+                                #{idx + 1}
+                              </span>
+                              <AvatarSVG
+                                type={player.avatar}
+                                size={24}
+                                emoji={player.avatarEmoji}
+                                color={player.avatarColor}
+                              />
+                              <span className="font-extrabold text-xs text-slate-900 truncate">
+                                {player.name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-700">
+                            {player.finalsPlayed}
+                          </td>
+                          <td className="py-2.5 px-2 text-center font-mono">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 font-black text-[11px]">
+                              🏆 {player.finalsWon}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-2 text-center font-mono">
+                            {player.finalsLost > 0 ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-800 font-bold text-[11px]">
+                                💔 {player.finalsLost}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-[11px]">0</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 pr-3 pl-2 text-right font-mono font-black">
+                            <span
+                              className={
+                                player.winRate >= 60
+                                  ? "text-emerald-700"
+                                  : player.winRate >= 40
+                                  ? "text-amber-700"
+                                  : "text-slate-500"
+                              }
+                            >
+                              {player.finalsPlayed > 0 ? `${player.winRate}%` : "—"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Row 4: Top Squad Rivalries Matrix */}
+              {advancedInsights.topRivalries.length > 0 && (
+                <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-sm shadow-2xs">
+                        ⚔️
+                      </span>
+                      <div>
+                        <h3 className="text-xs font-extrabold text-slate-900">
+                          Squad Rivalries &amp; Clash Matrix
+                        </h3>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          Most contested head-to-head match-ups
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200/60">
+                      H2H Leaders
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                    {advancedInsights.topRivalries.slice(0, 6).map((riv, i) => (
+                      <div
+                        key={i}
+                        className="p-3 rounded-2xl bg-gradient-to-br from-slate-50 to-white border border-slate-200/80 flex flex-col justify-between space-y-2 shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between text-xs font-black text-slate-900">
+                          <span className="truncate">{riv.nameA}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase mx-1">vs</span>
+                          <span className="truncate">{riv.nameB}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs font-mono font-black">
+                          <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200/60">
+                            {riv.winsA}W
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-semibold font-sans">
+                            {riv.total} Matches
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 border border-purple-200/60">
+                            {riv.winsB}W
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1846,13 +2086,13 @@ export default function HistoryPage() {
                 </div>
                 <div>
                   <h3 className="text-xs font-extrabold text-slate-900">Day Champions</h3>
-                  <p className="text-[10px] text-amber-700 font-semibold">Most daily 1st place finishes</p>
+                  <p className="text-[10px] text-amber-700 font-semibold">Daily 1st place finishes (All squad members)</p>
                 </div>
               </div>
 
               {displayedDayHonors?.dayChampions && displayedDayHonors.dayChampions.length > 0 ? (
-                <div className="space-y-2">
-                  {displayedDayHonors.dayChampions.slice(0, 3).map((c) => (
+                <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar pr-1">
+                  {displayedDayHonors.dayChampions.map((c) => (
                     <div
                       key={c.playerId}
                       className="flex items-center justify-between p-2 rounded-xl bg-white border border-amber-200/50 shadow-2xs"
@@ -1882,13 +2122,13 @@ export default function HistoryPage() {
                 </div>
                 <div>
                   <h3 className="text-xs font-extrabold text-slate-900">Wooden Spoon</h3>
-                  <p className="text-[10px] text-rose-700 font-semibold">Most daily last-place finishes</p>
+                  <p className="text-[10px] text-rose-700 font-semibold">Daily last-place finishes (All squad members)</p>
                 </div>
               </div>
 
               {displayedDayHonors?.dayLastPlaces && displayedDayHonors.dayLastPlaces.length > 0 ? (
-                <div className="space-y-2">
-                  {displayedDayHonors.dayLastPlaces.slice(0, 3).map((c) => (
+                <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar pr-1">
+                  {displayedDayHonors.dayLastPlaces.map((c) => (
                     <div
                       key={c.playerId}
                       className="flex items-center justify-between p-2 rounded-xl bg-white border border-rose-200/50 shadow-2xs"
