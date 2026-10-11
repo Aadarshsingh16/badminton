@@ -872,13 +872,84 @@ export default function HistoryPage() {
       };
     }).filter(d => d.count >= 2).sort((a, b) => b["Avg Diff"] - a["Avg Diff"]);
     
+    // Calculate Single-Day Score Record
+    const playerSingleDayHigh: { [playerId: string]: { maxPts: number; date: string } } = {};
+    (displayedHistory?.days || []).forEach((d) => {
+      const dayScores: Record<string, number> = {};
+      (d.tournaments || []).forEach((t) => {
+        const pts =
+          t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
+            ? t.dayPointsAwarded
+            : computeDayPoints(t);
+        if (pts) {
+          Object.entries(pts).forEach(([pid, pVal]) => {
+            const norm = isSajalId(pid) ? "sajal" : pid;
+            dayScores[norm] = (dayScores[norm] || 0) + (pVal as number);
+          });
+        }
+      });
+      Object.entries(dayScores).forEach(([pid, val]) => {
+        if (!playerSingleDayHigh[pid] || val > playerSingleDayHigh[pid].maxPts) {
+          playerSingleDayHigh[pid] = { maxPts: val, date: d.date };
+        }
+      });
+    });
+
+    (completedDays || []).forEach((cd) => {
+      if (cd.totals) {
+        Object.entries(cd.totals).forEach(([pid, val]) => {
+          const norm = isSajalId(pid) ? "sajal" : pid;
+          if (!playerSingleDayHigh[norm] || (val as number) > playerSingleDayHigh[norm].maxPts) {
+            playerSingleDayHigh[norm] = { maxPts: val as number, date: cd.date };
+          }
+        });
+      }
+    });
+
+    if (dayTable?.totals) {
+      Object.entries(dayTable.totals).forEach(([pid, val]) => {
+        const norm = isSajalId(pid) ? "sajal" : pid;
+        if (!playerSingleDayHigh[norm] || (val as number) > playerSingleDayHigh[norm].maxPts) {
+          playerSingleDayHigh[norm] = { maxPts: val as number, date: dayTable.date || "Today" };
+        }
+      });
+    }
+
+    let peakDayScoreLeader: { playerId: string; name: string; maxPts: number; date: string } | null = null;
+    Object.entries(playerSingleDayHigh).forEach(([pid, data]) => {
+      if (!peakDayScoreLeader || data.maxPts > peakDayScoreLeader.maxPts) {
+        const pObj = players.find((p) => p.id === pid) || FIXED_PLAYERS.find((p) => p.id === pid);
+        if (pObj && data.maxPts > 0) {
+          peakDayScoreLeader = {
+            playerId: pid,
+            name: pObj.name,
+            maxPts: data.maxPts,
+            date: data.date,
+          };
+        }
+      }
+    });
+
     // Calculate Stat Leaders
     const statLeaders = displayedLeaderboard.length > 0 ? {
       shutoutKing: displayedLeaderboard.reduce((prev, current) => (prev.shutoutWins > current.shutoutWins) ? prev : current, displayedLeaderboard[0]),
       highestMargin: displayedLeaderboard.reduce((prev, current) => (prev.highestWinMargin > current.highestWinMargin) ? prev : current, displayedLeaderboard[0]),
       ironMan: displayedLeaderboard.reduce((prev, current) => ((prev.leagueMatchesPlayed + prev.finalsPlayed) > (current.leagueMatchesPlayed + current.finalsPlayed)) ? prev : current, displayedLeaderboard[0]),
       finalsSpecialist: displayedLeaderboard.reduce((prev, current) => (prev.finalsWon > current.finalsWon) ? prev : current, displayedLeaderboard[0]),
-    } : { shutoutKing: null, highestMargin: null, ironMan: null, finalsSpecialist: null };
+      finalsPlayedLeader: displayedLeaderboard.reduce((prev, current) => (current.finalsPlayed > prev.finalsPlayed) ? current : prev, displayedLeaderboard[0]),
+      finalsLostLeader: displayedLeaderboard.reduce((prev, current) => ((current.finalsPlayed - current.finalsWon) > (prev.finalsPlayed - prev.finalsWon)) ? current : prev, displayedLeaderboard[0]),
+      shutoutLossesLeader: displayedLeaderboard.reduce((prev, current) => (current.shutoutLosses > prev.shutoutLosses) ? current : prev, displayedLeaderboard[0]),
+      peakDayScoreLeader,
+    } : {
+      shutoutKing: null,
+      highestMargin: null,
+      ironMan: null,
+      finalsSpecialist: null,
+      finalsPlayedLeader: null,
+      finalsLostLeader: null,
+      shutoutLossesLeader: null,
+      peakDayScoreLeader: null,
+    };
 
     return {
       formMap,
@@ -886,7 +957,7 @@ export default function HistoryPage() {
       winRateChartData,
       dominanceData
     };
-  }, [displayedHistory, displayedLeaderboard, players]);
+  }, [displayedHistory, displayedLeaderboard, players, completedDays, dayTable]);
 
 
   const displayedDayHonors =
