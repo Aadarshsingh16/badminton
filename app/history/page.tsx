@@ -9,7 +9,11 @@ import {
   recoverTournamentsFromSyncQueue,
   recoverCompletedDaysFromSyncQueue,
   getDeletedTournamentIds,
+  SAJAL_ALIASES,
+  isSajalId,
+  normalizePlayerId,
 } from "@/lib/store";
+import { computeDayPoints } from "@/lib/ranking";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
 import { PinModal } from "@/components/PinModal";
@@ -552,19 +556,35 @@ export default function HistoryPage() {
       let finalsWon = 0;
 
       allTourneys.forEach((t) => {
-        // Day points logic
-        if (t.dayPointsAwarded && t.dayPointsAwarded[p.id] !== undefined) {
-          dayPointsTotal += t.dayPointsAwarded[p.id];
+        // Day points logic: check t.dayPointsAwarded or compute fallback
+        const ptsMap = t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
+          ? t.dayPointsAwarded
+          : computeDayPoints(t);
+
+        if (ptsMap) {
+          if (ptsMap[p.id] !== undefined) {
+            dayPointsTotal += ptsMap[p.id];
+          }
+          if (p.id === "sajal") {
+            for (const alias of SAJAL_ALIASES) {
+              if (ptsMap[alias] !== undefined) {
+                dayPointsTotal += ptsMap[alias];
+              }
+            }
+          }
         }
 
         // League matches
         t.matches.filter(m => m.played).forEach(m => {
-          if (m.playerA === p.id || m.playerB === p.id) {
+          const isA = m.playerA === p.id || (p.id === "sajal" && isSajalId(m.playerA));
+          const isB = m.playerB === p.id || (p.id === "sajal" && isSajalId(m.playerB));
+          if (isA || isB) {
             leagueMatchesPlayed++;
-            const isA = m.playerA === p.id;
             const myScore = isA ? (m.scoreA ?? 0) : (m.scoreB ?? 0);
             const oppScore = isA ? (m.scoreB ?? 0) : (m.scoreA ?? 0);
-            const myPoints = isA ? (m.pointsAwarded?.[m.playerA] ?? 0) : (m.pointsAwarded?.[m.playerB] ?? 0);
+            const myPoints = isA
+              ? (m.pointsAwarded?.[m.playerA] ?? m.pointsAwarded?.["sajal"] ?? 0)
+              : (m.pointsAwarded?.[m.playerB] ?? m.pointsAwarded?.["sajal"] ?? 0);
             const won = myScore > oppScore;
             
             if (won) leagueWins++;
@@ -578,18 +598,47 @@ export default function HistoryPage() {
         });
 
         // Finals
-        if (t.final?.played && (t.final.playerA === p.id || t.final.playerB === p.id)) {
-          finalsPlayed++;
-          const m = t.final;
-          const isA = m.playerA === p.id;
-          const myScore = isA ? (m.scoreA ?? 0) : (m.scoreB ?? 0);
-          const oppScore = isA ? (m.scoreB ?? 0) : (m.scoreA ?? 0);
-          if (myScore > oppScore) finalsWon++;
+        if (t.final?.played) {
+          const isA = t.final.playerA === p.id || (p.id === "sajal" && isSajalId(t.final.playerA));
+          const isB = t.final.playerB === p.id || (p.id === "sajal" && isSajalId(t.final.playerB));
+          if (isA || isB) {
+            finalsPlayed++;
+            const m = t.final;
+            const myScore = isA ? (m.scoreA ?? 0) : (m.scoreB ?? 0);
+            const oppScore = isA ? (m.scoreB ?? 0) : (m.scoreA ?? 0);
+            if (myScore > oppScore) finalsWon++;
+          }
         }
       });
 
-      if (dayPointsTotal === 0 && dayTable.totals[p.id]) {
-        dayPointsTotal = dayTable.totals[p.id];
+      // If day points were not in tournaments, check completedDays
+      if (dayPointsTotal === 0 && completedDays && completedDays.length > 0) {
+        completedDays.forEach((cd) => {
+          if (cd.totals?.[p.id] !== undefined) {
+            dayPointsTotal += cd.totals[p.id];
+          }
+          if (p.id === "sajal") {
+            for (const alias of SAJAL_ALIASES) {
+              if (cd.totals?.[alias] !== undefined) {
+                dayPointsTotal += cd.totals[alias];
+              }
+            }
+          }
+        });
+      }
+
+      // If still 0, check active dayTable totals
+      if (dayPointsTotal === 0 && dayTable.totals) {
+        if (dayTable.totals[p.id]) {
+          dayPointsTotal += dayTable.totals[p.id];
+        }
+        if (p.id === "sajal") {
+          for (const alias of SAJAL_ALIASES) {
+            if (dayTable.totals[alias]) {
+              dayPointsTotal += dayTable.totals[alias];
+            }
+          }
+        }
       }
 
       return {
@@ -722,6 +771,15 @@ export default function HistoryPage() {
   const displayedLeaderboard = useMemo(() => {
     if (!baseLeaderboard) return [];
     const lb = [...baseLeaderboard];
+
+    // Ensure Sajal has correct day points if backend returned 0
+    const localSajal = localLeaderboardFallback.find((x) => x.playerId === "sajal");
+    if (localSajal && localSajal.dayPointsTotal > 0) {
+      const sajalEntry = lb.find((x) => x.playerId === "sajal");
+      if (sajalEntry && sajalEntry.dayPointsTotal === 0) {
+        sajalEntry.dayPointsTotal = localSajal.dayPointsTotal;
+      }
+    }
     
     if (leaderboardCategory === "day") {
       lb.sort((a, b) => b.dayPointsTotal - a.dayPointsTotal || b.leaguePoints - a.leaguePoints);

@@ -8,6 +8,9 @@ import {
   FIXED_PLAYERS,
   recoverTournamentsFromSyncQueue,
   recoverCompletedDaysFromSyncQueue,
+  normalizePlayerId,
+  SAJAL_ALIASES,
+  isSajalId,
 } from "@/lib/store";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
@@ -376,7 +379,7 @@ export default function ProfilesPage() {
     allTourneys.forEach((t) => {
       // Tournament Winner (Champion)
       if (t.final && t.final.played && t.final.scoreA !== undefined && t.final.scoreB !== undefined) {
-        const winnerId = t.final.scoreA > t.final.scoreB ? t.final.playerA : t.final.playerB;
+        const winnerId = normalizePlayerId(t.final.scoreA > t.final.scoreB ? t.final.playerA : t.final.playerB);
         if (stats[winnerId]) {
           stats[winnerId].tournamentsWon += 1;
         }
@@ -386,7 +389,7 @@ export default function ProfilesPage() {
       if (t.dayPointsAwarded) {
         const sorted = Object.entries(t.dayPointsAwarded).sort(([, a], [, b]) => (Number(a) || 0) - (Number(b) || 0));
         if (sorted.length > 0) {
-          const lastId = sorted[0][0];
+          const lastId = normalizePlayerId(sorted[0][0]);
           if (stats[lastId]) {
             stats[lastId].woodenSpoons += 1;
           }
@@ -399,40 +402,53 @@ export default function ProfilesPage() {
 
       allMatches.forEach((m: any) => {
         const { playerA, playerB, scoreA = 0, scoreB = 0 } = m;
-        if (stats[playerA] && stats[playerB]) {
-          stats[playerA].matchesPlayed += 1;
-          stats[playerB].matchesPlayed += 1;
-          stats[playerA].pointDiff += scoreA - scoreB;
-          stats[playerB].pointDiff += scoreB - scoreA;
+        const pA = normalizePlayerId(playerA);
+        const pB = normalizePlayerId(playerB);
+        if (stats[pA] && stats[pB]) {
+          stats[pA].matchesPlayed += 1;
+          stats[pB].matchesPlayed += 1;
+          stats[pA].pointDiff += scoreA - scoreB;
+          stats[pB].pointDiff += scoreB - scoreA;
 
           if (scoreA > scoreB) {
-            stats[playerA].wins += 1;
-            stats[playerB].losses += 1;
-            if (stats[playerA].h2h[playerB]) stats[playerA].h2h[playerB].won += 1;
-            if (stats[playerB].h2h[playerA]) stats[playerB].h2h[playerA].lost += 1;
+            stats[pA].wins += 1;
+            stats[pB].losses += 1;
+            if (stats[pA].h2h[pB]) stats[pA].h2h[pB].won += 1;
+            if (stats[pB].h2h[pA]) stats[pB].h2h[pA].lost += 1;
           } else if (scoreB > scoreA) {
-            stats[playerB].wins += 1;
-            stats[playerA].losses += 1;
-            if (stats[playerB].h2h[playerA]) stats[playerB].h2h[playerA].won += 1;
-            if (stats[playerA].h2h[playerB]) stats[playerA].h2h[playerB].lost += 1;
+            stats[pB].wins += 1;
+            stats[pA].losses += 1;
+            if (stats[pB].h2h[pA]) stats[pB].h2h[pA].won += 1;
+            if (stats[pA].h2h[pB]) stats[pA].h2h[pB].lost += 1;
           }
-          if (stats[playerA].h2h[playerB]) stats[playerA].h2h[playerB].played += 1;
-          if (stats[playerB].h2h[playerA]) stats[playerB].h2h[playerA].played += 1;
+          if (stats[pA].h2h[pB]) stats[pA].h2h[pB].played += 1;
+          if (stats[pB].h2h[pA]) stats[pB].h2h[pA].played += 1;
         }
       });
 
       // Points
       FIXED_PLAYERS.forEach((p) => {
-        if (t.dayPointsAwarded && t.dayPointsAwarded[p.id] !== undefined) {
-          stats[p.id].totalPoints += t.dayPointsAwarded[p.id];
+        let pts = 0;
+        if (t.dayPointsAwarded) {
+          if (t.dayPointsAwarded[p.id] !== undefined) pts += t.dayPointsAwarded[p.id];
+          if (p.id === "sajal") {
+            for (const alias of SAJAL_ALIASES) {
+              if (t.dayPointsAwarded[alias] !== undefined) pts += t.dayPointsAwarded[alias];
+            }
+          }
+        }
+        if (pts > 0) {
+          stats[p.id].totalPoints += pts;
         } else {
           (t.matches || [])
             .filter((m: any) => m.played)
             .forEach((m: any) => {
-              stats[p.id].totalPoints += m.pointsAwarded?.[p.id] || 0;
+              if (normalizePlayerId(m.playerA) === p.id) stats[p.id].totalPoints += m.pointsAwarded?.[m.playerA] || 0;
+              if (normalizePlayerId(m.playerB) === p.id) stats[p.id].totalPoints += m.pointsAwarded?.[m.playerB] || 0;
             });
           if (t.final?.played) {
-            stats[p.id].totalPoints += t.final.pointsAwarded?.[p.id] || 0;
+            if (normalizePlayerId(t.final.playerA) === p.id) stats[p.id].totalPoints += t.final.pointsAwarded?.[t.final.playerA] || 0;
+            if (normalizePlayerId(t.final.playerB) === p.id) stats[p.id].totalPoints += t.final.pointsAwarded?.[t.final.playerB] || 0;
           }
         }
       });
@@ -441,11 +457,13 @@ export default function ProfilesPage() {
     // Add completed day spoon records if recorded
     if (completedDays && completedDays.length > 0) {
       completedDays.forEach((cd) => {
-        if (cd.spoonPlayerId && stats[cd.spoonPlayerId]) {
-          if (allTourneys.length === 0) stats[cd.spoonPlayerId].woodenSpoons += 1;
+        const spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
+        const topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
+        if (spoonId && stats[spoonId]) {
+          if (allTourneys.length === 0) stats[spoonId].woodenSpoons += 1;
         }
-        if (cd.topPlayerId && stats[cd.topPlayerId]) {
-          if (allTourneys.length === 0) stats[cd.topPlayerId].tournamentsWon += 1;
+        if (topId && stats[topId]) {
+          if (allTourneys.length === 0) stats[topId].tournamentsWon += 1;
         }
       });
     } else if (cloudDayHonors) {

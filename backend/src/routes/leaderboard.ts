@@ -33,24 +33,59 @@ leaderboardRouter.get("/", async (req, res) => {
         SELECT id, date, totals FROM day_tables d WHERE 1=1 ${dateFilter}
       ),
       day_points AS (
-        SELECT p.id as player_id, SUM((d.totals->>p.id)::int) as day_points_total
+        SELECT
+          p.id as player_id,
+          SUM(
+            COALESCE((d.totals->>p.id)::int, 0) +
+            CASE WHEN p.id = 'sajal' THEN (
+              COALESCE((d.totals->>'custom-1791630401707')::int, 0) +
+              COALESCE((d.totals->>'custom-1791021029857')::int, 0) +
+              COALESCE((d.totals->>'custom-1791025802127')::int, 0) +
+              COALESCE((d.totals->>'custom-1790938366909')::int, 0)
+            ) ELSE 0 END
+          ) as day_points_total
         FROM players p
         CROSS JOIN date_filtered_days d
         WHERE (d.totals->>p.id) IS NOT NULL
+           OR (p.id = 'sajal' AND (
+             d.totals ? 'custom-1791630401707' OR
+             d.totals ? 'custom-1791021029857' OR
+             d.totals ? 'custom-1791025802127' OR
+             d.totals ? 'custom-1790938366909'
+           ))
         GROUP BY p.id
       ),
       league_stats AS (
         SELECT
           p.id as player_id,
           COUNT(m.id) as league_matches_played,
-          SUM(CASE WHEN (m.player_a = p.id AND m.score_a > m.score_b) OR (m.player_b = p.id AND m.score_b > m.score_a) THEN 1 ELSE 0 END) as league_wins,
-          SUM(CASE WHEN m.player_a = p.id THEN m.points_a ELSE m.points_b END) as league_points,
-          SUM(CASE WHEN m.player_a = p.id THEN (m.score_a - m.score_b) ELSE (m.score_b - m.score_a) END) as league_point_diff,
-          SUM(CASE WHEN (m.player_a = p.id AND m.score_b = 0) OR (m.player_b = p.id AND m.score_a = 0) THEN 1 ELSE 0 END) as shutout_wins,
-          SUM(CASE WHEN (m.player_a = p.id AND m.score_a = 0) OR (m.player_b = p.id AND m.score_b = 0) THEN 1 ELSE 0 END) as shutout_losses,
-          MAX(CASE WHEN (m.player_a = p.id AND m.score_a > m.score_b) THEN (m.score_a - m.score_b) WHEN (m.player_b = p.id AND m.score_b > m.score_a) THEN (m.score_b - m.score_a) ELSE 0 END) as highest_win_margin
+          SUM(CASE WHEN (
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
+          ) OR (
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
+          ) THEN 1 ELSE 0 END) as league_wins,
+          SUM(CASE WHEN (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) THEN m.points_a ELSE m.points_b END) as league_points,
+          SUM(CASE WHEN (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) THEN (m.score_a - m.score_b) ELSE (m.score_b - m.score_a) END) as league_point_diff,
+          SUM(CASE WHEN (
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b = 0
+          ) OR (
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a = 0
+          ) THEN 1 ELSE 0 END) as shutout_wins,
+          SUM(CASE WHEN (
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a = 0
+          ) OR (
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b = 0
+          ) THEN 1 ELSE 0 END) as shutout_losses,
+          MAX(CASE WHEN (
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
+          ) THEN (m.score_a - m.score_b) WHEN (
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
+          ) THEN (m.score_b - m.score_a) ELSE 0 END) as highest_win_margin
         FROM players p
-        JOIN matches m ON (m.player_a = p.id OR m.player_b = p.id) AND m.played = true AND (m.is_final = false AND m.round != -1)
+        JOIN matches m ON (
+          m.player_a = p.id OR m.player_b = p.id OR
+          (p.id = 'sajal' AND (m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909') OR m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909')))
+        ) AND m.played = true AND (m.is_final = false AND m.round != -1)
         JOIN tournaments t ON m.tournament_id = t.id
         JOIN date_filtered_days d ON t.day_id = d.id
         GROUP BY p.id
@@ -59,9 +94,16 @@ leaderboardRouter.get("/", async (req, res) => {
         SELECT
           p.id as player_id,
           COUNT(m.id) as finals_played,
-          SUM(CASE WHEN (m.player_a = p.id AND m.score_a > m.score_b) OR (m.player_b = p.id AND m.score_b > m.score_a) THEN 1 ELSE 0 END) as finals_won
+          SUM(CASE WHEN (
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
+          ) OR (
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
+          ) THEN 1 ELSE 0 END) as finals_won
         FROM players p
-        JOIN matches m ON (m.player_a = p.id OR m.player_b = p.id) AND m.played = true AND (m.is_final = true OR m.round = -1)
+        JOIN matches m ON (
+          m.player_a = p.id OR m.player_b = p.id OR
+          (p.id = 'sajal' AND (m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909') OR m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909')))
+        ) AND m.played = true AND (m.is_final = true OR m.round = -1)
         JOIN tournaments t ON m.tournament_id = t.id
         JOIN date_filtered_days d ON t.day_id = d.id
         GROUP BY p.id

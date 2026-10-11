@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useStore, recoverTournamentsFromSyncQueue, getDeletedTournamentIds } from "@/lib/store";
+import { useStore, recoverTournamentsFromSyncQueue, getDeletedTournamentIds, normalizePlayerId } from "@/lib/store";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { computeTournamentTable } from "@/lib/ranking";
 import { Player, Tournament } from "@/lib/types";
@@ -65,8 +65,10 @@ export default function DayPage() {
     fetchCloudDay();
   }, [currentTournament, dayTable.date]);
 
-  const getPlayer = (id: string): Player =>
-    players.find((p) => p.id === id) ?? { id, name: id, avatar: "custom" as any };
+  const getPlayer = (id: string): Player => {
+    const targetId = normalizePlayerId(id);
+    return players.find((p) => p.id === targetId || p.id === id) ?? { id, name: id, avatar: "custom" as any };
+  };
 
   // Combine past tournaments + recovered tournaments + cloud fallback tournaments
   const effectiveTournaments = useMemo<Tournament[]>(() => {
@@ -117,7 +119,12 @@ export default function DayPage() {
     // 1. Backend is the true source of truth. If we have cloud totals, use them directly.
     const backendTotals = cloudDayData?.totals || {};
     if (Object.keys(backendTotals).length > 0) {
-      return Object.entries(backendTotals)
+      const merged: Record<string, number> = {};
+      for (const [id, pts] of Object.entries(backendTotals)) {
+        const targetId = normalizePlayerId(id);
+        merged[targetId] = (merged[targetId] || 0) + (pts as number);
+      }
+      return Object.entries(merged)
         .sort(([, a], [, b]) => (b as number) - (a as number))
         .map(([id, pts], idx) => ({ id, pts: pts as number, rank: idx + 1 }));
     }
@@ -129,8 +136,9 @@ export default function DayPage() {
         const tTable = computeTournamentTable(t);
         const ptsMap = t.dayPointsAwarded || {};
         tTable.forEach((row, rowIdx) => {
-          const pts = ptsMap[row.playerId] ?? row.dayPoints ?? Math.max(1, tTable.length - rowIdx);
-          computedTotals[row.playerId] = (computedTotals[row.playerId] ?? 0) + pts;
+          const targetId = normalizePlayerId(row.playerId);
+          const pts = ptsMap[row.playerId] ?? ptsMap[targetId] ?? row.dayPoints ?? Math.max(1, tTable.length - rowIdx);
+          computedTotals[targetId] = (computedTotals[targetId] ?? 0) + pts;
         });
       }
       return Object.entries(computedTotals)
@@ -140,7 +148,12 @@ export default function DayPage() {
 
     // 3. Absolute fallback to persisted day table state
     if (Object.keys(dayTable.totals).length > 0) {
-      return Object.entries(dayTable.totals)
+      const merged: Record<string, number> = {};
+      for (const [id, pts] of Object.entries(dayTable.totals)) {
+        const targetId = normalizePlayerId(id);
+        merged[targetId] = (merged[targetId] || 0) + pts;
+      }
+      return Object.entries(merged)
         .sort(([, a], [, b]) => b - a)
         .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
     }
@@ -212,13 +225,14 @@ export default function DayPage() {
 
   /** For a given player, get their position in each tournament */
   const getPlayerTournamentHistory = (playerId: string) => {
+    const targetNorm = normalizePlayerId(playerId);
     return effectiveTournaments
       .map((t) => {
         const tTable = computeTournamentTable(t);
-        const rowIdx = tTable.findIndex((r) => r.playerId === playerId);
+        const rowIdx = tTable.findIndex((r) => normalizePlayerId(r.playerId) === targetNorm);
         if (rowIdx === -1) return null;
         const row = tTable[rowIdx];
-        const dayPts = t.dayPointsAwarded?.[playerId] ?? row.dayPoints ?? Math.max(1, tTable.length - rowIdx);
+        const dayPts = t.dayPointsAwarded?.[playerId] ?? t.dayPointsAwarded?.[row.playerId] ?? row.dayPoints ?? Math.max(1, tTable.length - rowIdx);
         return { tournament: t, rank: rowIdx + 1, points: row.points, dayPts, rowIdx };
       })
       .filter(Boolean) as { tournament: Tournament; rank: number; points: number; dayPts: number; rowIdx: number }[];

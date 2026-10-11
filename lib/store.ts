@@ -30,6 +30,125 @@ export const FIXED_PLAYERS: Player[] = [
   { id: "sajal", name: "Sajal", avatar: "custom", avatarEmoji: "🦁", avatarColor: "#6C63FF" },
 ];
 
+export const SAJAL_ALIASES = new Set([
+  "custom-1791630401707",
+  "custom-1791021029857",
+  "custom-1791025802127",
+  "custom-1790938366909",
+]);
+
+export function isSajalId(id: string | undefined | null): boolean {
+  if (!id) return false;
+  return id === "sajal" || SAJAL_ALIASES.has(id);
+}
+
+export function normalizePlayerId(id: string): string {
+  if (isSajalId(id)) return "sajal";
+  return id;
+}
+
+export function migrateTournamentData(t: Tournament): Tournament {
+  if (!t) return t;
+  const migrated: Tournament = { ...t };
+
+  // 1. Normalize playerIds
+  if (Array.isArray(migrated.playerIds)) {
+    migrated.playerIds = Array.from(new Set(migrated.playerIds.map(normalizePlayerId)));
+  }
+
+  // 2. Normalize matches
+  if (Array.isArray(migrated.matches)) {
+    migrated.matches = migrated.matches.map((m) => {
+      const match = { ...m };
+      match.playerA = normalizePlayerId(match.playerA);
+      match.playerB = normalizePlayerId(match.playerB);
+      if (match.courtSide) {
+        const cs: { [pid: string]: 1 | 2 } = {};
+        for (const [pid, side] of Object.entries(match.courtSide)) {
+          cs[normalizePlayerId(pid)] = side;
+        }
+        match.courtSide = cs;
+      }
+      if (match.pointsAwarded) {
+        const pa: { [pid: string]: number } = {};
+        for (const [pid, pts] of Object.entries(match.pointsAwarded)) {
+          const target = normalizePlayerId(pid);
+          pa[target] = (pa[target] || 0) + pts;
+        }
+        match.pointsAwarded = pa;
+      }
+      return match;
+    });
+  }
+
+  // 3. Normalize final
+  if (migrated.final) {
+    const f = { ...migrated.final };
+    f.playerA = normalizePlayerId(f.playerA);
+    f.playerB = normalizePlayerId(f.playerB);
+    if (f.courtSide) {
+      const cs: { [pid: string]: 1 | 2 } = {};
+      for (const [pid, side] of Object.entries(f.courtSide)) {
+        cs[normalizePlayerId(pid)] = side;
+      }
+      f.courtSide = cs;
+    }
+    if (f.pointsAwarded) {
+      const pa: { [pid: string]: number } = {};
+      for (const [pid, pts] of Object.entries(f.pointsAwarded)) {
+        const target = normalizePlayerId(pid);
+        pa[target] = (pa[target] || 0) + pts;
+      }
+      f.pointsAwarded = pa;
+    }
+    migrated.final = f;
+  }
+
+  // 4. Normalize dayPointsAwarded
+  if (migrated.dayPointsAwarded && Object.keys(migrated.dayPointsAwarded).length > 0) {
+    const dpa: { [pid: string]: number } = {};
+    for (const [pid, pts] of Object.entries(migrated.dayPointsAwarded)) {
+      const target = normalizePlayerId(pid);
+      dpa[target] = (dpa[target] || 0) + pts;
+    }
+    migrated.dayPointsAwarded = dpa;
+  } else {
+    migrated.dayPointsAwarded = computeDayPoints(migrated);
+  }
+
+  return migrated;
+}
+
+export function migrateCompletedDayData(cd: CompletedDaySummary): CompletedDaySummary {
+  if (!cd) return cd;
+  const migrated: CompletedDaySummary = { ...cd };
+  if (migrated.totals) {
+    const totals: { [pid: string]: number } = {};
+    for (const [pid, pts] of Object.entries(migrated.totals)) {
+      const target = normalizePlayerId(pid);
+      totals[target] = (totals[target] || 0) + pts;
+    }
+    migrated.totals = totals;
+  }
+  if (migrated.topPlayerId) migrated.topPlayerId = normalizePlayerId(migrated.topPlayerId);
+  if (migrated.spoonPlayerId) migrated.spoonPlayerId = normalizePlayerId(migrated.spoonPlayerId);
+  return migrated;
+}
+
+export function migrateDayTableData(dt: DayTable): DayTable {
+  if (!dt) return dt;
+  const migrated: DayTable = { ...dt };
+  if (migrated.totals) {
+    const totals: { [pid: string]: number } = {};
+    for (const [pid, pts] of Object.entries(migrated.totals)) {
+      const target = normalizePlayerId(pid);
+      totals[target] = (totals[target] || 0) + pts;
+    }
+    migrated.totals = totals;
+  }
+  return migrated;
+}
+
 interface AppState {
   // Session
   appRole: AppRole;
@@ -276,7 +395,7 @@ export function recoverTournamentsFromSyncQueue(): Tournament[] {
     console.warn("Failed to recover tournaments from sync queue:", e);
   }
 
-  const list = Object.values(tournamentsMap);
+  const list = Object.values(tournamentsMap).map(migrateTournamentData);
   if (list.length > 0) {
     try {
       localStorage.setItem("badminton_archived_tournaments_v1", JSON.stringify(list));
@@ -329,7 +448,7 @@ export function recoverCompletedDaysFromSyncQueue(): CompletedDaySummary[] {
     }
   } catch {}
 
-  const result = Object.values(daysMap);
+  const result = Object.values(daysMap).map(migrateCompletedDayData);
   if (result.length > 0) {
     try {
       localStorage.setItem("badminton_completed_days_v1", JSON.stringify(result));
@@ -919,6 +1038,7 @@ export const useStore = create<AppState>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.isScoreSheetOpen = false;
+
           // Ensure all fixed players (including Sajal) are present in state.players
           const existingIds = new Set((state.players || []).map((p) => p.id));
           const playersToAdd: Player[] = [];
@@ -930,22 +1050,46 @@ export const useStore = create<AppState>()(
           if (playersToAdd.length > 0) {
             state.players = [...(state.players || []), ...playersToAdd];
           }
-          // Remove old custom duplicates of Sajal
+
+          // Remove old custom duplicates/aliases of Sajal
           state.players = (state.players || []).filter(
-            (p) => p.id !== "custom-1791021029857" && p.id !== "custom-1791025802127"
+            (p) => !SAJAL_ALIASES.has(p.id) && !(p.name.toLowerCase() === "sajal" && p.id !== "sajal")
           );
 
-          if (state.pastTournaments.length === 0) {
+          // Migrate pastTournaments
+          if (state.pastTournaments && state.pastTournaments.length > 0) {
+            state.pastTournaments = state.pastTournaments.map(migrateTournamentData);
+            try {
+              localStorage.setItem("badminton_archived_tournaments_v1", JSON.stringify(state.pastTournaments));
+            } catch {}
+          } else {
             const recovered = recoverTournamentsFromSyncQueue();
             if (recovered.length > 0) {
               state.pastTournaments = recovered;
             }
           }
-          if (!state.completedDays || state.completedDays.length === 0) {
+
+          // Migrate completedDays
+          if (state.completedDays && state.completedDays.length > 0) {
+            state.completedDays = state.completedDays.map(migrateCompletedDayData);
+            try {
+              localStorage.setItem("badminton_completed_days_v1", JSON.stringify(state.completedDays));
+            } catch {}
+          } else {
             const recoveredDays = recoverCompletedDaysFromSyncQueue();
             if (recoveredDays.length > 0) {
               state.completedDays = recoveredDays;
             }
+          }
+
+          // Migrate dayTable
+          if (state.dayTable) {
+            state.dayTable = migrateDayTableData(state.dayTable);
+          }
+
+          // Migrate currentTournament if active
+          if (state.currentTournament) {
+            state.currentTournament = migrateTournamentData(state.currentTournament);
           }
         }
       },

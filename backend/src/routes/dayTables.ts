@@ -7,6 +7,18 @@ import { TournamentConfig, DEFAULT_CONFIG } from "../lib/scoring";
 
 export const dayTablesRouter = Router();
 
+const SAJAL_ALIASES = new Set([
+  "custom-1791630401707",
+  "custom-1791021029857",
+  "custom-1791025802127",
+  "custom-1790938366909",
+]);
+
+function normalizePlayerId(id: string): string {
+  if (id === "sajal" || SAJAL_ALIASES.has(id)) return "sajal";
+  return id;
+}
+
 // GET /day-tables/:date — fetch cumulative day table, tournaments, matches, active tournament, and player roster
 dayTablesRouter.get("/:date", async (req, res) => {
   const { date } = req.params;
@@ -121,7 +133,8 @@ dayTablesRouter.get("/:date", async (req, res) => {
           hasCompletedTournaments = true;
           for (const row of t.standings) {
             if (row.playerId) {
-              calcTotals[row.playerId] = (calcTotals[row.playerId] || 0) + (row.dayPoints || 0);
+              const target = normalizePlayerId(row.playerId);
+              calcTotals[target] = (calcTotals[target] || 0) + (row.dayPoints || 0);
             }
           }
         }
@@ -129,9 +142,15 @@ dayTablesRouter.get("/:date", async (req, res) => {
     }
 
     // Merge calculated totals (if any tournaments are completed) or fallback to saved totals
-    let mergedTotals: Record<string, number> = hasCompletedTournaments
+    const rawTotals: Record<string, number> = hasCompletedTournaments
       ? calcTotals
       : { ...(extraDayTotals || {}), ...(day.totals || {}) };
+
+    const mergedTotals: Record<string, number> = {};
+    for (const [id, pts] of Object.entries(rawTotals)) {
+      const target = normalizePlayerId(id);
+      mergedTotals[target] = (mergedTotals[target] || 0) + (Number(pts) || 0);
+    }
 
     // Self-healing: if the database totals are stale compared to our true live calculated totals, update the database
     if (hasCompletedTournaments) {
