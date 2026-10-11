@@ -1017,10 +1017,6 @@ export default function ProfilesPage() {
                 </span>
               </div>
             </div>
-          </div> {winRate}% WR
-                </span>
-              </div>
-            </div>
           </div>
 
           {/* Full Player Tagline Quote - Never Truncated */}
