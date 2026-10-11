@@ -1722,7 +1722,12 @@ export default function HistoryPage() {
                             <span key={i} className={`w-5 h-5 flex items-center justify-center rounded-full text-[9px] font-black ${res === "W" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>{res}</span>
                           ))}
                         </div>
-                           {/* Stat Leaders Grid */}
+                      </div>
+                    ) : null).filter(Boolean)}
+                  </div>
+                </div>
+
+                {/* Stat Leaders Grid */}
                 <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-[26px] p-4 shadow-xs flex flex-col max-h-80">
                   <div className="flex items-center gap-2 mb-3 shrink-0">
                     <div className="w-8 h-8 rounded-xl bg-slate-200/80 flex items-center justify-center text-sm shadow-2xs">🏅</div>
