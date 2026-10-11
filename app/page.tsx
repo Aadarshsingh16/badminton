@@ -194,6 +194,7 @@ export default function PlayPage() {
         udbhaw: "bg-[#FEF8E6]",
         anirudh: "bg-[#FFF0F2]",
         gautam: "bg-[#FFFDE6]",
+        sajal: "bg-[#F3E8FF]",
       };
 
       const selectedPlayersList = selectedPlayerIds

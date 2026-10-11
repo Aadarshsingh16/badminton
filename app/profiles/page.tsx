@@ -204,6 +204,32 @@ const PLAYER_LORES: { [id: string]: PlayerLore } = {
       { label: "Chaotic Charm", value: 98, color: "from-emerald-400 to-teal-500" },
     ],
   },
+
+  sajal: {
+    id: "sajal",
+    name: "Sajal",
+    title: "The Lionheart Striker",
+    origin: "🦁 Wildcard Arena / 7th Squad Pillar",
+    avatar: "custom",
+    badgeEmoji: "🦁",
+    tagline: "Came as a wild card, stayed as the 7th permanent lethal weapon",
+    roastBio:
+      "Arrived as a temporary custom player with different profile aliases, but played so aggressively the squad had no choice but to draft him as the permanent 7th. Smashes like an apex predator on the prowl. His drop shots are as deceptive as his sudden appearance on the permanent roster.",
+    playstyle: "Apex Predator / Unpredictable Roar & Smash",
+    specialMove: "🦁 The Lion's Pounce (Dives across the court out of nowhere to kill the rally)",
+    weakness: "People asking which of his 2 previous profile IDs was the original",
+    vibeQuotes: {
+      courtMood: "I started as a guest, but now you guys can't get rid of me even if you try.",
+      dailyRoast: "Check my win rate. Permanent squad member status was earned, not gifted.",
+      excuse: "I was busy calculating my transition from custom wild card to franchise player.",
+    },
+    funStats: [
+      { label: "Predator Instinct", value: 97, color: "from-amber-400 to-orange-500" },
+      { label: "Wildcard Chaos", value: 95, color: "from-purple-400 to-indigo-500" },
+      { label: "Squad Loyalty", value: 99, color: "from-emerald-400 to-teal-500" },
+      { label: "Smash Ferocity", value: 93, color: "from-rose-400 to-red-500" },
+    ],
+  },
 };
 
 export default function ProfilesPage() {

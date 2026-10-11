@@ -17,7 +17,7 @@ playersRouter.get("/", async (_req, res) => {
   }
 });
 
-// Fixed 6 squad players
+// Fixed squad players
 export const FIXED_SQUAD_PLAYERS = [
   { id: "adarsh", name: "Adarsh", avatar: "clumsy" },
   { id: "akshat", name: "Akshat", avatar: "dwarf" },
@@ -25,16 +25,21 @@ export const FIXED_SQUAD_PLAYERS = [
   { id: "udbhaw", name: "Udbhaw", avatar: "bigfoot" },
   { id: "anirudh", name: "Anirudh", avatar: "fighter" },
   { id: "gautam", name: "Gautam", avatar: "chinese" },
+  { id: "sajal", name: "Sajal", avatar: "custom", avatarEmoji: "🦁", avatarColor: "#6C63FF" },
 ];
 
 export async function seedFixedPlayers() {
   for (const p of FIXED_SQUAD_PLAYERS) {
     try {
       await pool.query(
-        `INSERT INTO players (id, name, avatar_type)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (id) DO UPDATE SET name = $2, avatar_type = $3`,
-        [p.id, p.name, p.avatar]
+        `INSERT INTO players (id, name, avatar_type, avatar_emoji, avatar_color)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (id) DO UPDATE SET 
+           name = $2, 
+           avatar_type = $3,
+           avatar_emoji = COALESCE($4, players.avatar_emoji),
+           avatar_color = COALESCE($5, players.avatar_color)`,
+        [p.id, p.name, p.avatar, (p as any).avatarEmoji || null, (p as any).avatarColor || null]
       );
     } catch (err: any) {
       console.warn(`Failed to seed player ${p.name}:`, err.message);

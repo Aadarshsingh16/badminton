@@ -19,7 +19,7 @@ import { apiSync } from "./apiSync";
 
 export type AppRole = 'admin' | 'viewer' | null;
 
-// Fixed players (the 6 friends)
+// Fixed players (the 7 friends)
 export const FIXED_PLAYERS: Player[] = [
   { id: "adarsh", name: "Adarsh", avatar: "clumsy" },
   { id: "akshat", name: "Akshat", avatar: "dwarf" },
@@ -27,6 +27,7 @@ export const FIXED_PLAYERS: Player[] = [
   { id: "udbhaw", name: "Udbhaw", avatar: "bigfoot" },
   { id: "anirudh", name: "Anirudh", avatar: "fighter" },
   { id: "gautam", name: "Gautam", avatar: "chinese" },
+  { id: "sajal", name: "Sajal", avatar: "custom", avatarEmoji: "🦁", avatarColor: "#6C63FF" },
 ];
 
 interface AppState {
@@ -918,6 +919,22 @@ export const useStore = create<AppState>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.isScoreSheetOpen = false;
+          // Ensure all fixed players (including Sajal) are present in state.players
+          const existingIds = new Set((state.players || []).map((p) => p.id));
+          const playersToAdd: Player[] = [];
+          for (const fp of FIXED_PLAYERS) {
+            if (!existingIds.has(fp.id)) {
+              playersToAdd.push(fp);
+            }
+          }
+          if (playersToAdd.length > 0) {
+            state.players = [...(state.players || []), ...playersToAdd];
+          }
+          // Remove old custom duplicates of Sajal
+          state.players = (state.players || []).filter(
+            (p) => p.id !== "custom-1791021029857" && p.id !== "custom-1791025802127"
+          );
+
           if (state.pastTournaments.length === 0) {
             const recovered = recoverTournamentsFromSyncQueue();
             if (recovered.length > 0) {
