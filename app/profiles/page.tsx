@@ -248,9 +248,18 @@ export default function ProfilesPage() {
   const [cloudHistory, setCloudHistory] = useState<any | null>(null);
   const [cloudDayHonors, setCloudDayHonors] = useState<any | null>(null);
   const [cloudLeaderboard, setCloudLeaderboard] = useState<any[] | null>(null);
-  const [cloudLoading, setCloudLoading] = useState(false);
   const [shutoutModalType, setShutoutModalType] = useState<"delivered" | "received" | null>(null);
   const [selectedOpponentH2H, setSelectedOpponentH2H] = useState<string | null>(null);
+  const [compareOpponentId, setCompareOpponentId] = useState<string>(
+    FIXED_PLAYERS.find((p) => p.id !== (FIXED_PLAYERS[0]?.id || "adarsh"))?.id || "gautam"
+  );
+
+  useEffect(() => {
+    if (compareOpponentId === selectedPlayerId) {
+      const alt = FIXED_PLAYERS.find((p) => p.id !== selectedPlayerId);
+      if (alt) setCompareOpponentId(alt.id);
+    }
+  }, [selectedPlayerId, compareOpponentId]);
 
   useEffect(() => {
     const viewer = isViewerMode() && !currentTournament;
