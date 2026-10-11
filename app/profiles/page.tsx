@@ -891,7 +891,10 @@ export default function ProfilesPage() {
       {/* Interactive Avatar Carousel / Player Picker */}
       <div className="px-5 pt-4 pb-2">
         <div className="flex items-center justify-between mb-2.5 px-0.5">
-          <p className="text-[11px] font-black           <span className="text-[11px] font-bold text-slate-400">
+          <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+            Select Player
+          </p>
+          <span className="text-[11px] font-bold text-slate-400">
             {FIXED_PLAYERS.length} Squad Athletes
           </span>
         </div>
@@ -1263,7 +1266,18 @@ export default function ProfilesPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {/* Card 1: 👑 Day Champions */}
+                  <div className="p-3.5 rounded-[22px] bg-gradient-to-br from-amber-100/90 via-amber-50 to-white border border-amber-300 text-center shadow-2xs relative overflow-hidden">
+                    <span className="absolute top-1.5 right-1.5 text-xs">👑</span>
+                    <p className="text-amber-950 font-black text-2xl leading-tight font-mono">
+                      {activeStats.dayWins}
+                    </p>
+                    <p className="text-[10px] text-amber-900 font-black mt-0.5">👑 Day Champ</p>
+                    <p className="text-[9px] text-amber-700/80">Daily 1st Place</p>
+                  </div>
+
+                  {/* Card 2: 🏆 Titles Won */}
                   <div className="p-3.5 rounded-[22px] bg-amber-50/70 border border-amber-200/60 text-center">
                     <p className="text-amber-900 font-black text-2xl leading-tight font-mono">
                       {activeStats.tournamentsWon}
@@ -1272,6 +1286,7 @@ export default function ProfilesPage() {
                     <p className="text-[9px] text-amber-700/70">Finals Champion</p>
                   </div>
 
+                  {/* Card 3: 🥄 Day Spoons */}
                   <div className="p-3.5 rounded-[22px] bg-rose-50/70 border border-rose-200/60 text-center">
                     <p className="text-rose-800 font-black text-2xl leading-tight font-mono">
                       {activeStats.woodenSpoons}
@@ -1280,6 +1295,7 @@ export default function ProfilesPage() {
                     <p className="text-[9px] text-rose-600/70">Official Day Last</p>
                   </div>
 
+                  {/* Card 4: 📈 Win Rate */}
                   <div className="p-3.5 rounded-[22px] bg-emerald-50/70 border border-emerald-200/60 text-center">
                     <p className="text-emerald-800 font-black text-2xl leading-tight font-mono">
                       {winRate}%
@@ -1290,6 +1306,7 @@ export default function ProfilesPage() {
                     </p>
                   </div>
 
+                  {/* Card 5: ⭐ Day Points */}
                   <div className="p-3.5 rounded-[22px] bg-indigo-50/70 border border-indigo-200/60 text-center">
                     <p className="text-indigo-900 font-black text-2xl leading-tight font-mono">
                       {activeStats.dayPointsTotal}
@@ -1298,6 +1315,7 @@ export default function ProfilesPage() {
                     <p className="text-[9px] text-indigo-600/70">Official Placement Pts</p>
                   </div>
 
+                  {/* Card 6: 🎯 Match Points */}
                   <div className="p-3.5 rounded-[22px] bg-blue-50/70 border border-blue-200/60 text-center">
                     <p className="text-blue-900 font-black text-2xl leading-tight font-mono">
                       {activeStats.leaguePoints}
@@ -1306,6 +1324,7 @@ export default function ProfilesPage() {
                     <p className="text-[9px] text-blue-600/70">2-3 Pts Game Score</p>
                   </div>
 
+                  {/* Card 7: 🏸 Total Matches */}
                   <div className="p-3.5 rounded-[22px] bg-slate-50 border border-slate-200/70 text-center">
                     <p className="text-slate-900 font-black text-2xl leading-tight font-mono">
                       {activeStats.matchesPlayed}
@@ -1315,18 +1334,156 @@ export default function ProfilesPage() {
                       Diff: {activeStats.pointDiff >= 0 ? `+${activeStats.pointDiff}` : activeStats.pointDiff}
                     </p>
                   </div>
+
+                  {/* Card 8: ⚡ Shutout Ratio */}
+                  <div className="p-3.5 rounded-[22px] bg-purple-50/70 border border-purple-200/60 text-center">
+                    <p className="text-purple-900 font-black text-2xl leading-tight font-mono">
+                      {activeStats.shutsDelivered} : {activeStats.shutsReceived}
+                    </p>
+                    <p className="text-[10px] text-purple-800 font-bold mt-0.5">⚡ Shutouts</p>
+                    <p className="text-[9px] text-purple-600/70">Delivered : Conceded</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Rivalry & Head-to-Head Dossier */}
-              <div className="rounded-[28px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3">
+              {/* Finals & Clutch Performance Hub */}
+              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3.5">
                 <div className="flex items-center justify-between">
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
-                    Rivalry Matrix
-                  </p>
-                  <span className="text-[10px] text-slate-400 font-mono">H2H Standings</span>
+                  <div>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                      Clutch &amp; Finals Intelligence
+                    </p>
+                    <p className="text-slate-900 font-extrabold text-xs mt-0.5">
+                      Pressure Index &amp; Momentum
+                    </p>
+                  </div>
+                  <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
+                    Clutch Factor
+                  </span>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {/* Card 1: Finals Record */}
+                  <div className="p-3.5 rounded-[22px] bg-gradient-to-br from-amber-500/10 via-amber-50/50 to-white border border-amber-200/80 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full">
+                        🏆 Finals Record
+                      </span>
+                      <span className="text-xs font-mono font-bold text-amber-800">
+                        {activeStats.finalsPlayed > 0
+                          ? `${Math.round((activeStats.tournamentsWon / activeStats.finalsPlayed) * 100)}% WR`
+                          : "0%"}
+                      </span>
+                    </div>
+                    <div className="my-2">
+                      <p className="text-2xl font-black text-slate-900 font-mono">
+                        {activeStats.tournamentsWon}W - {activeStats.finalsLost}L
+                      </p>
+                      <p className="text-[11px] font-bold text-amber-950 mt-0.5">
+                        {activeStats.finalsPlayed} Championship Finals
+                      </p>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      {activeStats.finalsPlayed === 0
+                        ? "Has not reached a final yet"
+                        : activeStats.tournamentsWon > 0 && activeStats.finalsLost === 0
+                        ? "🔥 Undefeated in Championship Finals"
+                        : activeStats.finalsLost > activeStats.tournamentsWon
+                        ? `💔 ${activeStats.finalsLost} Heartbreak Runner-up finishes`
+                        : "🏆 Proven Finals Champion"}
+                    </p>
+                  </div>
+
+                  {/* Card 2: 1-Point Deciders (Cardiac Rating) */}
+                  <div className="p-3.5 rounded-[22px] bg-gradient-to-br from-rose-500/10 via-rose-50/50 to-white border border-rose-200/80 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-rose-900 bg-rose-100/80 px-2 py-0.5 rounded-full">
+                        💓 1-Pt Thrillers
+                      </span>
+                      <span className="text-xs font-mono font-bold text-rose-800">
+                        {activeStats.clutchMatches > 0
+                          ? `${Math.round((activeStats.clutchWins / activeStats.clutchMatches) * 100)}% WR`
+                          : "0%"}
+                      </span>
+                    </div>
+                    <div className="my-2">
+                      <p className="text-2xl font-black text-slate-900 font-mono">
+                        {activeStats.clutchWins}W - {activeStats.clutchLosses}L
+                      </p>
+                      <p className="text-[11px] font-bold text-rose-950 mt-0.5">
+                        {activeStats.clutchMatches} Matches Decided by 1 Pt
+                      </p>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      {activeStats.clutchMatches === 0
+                        ? "No 1-point thriller games played"
+                        : activeStats.clutchWins >= activeStats.clutchLosses
+                        ? "🧊 Ice in the veins in pressure cookers"
+                        : "⚠️ Tendency to slip in 5-4 / 6-5 nailbiters"}
+                    </p>
+                  </div>
+
+                  {/* Card 3: Form & Momentum Pulse */}
+                  <div className="p-3.5 rounded-[22px] bg-gradient-to-br from-emerald-500/10 via-emerald-50/50 to-white border border-emerald-200/80 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-900 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                        🔥 Momentum Pulse
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-800">
+                        {activeStats.currentStreak?.count > 0
+                          ? activeStats.currentStreak.type === "W"
+                            ? `🔥 ${activeStats.currentStreak.count}W Streak`
+                            : `❄️ ${activeStats.currentStreak.count}L Streak`
+                          : "Neutral"}
+                      </span>
+                    </div>
+                    <div className="my-2">
+                      <div className="flex items-center gap-1.5">
+                        {activeStats.recentForm && activeStats.recentForm.length > 0 ? (
+                          activeStats.recentForm.map((res, i) => (
+                            <span
+                              key={i}
+                              className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shadow-2xs ${
+                                res === "W"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-rose-500 text-white"
+                              }`}
+                            >
+                              {res}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">No recent matches</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] font-bold text-emerald-950 mt-1">
+                        Last 5 Matches (Recent → Older)
+                      </p>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      🚀 Career-Best: {activeStats.longestWinStreak} Consecutive Wins
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rivalry & Head-to-Head Matrix Hub */}
+              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                      Rivalry Matrix &amp; Final Face-Offs
+                    </p>
+                    <p className="text-slate-900 font-extrabold text-xs mt-0.5">
+                      Complete Head-to-Head Squad Table
+                    </p>
+                  </div>
+                  <span className="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-2.5 py-0.5 rounded-full font-bold">
+                    Tap Row for Matchup
+                  </span>
+                </div>
+
+                {/* Bunny & Nemesis Highlights */}
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="p-3.5 rounded-[22px] bg-emerald-50/70 border border-emerald-200/70">
                     <p className="text-[9px] uppercase font-black text-emerald-800 tracking-wider">
@@ -1365,133 +1522,194 @@ export default function ProfilesPage() {
                   </div>
                 </div>
 
-                {/* Complete H2H Squad Breakdown with Clean Shutout Badges */}
-                <div className="pt-2 border-t border-slate-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                      Record vs. Squad Opponents
-                    </p>
-                    <span className="text-[10px] text-slate-400 italic">Tap row for matchup details</span>
-                  </div>
-                  <div className="space-y-2">
-                    {FIXED_PLAYERS.filter((p) => p.id !== selectedPlayerId).map((opp) => {
-                      const rec = activeStats.h2h?.[opp.id] || {
-                        played: 0,
-                        won: 0,
-                        lost: 0,
-                        shutsDelivered: 0,
-                        shutsReceived: 0,
-                        pointsFor: 0,
-                        pointsAgainst: 0,
-                      };
-                      const isExpanded = selectedOpponentH2H === opp.id;
+                {/* Comprehensive Table Container */}
+                <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-200/80">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                        <th className="py-2.5 pl-3 pr-2">Opponent</th>
+                        <th className="py-2.5 px-2 text-center">Record</th>
+                        <th className="py-2.5 px-2 text-center">🏆 Finals</th>
+                        <th className="py-2.5 px-2 text-center">⚡/🛡️ Shutouts</th>
+                        <th className="py-2.5 px-2 text-center">Diff</th>
+                        <th className="py-2.5 pr-3 pl-2 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {FIXED_PLAYERS.filter((p) => p.id !== selectedPlayerId).map((opp) => {
+                        const rec = activeStats.h2h?.[opp.id] || {
+                          played: 0,
+                          won: 0,
+                          lost: 0,
+                          finalsPlayed: 0,
+                          finalsWon: 0,
+                          finalsLost: 0,
+                          shutsDelivered: 0,
+                          shutsReceived: 0,
+                          pointsFor: 0,
+                          pointsAgainst: 0,
+                        };
+                        const oppWr = rec.played > 0 ? Math.round((rec.won / rec.played) * 100) : 0;
+                        const netMargin = rec.pointsFor - rec.pointsAgainst;
+                        const isExpanded = selectedOpponentH2H === opp.id;
 
-                      return (
-                        <div
-                          key={opp.id}
-                          onClick={() => setSelectedOpponentH2H(isExpanded ? null : opp.id)}
-                          className={`p-2.5 rounded-2xl border transition-all cursor-pointer ${
-                            isExpanded
-                              ? "bg-indigo-50/80 border-indigo-200 shadow-xs"
-                              : "bg-slate-50/80 hover:bg-slate-100/70 border-slate-200/60"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="w-6 h-6 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shadow-xs">
-                                <AvatarSVG type={opp.avatar} size={18} />
-                              </span>
-                              <span className="font-extrabold text-xs text-slate-800">
-                                {opp.name}
-                              </span>
-                            </div>
+                        // Relationship Status Tag
+                        const isBunny = rec.played >= 2 && oppWr >= 65;
+                        const isNemesis = rec.played >= 2 && oppWr <= 35;
 
-                            <div className="flex items-center gap-2">
-                              {/* Clean Shutout Badges directly in the matrix row */}
-                              {rec.shutsDelivered > 0 && (
-                                <span
-                                  title={`${rec.shutsDelivered} shutouts delivered against ${opp.name}`}
-                                  className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-900 border border-amber-300/80 text-[10px] font-black shadow-2xs"
-                                >
-                                  <span>⚡</span>
-                                  <span>{rec.shutsDelivered} shut</span>
-                                </span>
-                              )}
-                              {rec.shutsReceived > 0 && (
-                                <span
-                                  title={`${rec.shutsReceived} shutouts conceded to ${opp.name}`}
-                                  className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-rose-100/90 text-rose-900 border border-rose-300/80 text-[10px] font-black shadow-2xs"
-                                >
-                                  <span>🛡️</span>
-                                  <span>{rec.shutsReceived} shutted</span>
-                                </span>
-                              )}
+                        return (
+                          <React.Fragment key={opp.id}>
+                            <tr
+                              onClick={() => setSelectedOpponentH2H(isExpanded ? null : opp.id)}
+                              className={`cursor-pointer transition-colors ${
+                                isExpanded
+                                  ? "bg-indigo-50/70"
+                                  : "hover:bg-slate-50/80"
+                              }`}
+                            >
+                              {/* Opponent */}
+                              <td className="py-2.5 pl-3 pr-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-6 h-6 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shadow-xs shrink-0">
+                                    <AvatarSVG type={opp.avatar} size={18} />
+                                  </span>
+                                  <span className="font-extrabold text-xs text-slate-900 truncate">
+                                    {opp.name}
+                                  </span>
+                                </div>
+                              </td>
 
-                              {/* W-L Score */}
-                              <div className="font-mono text-xs ml-1 min-w-[50px] text-right">
+                              {/* Overall Record */}
+                              <td className="py-2.5 px-2 text-center font-mono">
                                 {rec.played > 0 ? (
-                                  <span>
+                                  <div>
                                     <span className="font-black text-emerald-700">{rec.won}W</span>
-                                    <span className="text-slate-300 mx-1">-</span>
+                                    <span className="text-slate-300 mx-0.5">-</span>
                                     <span className="font-black text-rose-600">{rec.lost}L</span>
+                                    <span className="text-[10px] text-slate-400 block">{oppWr}%</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-400 font-medium">0 - 0</span>
+                                )}
+                              </td>
+
+                              {/* Final Face-Offs */}
+                              <td className="py-2.5 px-2 text-center">
+                                {rec.finalsPlayed > 0 ? (
+                                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-900 border border-amber-300/80 text-[10px] font-black shadow-2xs font-mono">
+                                    <span>🏆</span>
+                                    <span>{rec.finalsWon}W - {rec.finalsLost}L</span>
                                   </span>
                                 ) : (
-                                  <span className="text-slate-400">0 - 0</span>
+                                  <span className="text-slate-300 font-mono text-[11px]">—</span>
                                 )}
-                              </div>
-                            </div>
-                          </div>
+                              </td>
 
-                          {/* Expandable Matchup Details */}
-                          <AnimatePresence>
+                              {/* Shutouts Delivered vs Received */}
+                              <td className="py-2.5 px-2 text-center">
+                                {rec.shutsDelivered > 0 || rec.shutsReceived > 0 ? (
+                                  <div className="flex items-center justify-center gap-1 font-mono text-[10px]">
+                                    {rec.shutsDelivered > 0 && (
+                                      <span
+                                        title={`${rec.shutsDelivered} blowouts delivered`}
+                                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 font-bold"
+                                      >
+                                        <span>⚡</span>
+                                        <span>{rec.shutsDelivered}</span>
+                                      </span>
+                                    )}
+                                    {rec.shutsReceived > 0 && (
+                                      <span
+                                        title={`${rec.shutsReceived} blowouts conceded`}
+                                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-900 border border-rose-200 font-bold"
+                                      >
+                                        <span>🛡️</span>
+                                        <span>{rec.shutsReceived}</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-300 text-[11px]">—</span>
+                                )}
+                              </td>
+
+                              {/* Net Margin */}
+                              <td className="py-2.5 px-2 text-center font-mono font-bold text-[11px]">
+                                {rec.played > 0 ? (
+                                  <span className={netMargin > 0 ? "text-emerald-700" : netMargin < 0 ? "text-rose-600" : "text-slate-400"}>
+                                    {netMargin > 0 ? `+${netMargin}` : netMargin}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-300">0</span>
+                                )}
+                              </td>
+
+                              {/* Dynamic Relationship Tag */}
+                              <td className="py-2.5 pr-3 pl-2 text-right">
+                                {isBunny ? (
+                                  <span className="px-2 py-0.5 rounded-full bg-emerald-100/80 text-emerald-800 text-[9px] font-black">
+                                    🐰 Bunny
+                                  </span>
+                                ) : isNemesis ? (
+                                  <span className="px-2 py-0.5 rounded-full bg-rose-100/80 text-rose-800 text-[9px] font-black">
+                                    😈 Nemesis
+                                  </span>
+                                ) : rec.played > 0 ? (
+                                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[9px] font-bold">
+                                    ⚔️ Rival
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-400 text-[10px]">Unplayed</span>
+                                )}
+                              </td>
+                            </tr>
+
+                            {/* Expandable Drill-Down Row */}
                             {isExpanded && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="mt-2.5 pt-2.5 border-t border-slate-200/70 overflow-hidden text-[11px]"
-                              >
-                                <div className="grid grid-cols-3 gap-2 text-center">
-                                  <div className="p-2 rounded-xl bg-white border border-slate-100 shadow-xs">
-                                    <span className="text-[9px] uppercase font-bold text-slate-400 block">
-                                      Win Rate
-                                    </span>
-                                    <span className="font-black text-slate-800">
-                                      {rec.played > 0 ? Math.round((rec.won / rec.played) * 100) : 0}%
-                                    </span>
+                              <tr className="bg-indigo-50/40">
+                                <td colSpan={6} className="p-3">
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11px]">
+                                    <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                                      <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                        Total Head-to-Head
+                                      </span>
+                                      <span className="font-black text-slate-800 font-mono">
+                                        {rec.played} Matches ({oppWr}% Win)
+                                      </span>
+                                    </div>
+                                    <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                                      <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                        Championship Finals
+                                      </span>
+                                      <span className="font-black text-amber-700 font-mono">
+                                        {rec.finalsPlayed > 0 ? `${rec.finalsWon}W - ${rec.finalsLost}L in Finals` : "Never met in Finals"}
+                                      </span>
+                                    </div>
+                                    <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                                      <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                        Points Aggregate
+                                      </span>
+                                      <span className="font-black text-slate-800 font-mono">
+                                        {rec.pointsFor} - {rec.pointsAgainst}
+                                      </span>
+                                    </div>
+                                    <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                                      <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                        Blowout Margin
+                                      </span>
+                                      <span className="font-black text-indigo-700 font-mono">
+                                        {rec.shutsDelivered} delivered / {rec.shutsReceived} conceded
+                                      </span>
+                                    </div>
                                   </div>
-                                  <div className="p-2 rounded-xl bg-white border border-slate-100 shadow-xs">
-                                    <span className="text-[9px] uppercase font-bold text-slate-400 block">
-                                      Points Aggregate
-                                    </span>
-                                    <span className="font-black text-slate-800 font-mono">
-                                      {rec.pointsFor} - {rec.pointsAgainst}
-                                    </span>
-                                  </div>
-                                  <div className="p-2 rounded-xl bg-white border border-slate-100 shadow-xs">
-                                    <span className="text-[9px] uppercase font-bold text-slate-400 block">
-                                      Net Margin
-                                    </span>
-                                    <span
-                                      className={`font-black font-mono ${
-                                        rec.pointsFor - rec.pointsAgainst >= 0
-                                          ? "text-emerald-700"
-                                          : "text-rose-600"
-                                      }`}
-                                    >
-                                      {rec.pointsFor - rec.pointsAgainst > 0
-                                        ? `+${rec.pointsFor - rec.pointsAgainst}`
-                                        : rec.pointsFor - rec.pointsAgainst}
-                                    </span>
-                                  </div>
-                                </div>
-                              </motion.div>
+                                </td>
+                              </tr>
                             )}
-                          </AnimatePresence>
-                        </div>
-                      );
-                    })}
-                  </div>
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
