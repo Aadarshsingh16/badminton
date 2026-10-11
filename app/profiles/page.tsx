@@ -381,6 +381,12 @@ export default function ProfilesPage() {
         pointDiff: number;
         shutsDelivered: number;
         shutsReceived: number;
+        clutchMatches: number;
+        clutchWins: number;
+        clutchLosses: number;
+        longestWinStreak: number;
+        currentStreak: { type: "W" | "L" | null; count: number };
+        recentForm: ("W" | "L")[];
         h2h: {
           [opponentId: string]: {
             played: number;
@@ -402,7 +408,10 @@ export default function ProfilesPage() {
       };
     } = {};
 
+    const playerMatchLog: Record<string, { won: boolean; isFinal: boolean; diff: number; oppId: string }[]> = {};
+
     FIXED_PLAYERS.forEach((p) => {
+      playerMatchLog[p.id] = [];
       stats[p.id] = {
         matchesPlayed: 0,
         wins: 0,
@@ -418,6 +427,12 @@ export default function ProfilesPage() {
         pointDiff: 0,
         shutsDelivered: 0,
         shutsReceived: 0,
+        clutchMatches: 0,
+        clutchWins: 0,
+        clutchLosses: 0,
+        longestWinStreak: 0,
+        currentStreak: { type: null, count: 0 },
+        recentForm: [],
         h2h: {},
       };
       FIXED_PLAYERS.forEach((opp) => {
@@ -555,6 +570,8 @@ export default function ProfilesPage() {
         }
 
         if (scoreA > scoreB) {
+          playerMatchLog[pA]?.push({ won: true, isFinal: isFinalMatch, diff, oppId: pB });
+          playerMatchLog[pB]?.push({ won: false, isFinal: isFinalMatch, diff, oppId: pA });
           stats[pA].wins += 1;
           stats[pB].losses += 1;
           stats[pA].h2h[pB].won += 1;
@@ -591,6 +608,8 @@ export default function ProfilesPage() {
             }
           }
         } else if (scoreB > scoreA) {
+          playerMatchLog[pB]?.push({ won: true, isFinal: isFinalMatch, diff, oppId: pA });
+          playerMatchLog[pA]?.push({ won: false, isFinal: isFinalMatch, diff, oppId: pB });
           stats[pB].wins += 1;
           stats[pA].losses += 1;
           stats[pB].h2h[pA].won += 1;
@@ -627,6 +646,40 @@ export default function ProfilesPage() {
           }
         }
       });
+    });
+
+    // Compute streaks, form & clutch rating for all players
+    FIXED_PLAYERS.forEach((p) => {
+      const log = playerMatchLog[p.id] || [];
+      const clutchM = log.filter((m) => m.diff === 1);
+      stats[p.id].clutchMatches = clutchM.length;
+      stats[p.id].clutchWins = clutchM.filter((m) => m.won).length;
+      stats[p.id].clutchLosses = clutchM.filter((m) => !m.won).length;
+      stats[p.id].recentForm = log.slice(-5).map((m) => (m.won ? "W" : "L"));
+
+      let maxW = 0;
+      let currW = 0;
+      for (const m of log) {
+        if (m.won) {
+          currW++;
+          if (currW > maxW) maxW = currW;
+        } else {
+          currW = 0;
+        }
+      }
+      stats[p.id].longestWinStreak = maxW;
+
+      if (log.length === 0) {
+        stats[p.id].currentStreak = { type: null, count: 0 };
+      } else {
+        const lastType = log[log.length - 1].won ? "W" : "L";
+        let cnt = 0;
+        for (let i = log.length - 1; i >= 0; i--) {
+          if ((log[i].won ? "W" : "L") === lastType) cnt++;
+          else break;
+        }
+        stats[p.id].currentStreak = { type: lastType, count: cnt };
+      }
     });
 
     // Assign totalPoints = dayPointsTotal (Official Placement Metric)
@@ -741,6 +794,12 @@ export default function ProfilesPage() {
     pointDiff: 0,
     shutsDelivered: 0,
     shutsReceived: 0,
+    clutchMatches: 0,
+    clutchWins: 0,
+    clutchLosses: 0,
+    longestWinStreak: 0,
+    currentStreak: { type: null, count: 0 },
+    recentForm: [],
     h2h: {},
   };
 
@@ -955,7 +1014,7 @@ export default function ProfilesPage() {
                 </span>
               </div>
             </div>
-          </div>ˆ {winRate}% WR
+          </div> {winRate}% WR
                 </span>
               </div>
             </div>
