@@ -67,14 +67,14 @@ leaderboardRouter.get("/", async (req, res) => {
           SUM(CASE WHEN (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) THEN m.points_a ELSE m.points_b END) as league_points,
           SUM(CASE WHEN (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) THEN (m.score_a - m.score_b) ELSE (m.score_b - m.score_a) END) as league_point_diff,
           SUM(CASE WHEN (
-            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b = 0
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_a = 3 OR (m.score_a - m.score_b) >= 4)
           ) OR (
-            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a = 0
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_b = 3 OR (m.score_b - m.score_a) >= 4)
           ) THEN 1 ELSE 0 END) as shutout_wins,
           SUM(CASE WHEN (
-            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a = 0
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_b = 3 OR (m.score_b - m.score_a) >= 4)
           ) OR (
-            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b = 0
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_a = 3 OR (m.score_a - m.score_b) >= 4)
           ) THEN 1 ELSE 0 END) as shutout_losses,
           MAX(CASE WHEN (
             (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
@@ -98,7 +98,17 @@ leaderboardRouter.get("/", async (req, res) => {
             (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
           ) OR (
             (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
-          ) THEN 1 ELSE 0 END) as finals_won
+          ) THEN 1 ELSE 0 END) as finals_won,
+          SUM(CASE WHEN (
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_a - m.score_b) >= 4
+          ) OR (
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_b - m.score_a) >= 4
+          ) THEN 1 ELSE 0 END) as final_shutout_wins,
+          SUM(CASE WHEN (
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_b - m.score_a) >= 4
+          ) OR (
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_a - m.score_b) >= 4
+          ) THEN 1 ELSE 0 END) as final_shutout_losses
         FROM players p
         JOIN matches m ON (
           m.player_a = p.id OR m.player_b = p.id OR
@@ -119,8 +129,8 @@ leaderboardRouter.get("/", async (req, res) => {
         COALESCE(ls.league_wins, 0)::int AS "leagueWins",
         COALESCE(ls.league_points, 0)::int AS "leaguePoints",
         COALESCE(ls.league_point_diff, 0)::int AS "leaguePointDiff",
-        COALESCE(ls.shutout_wins, 0)::int AS "shutoutWins",
-        COALESCE(ls.shutout_losses, 0)::int AS "shutoutLosses",
+        (COALESCE(ls.shutout_wins, 0)::int + COALESCE(fs.final_shutout_wins, 0)::int) AS "shutoutWins",
+        (COALESCE(ls.shutout_losses, 0)::int + COALESCE(fs.final_shutout_losses, 0)::int) AS "shutoutLosses",
         COALESCE(ls.highest_win_margin, 0)::int AS "highestWinMargin",
         COALESCE(fs.finals_played, 0)::int AS "finalsPlayed",
         COALESCE(fs.finals_won, 0)::int AS "finalsWon",

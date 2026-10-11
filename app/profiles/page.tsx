@@ -12,6 +12,7 @@ import {
   SAJAL_ALIASES,
   isSajalId,
 } from "@/lib/store";
+import { computeDayPoints } from "@/lib/ranking";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
 import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
@@ -246,21 +247,25 @@ export default function ProfilesPage() {
   const [viewerSlug, setViewerSlugState] = useState<string | null>(null);
   const [cloudHistory, setCloudHistory] = useState<any | null>(null);
   const [cloudDayHonors, setCloudDayHonors] = useState<any | null>(null);
+  const [cloudLeaderboard, setCloudLeaderboard] = useState<any[] | null>(null);
   const [cloudLoading, setCloudLoading] = useState(false);
+  const [shutoutModalType, setShutoutModalType] = useState<"delivered" | "received" | null>(null);
+  const [selectedOpponentH2H, setSelectedOpponentH2H] = useState<string | null>(null);
 
   useEffect(() => {
     const viewer = isViewerMode() && !currentTournament;
     setIsViewer(viewer);
     setViewerSlugState(getViewerSlug());
 
-    // Fetch cloud history & honors so spectators see real career stats across all 6 players
+    // Fetch cloud history, honors & leaderboard so spectators see real career stats across all players
     const fetchCloudData = async () => {
       setCloudLoading(true);
       try {
         const backendUrl = getBackendUrl();
-        const [resHist, resDays] = await Promise.all([
+        const [resHist, resDays, resLb] = await Promise.all([
           fetch(`${backendUrl}/history?range=all`),
           fetch(`${backendUrl}/day-results`),
+          fetch(`${backendUrl}/leaderboard`),
         ]);
         if (resHist.ok) {
           const hData = await resHist.json();
@@ -269,6 +274,10 @@ export default function ProfilesPage() {
         if (resDays.ok) {
           const dData = await resDays.json();
           setCloudDayHonors(dData);
+        }
+        if (resLb.ok) {
+          const lbData = await resLb.json();
+          setCloudLeaderboard(lbData);
         }
       } catch (err) {
         console.warn("Failed to fetch cloud profile stats:", err);
@@ -334,6 +343,17 @@ export default function ProfilesPage() {
             matches: rrMatches,
             final: finalMatch,
             dayPointsAwarded: {},
+            config: ct.config || {
+              winScore: 5,
+              bonusMargin: 4,
+              finalBonusMargin: 4,
+              winPoints: 2,
+              bonusPoints: 1,
+              finalWinScore: 6,
+              finalWinBase: 2,
+              finalWinBonus: 0,
+              finalLoserPenalty: -1,
+            },
           });
         });
       });
@@ -343,7 +363,7 @@ export default function ProfilesPage() {
     return list;
   }, [pastTournaments, currentTournament, cloudHistory]);
 
-  // Overall career stats for all 6 players
+  // Overall career stats for all squad players
   const playerStatsMap = useMemo(() => {
     const stats: {
       [id: string]: {
@@ -352,9 +372,27 @@ export default function ProfilesPage() {
         losses: number;
         tournamentsWon: number;
         woodenSpoons: number;
+        dayPointsTotal: number;
+        leaguePoints: number;
         totalPoints: number;
         pointDiff: number;
-        h2h: { [opponentId: string]: { played: number; won: number; lost: number } };
+        shutsDelivered: number;
+        shutsReceived: number;
+        h2h: {
+          [opponentId: string]: {
+            played: number;
+            won: number;
+            lost: number;
+            shutsDelivered: number;
+            shutsReceived: number;
+            regularShutsDelivered: number;
+            finalShutsDelivered: number;
+            regularShutsReceived: number;
+            finalShutsReceived: number;
+            pointsFor: number;
+            pointsAgainst: number;
+          };
+        };
       };
     } = {};
 
@@ -365,13 +403,29 @@ export default function ProfilesPage() {
         losses: 0,
         tournamentsWon: 0,
         woodenSpoons: 0,
+        dayPointsTotal: 0,
+        leaguePoints: 0,
         totalPoints: 0,
         pointDiff: 0,
+        shutsDelivered: 0,
+        shutsReceived: 0,
         h2h: {},
       };
       FIXED_PLAYERS.forEach((opp) => {
         if (opp.id !== p.id) {
-          stats[p.id].h2h[opp.id] = { played: 0, won: 0, lost: 0 };
+          stats[p.id].h2h[opp.id] = {
+            played: 0,
+            won: 0,
+            lost: 0,
+            shutsDelivered: 0,
+            shutsReceived: 0,
+            regularShutsDelivered: 0,
+            finalShutsDelivered: 0,
+            regularShutsReceived: 0,
+            finalShutsReceived: 0,
+            pointsFor: 0,
+            pointsAgainst: 0,
+          };
         }
       });
     });
@@ -385,18 +439,25 @@ export default function ProfilesPage() {
         }
       }
 
-      // Wooden Spoon / Last place
-      if (t.dayPointsAwarded) {
-        const sorted = Object.entries(t.dayPointsAwarded).sort(([, a], [, b]) => (Number(a) || 0) - (Number(b) || 0));
-        if (sorted.length > 0) {
-          const lastId = normalizePlayerId(sorted[0][0]);
-          if (stats[lastId]) {
-            stats[lastId].woodenSpoons += 1;
+      // Day Points (Tournament placement points: e.g. 5 for 1st, 4 for 2nd, etc.)
+      const tPtsMap =
+        t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
+          ? t.dayPointsAwarded
+          : computeDayPoints(t);
+
+      if (tPtsMap) {
+        FIXED_PLAYERS.forEach((p) => {
+          let pts = tPtsMap[p.id] ?? 0;
+          if (p.id === "sajal") {
+            for (const alias of SAJAL_ALIASES) {
+              if (tPtsMap[alias] !== undefined) pts += tPtsMap[alias];
+            }
           }
-        }
+          stats[p.id].dayPointsTotal += pts;
+        });
       }
 
-      // Matches
+      // Matches (Round-Robin & Final)
       const allMatches = [...(t.matches || []).filter((m: any) => m.played)];
       if (t.final && t.final.played) allMatches.push(t.final);
 
@@ -404,98 +465,213 @@ export default function ProfilesPage() {
         const { playerA, playerB, scoreA = 0, scoreB = 0 } = m;
         const pA = normalizePlayerId(playerA);
         const pB = normalizePlayerId(playerB);
-        if (stats[pA] && stats[pB]) {
-          stats[pA].matchesPlayed += 1;
-          stats[pB].matchesPlayed += 1;
-          stats[pA].pointDiff += scoreA - scoreB;
-          stats[pB].pointDiff += scoreB - scoreA;
+        if (pA === pB || !stats[pA] || !stats[pB]) return;
 
-          if (scoreA > scoreB) {
-            stats[pA].wins += 1;
-            stats[pB].losses += 1;
-            if (stats[pA].h2h[pB]) stats[pA].h2h[pB].won += 1;
-            if (stats[pB].h2h[pA]) stats[pB].h2h[pA].lost += 1;
-          } else if (scoreB > scoreA) {
-            stats[pB].wins += 1;
-            stats[pA].losses += 1;
-            if (stats[pB].h2h[pA]) stats[pB].h2h[pA].won += 1;
-            if (stats[pA].h2h[pB]) stats[pA].h2h[pB].lost += 1;
-          }
-          if (stats[pA].h2h[pB]) stats[pA].h2h[pB].played += 1;
-          if (stats[pB].h2h[pA]) stats[pB].h2h[pA].played += 1;
+        stats[pA].matchesPlayed += 1;
+        stats[pB].matchesPlayed += 1;
+        stats[pA].pointDiff += scoreA - scoreB;
+        stats[pB].pointDiff += scoreB - scoreA;
+
+        if (!stats[pA].h2h[pB]) {
+          stats[pA].h2h[pB] = {
+            played: 0,
+            won: 0,
+            lost: 0,
+            shutsDelivered: 0,
+            shutsReceived: 0,
+            regularShutsDelivered: 0,
+            finalShutsDelivered: 0,
+            regularShutsReceived: 0,
+            finalShutsReceived: 0,
+            pointsFor: 0,
+            pointsAgainst: 0,
+          };
         }
-      });
+        if (!stats[pB].h2h[pA]) {
+          stats[pB].h2h[pA] = {
+            played: 0,
+            won: 0,
+            lost: 0,
+            shutsDelivered: 0,
+            shutsReceived: 0,
+            regularShutsDelivered: 0,
+            finalShutsDelivered: 0,
+            regularShutsReceived: 0,
+            finalShutsReceived: 0,
+            pointsFor: 0,
+            pointsAgainst: 0,
+          };
+        }
 
-      // Points
-      FIXED_PLAYERS.forEach((p) => {
-        let pts = 0;
-        if (t.dayPointsAwarded) {
-          if (t.dayPointsAwarded[p.id] !== undefined) pts += t.dayPointsAwarded[p.id];
-          if (p.id === "sajal") {
-            for (const alias of SAJAL_ALIASES) {
-              if (t.dayPointsAwarded[alias] !== undefined) pts += t.dayPointsAwarded[alias];
+        stats[pA].h2h[pB].played += 1;
+        stats[pB].h2h[pA].played += 1;
+        stats[pA].h2h[pB].pointsFor += scoreA;
+        stats[pA].h2h[pB].pointsAgainst += scoreB;
+        stats[pB].h2h[pA].pointsFor += scoreB;
+        stats[pB].h2h[pA].pointsAgainst += scoreA;
+
+        const isFinalMatch = !!m.isFinal || m.round === -1;
+        const diff = Math.abs(scoreA - scoreB);
+        const bonusMargin = isFinalMatch
+          ? t.config?.finalBonusMargin ?? 4
+          : t.config?.bonusMargin ?? 4;
+
+        // Match Points (2 pts win, 3 pts shutout / bonus)
+        const ptsAwardedA = m.pointsAwarded?.[m.playerA] ?? m.pointsAwarded?.[pA];
+        const ptsAwardedB = m.pointsAwarded?.[m.playerB] ?? m.pointsAwarded?.[pB];
+        const ptsA =
+          ptsAwardedA !== undefined
+            ? ptsAwardedA
+            : scoreA > scoreB
+            ? diff >= bonusMargin
+              ? 3
+              : 2
+            : 0;
+        const ptsB =
+          ptsAwardedB !== undefined
+            ? ptsAwardedB
+            : scoreB > scoreA
+            ? diff >= bonusMargin
+              ? 3
+              : 2
+            : 0;
+
+        stats[pA].leaguePoints += ptsA;
+        stats[pB].leaguePoints += ptsB;
+
+        if (scoreA > scoreB) {
+          stats[pA].wins += 1;
+          stats[pB].losses += 1;
+          stats[pA].h2h[pB].won += 1;
+          stats[pB].h2h[pA].lost += 1;
+
+          // Shutout Condition: 3 points earned in regular match OR diff >= bonusMargin (>=4)
+          // Final: win by final specified margin (diff >= finalBonusMargin)
+          const isShutout = isFinalMatch
+            ? diff >= bonusMargin
+            : ptsA === 3 || diff >= bonusMargin;
+
+          if (isShutout) {
+            stats[pA].shutsDelivered += 1;
+            stats[pB].shutsReceived += 1;
+            stats[pA].h2h[pB].shutsDelivered += 1;
+            stats[pB].h2h[pA].shutsReceived += 1;
+            if (isFinalMatch) {
+              stats[pA].h2h[pB].finalShutsDelivered += 1;
+              stats[pB].h2h[pA].finalShutsReceived += 1;
+            } else {
+              stats[pA].h2h[pB].regularShutsDelivered += 1;
+              stats[pB].h2h[pA].regularShutsReceived += 1;
             }
           }
-        }
-        if (pts > 0) {
-          stats[p.id].totalPoints += pts;
-        } else {
-          (t.matches || [])
-            .filter((m: any) => m.played)
-            .forEach((m: any) => {
-              if (normalizePlayerId(m.playerA) === p.id) stats[p.id].totalPoints += m.pointsAwarded?.[m.playerA] || 0;
-              if (normalizePlayerId(m.playerB) === p.id) stats[p.id].totalPoints += m.pointsAwarded?.[m.playerB] || 0;
-            });
-          if (t.final?.played) {
-            if (normalizePlayerId(t.final.playerA) === p.id) stats[p.id].totalPoints += t.final.pointsAwarded?.[t.final.playerA] || 0;
-            if (normalizePlayerId(t.final.playerB) === p.id) stats[p.id].totalPoints += t.final.pointsAwarded?.[t.final.playerB] || 0;
+        } else if (scoreB > scoreA) {
+          stats[pB].wins += 1;
+          stats[pA].losses += 1;
+          stats[pB].h2h[pA].won += 1;
+          stats[pA].h2h[pB].lost += 1;
+
+          const isShutout = isFinalMatch
+            ? diff >= bonusMargin
+            : ptsB === 3 || diff >= bonusMargin;
+
+          if (isShutout) {
+            stats[pB].shutsDelivered += 1;
+            stats[pA].shutsReceived += 1;
+            stats[pB].h2h[pA].shutsDelivered += 1;
+            stats[pA].h2h[pB].shutsReceived += 1;
+            if (isFinalMatch) {
+              stats[pB].h2h[pA].finalShutsDelivered += 1;
+              stats[pA].h2h[pB].finalShutsReceived += 1;
+            } else {
+              stats[pB].h2h[pA].regularShutsDelivered += 1;
+              stats[pA].h2h[pB].regularShutsReceived += 1;
+            }
           }
         }
       });
     });
 
-    // Add completed day spoon records if recorded
-    if (completedDays && completedDays.length > 0) {
+    // Assign totalPoints = dayPointsTotal (Official Placement Metric)
+    FIXED_PLAYERS.forEach((p) => {
+      stats[p.id].totalPoints = stats[p.id].dayPointsTotal;
+    });
+
+    // Cloud Leaderboard Reconcile & Fallback
+    if (cloudLeaderboard && cloudLeaderboard.length > 0) {
+      cloudLeaderboard.forEach((entry: any) => {
+        const normId = normalizePlayerId(entry.playerId);
+        if (stats[normId]) {
+          if (stats[normId].dayPointsTotal === 0 && (entry.dayPointsTotal || 0) > 0) {
+            stats[normId].dayPointsTotal = entry.dayPointsTotal;
+            stats[normId].totalPoints = entry.dayPointsTotal;
+          }
+          if (stats[normId].leaguePoints === 0 && (entry.leaguePoints || 0) > 0) {
+            stats[normId].leaguePoints = entry.leaguePoints;
+          }
+          if (stats[normId].matchesPlayed === 0 && (entry.leagueMatchesPlayed || 0) > 0) {
+            stats[normId].matchesPlayed =
+              (entry.leagueMatchesPlayed || 0) + (entry.finalsPlayed || 0);
+            stats[normId].wins = (entry.leagueWins || 0) + (entry.finalsWon || 0);
+            stats[normId].losses = stats[normId].matchesPlayed - stats[normId].wins;
+            stats[normId].tournamentsWon = entry.finalsWon || 0;
+            stats[normId].shutsDelivered = entry.shutoutWins || 0;
+            stats[normId].shutsReceived = entry.shutoutLosses || 0;
+          }
+        }
+      });
+    }
+
+    // Official Day Wooden Spoons Calculation (From completed days & cloud day honors)
+    if (cloudDayHonors?.dayLastPlaces && cloudDayHonors.dayLastPlaces.length > 0) {
+      cloudDayHonors.dayLastPlaces.forEach((s: any) => {
+        const spoonId = normalizePlayerId(s.playerId);
+        if (stats[spoonId]) {
+          stats[spoonId].woodenSpoons = s.count;
+        }
+      });
+    } else if (completedDays && completedDays.length > 0) {
       completedDays.forEach((cd) => {
         const spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
-        const topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
         if (spoonId && stats[spoonId]) {
-          if (allTourneys.length === 0) stats[spoonId].woodenSpoons += 1;
-        }
-        if (topId && stats[topId]) {
-          if (allTourneys.length === 0) stats[topId].tournamentsWon += 1;
+          stats[spoonId].woodenSpoons += 1;
         }
       });
-    } else if (cloudDayHonors) {
-      (cloudDayHonors.dayChampions || []).forEach((c: any) => {
-        if (stats[c.playerId] && stats[c.playerId].tournamentsWon === 0) {
-          stats[c.playerId].tournamentsWon = c.count;
-        }
-      });
-      (cloudDayHonors.dayLastPlaces || []).forEach((s: any) => {
-        if (stats[s.playerId] && stats[s.playerId].woodenSpoons === 0) {
-          stats[s.playerId].woodenSpoons = s.count;
+    }
+
+    // Cloud Day Champions fallback for tournamentsWon if zero
+    if (cloudDayHonors?.dayChampions) {
+      cloudDayHonors.dayChampions.forEach((c: any) => {
+        const champId = normalizePlayerId(c.playerId);
+        if (stats[champId] && stats[champId].tournamentsWon === 0) {
+          stats[champId].tournamentsWon = c.count;
         }
       });
     }
 
     return stats;
-  }, [allTourneys, completedDays, cloudDayHonors]);
+  }, [allTourneys, completedDays, cloudDayHonors, cloudLeaderboard]);
 
-  // Overall Standings Ranking
+  // Overall Standings Ranking (Ranked primarily by Day Points, tie-broken by wins & match points)
   const rankingList = useMemo(() => {
     return [...FIXED_PLAYERS]
       .map((p) => {
-        const s = playerStatsMap[p.id] || { totalPoints: 0, wins: 0, matchesPlayed: 0 };
+        const s = playerStatsMap[p.id] || {
+          totalPoints: 0,
+          dayPointsTotal: 0,
+          leaguePoints: 0,
+          wins: 0,
+          matchesPlayed: 0,
+        };
         return {
           id: p.id,
           name: p.name,
-          points: s.totalPoints,
+          points: s.dayPointsTotal,
+          leaguePoints: s.leaguePoints,
           wins: s.wins,
           winRate: s.matchesPlayed > 0 ? (s.wins / s.matchesPlayed) * 100 : 0,
         };
       })
-      .sort((a, b) => b.points - a.points || b.wins - a.wins);
+      .sort((a, b) => b.points - a.points || b.wins - a.wins || b.leaguePoints - a.leaguePoints);
   }, [playerStatsMap]);
 
   const activeLore = PLAYER_LORES[selectedPlayerId] || PLAYER_LORES["gautam"];
@@ -505,8 +681,12 @@ export default function ProfilesPage() {
     losses: 0,
     tournamentsWon: 0,
     woodenSpoons: 0,
+    dayPointsTotal: 0,
+    leaguePoints: 0,
     totalPoints: 0,
     pointDiff: 0,
+    shutsDelivered: 0,
+    shutsReceived: 0,
     h2h: {},
   };
 
@@ -936,53 +1116,70 @@ export default function ProfilesPage() {
               {/* Career Performance Grid Card */}
               <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
-                    Career Tournament Record
-                  </p>
-                  <span className="text-[10px] text-slate-400 font-mono">All Time</span>
+                  <div>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                      Career Performance Record
+                    </p>
+                    <p className="text-slate-900 font-extrabold text-xs mt-0.5">
+                      Tournament &amp; Match Standings
+                    </p>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono bg-slate-100 px-2 py-0.5 rounded-full font-bold">
+                    Squad Rank #{currentRank}
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   <div className="p-3.5 rounded-[22px] bg-amber-50/70 border border-amber-200/60 text-center">
-                    <p className="text-amber-900 font-black text-xl leading-tight">
+                    <p className="text-amber-900 font-black text-2xl leading-tight font-mono">
                       {activeStats.tournamentsWon}
                     </p>
-                    <p className="text-[10px] text-amber-700/80 font-bold mt-0.5">🏆 Titles Won</p>
+                    <p className="text-[10px] text-amber-800 font-bold mt-0.5">🏆 Titles Won</p>
+                    <p className="text-[9px] text-amber-700/70">Finals Champion</p>
                   </div>
 
                   <div className="p-3.5 rounded-[22px] bg-rose-50/70 border border-rose-200/60 text-center">
-                    <p className="text-rose-800 font-black text-xl leading-tight">
+                    <p className="text-rose-800 font-black text-2xl leading-tight font-mono">
                       {activeStats.woodenSpoons}
                     </p>
-                    <p className="text-[10px] text-rose-700/80 font-bold mt-0.5">🥄 Spoons</p>
+                    <p className="text-[10px] text-rose-800 font-bold mt-0.5">🥄 Day Spoons</p>
+                    <p className="text-[9px] text-rose-600/70">Official Day Last</p>
                   </div>
 
                   <div className="p-3.5 rounded-[22px] bg-emerald-50/70 border border-emerald-200/60 text-center">
-                    <p className="text-emerald-800 font-black text-xl leading-tight">
+                    <p className="text-emerald-800 font-black text-2xl leading-tight font-mono">
                       {winRate}%
                     </p>
-                    <p className="text-[10px] text-emerald-700/80 font-bold mt-0.5">Win Rate</p>
+                    <p className="text-[10px] text-emerald-800 font-bold mt-0.5">📈 Win Rate</p>
+                    <p className="text-[9px] text-emerald-600/70">
+                      {activeStats.wins}W - {activeStats.losses}L
+                    </p>
                   </div>
 
                   <div className="p-3.5 rounded-[22px] bg-indigo-50/70 border border-indigo-200/60 text-center">
-                    <p className="text-indigo-900 font-black text-xl leading-tight">
-                      {activeStats.totalPoints}
+                    <p className="text-indigo-900 font-black text-2xl leading-tight font-mono">
+                      {activeStats.dayPointsTotal}
                     </p>
-                    <p className="text-[10px] text-indigo-700/80 font-bold mt-0.5">Total Points</p>
+                    <p className="text-[10px] text-indigo-800 font-bold mt-0.5">⭐ Day Points</p>
+                    <p className="text-[9px] text-indigo-600/70">Official Placement Pts</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-[22px] bg-blue-50/70 border border-blue-200/60 text-center">
+                    <p className="text-blue-900 font-black text-2xl leading-tight font-mono">
+                      {activeStats.leaguePoints}
+                    </p>
+                    <p className="text-[10px] text-blue-800 font-bold mt-0.5">🎯 Match Points</p>
+                    <p className="text-[9px] text-blue-600/70">2-3 Pts Game Score</p>
                   </div>
 
                   <div className="p-3.5 rounded-[22px] bg-slate-50 border border-slate-200/70 text-center">
-                    <p className="text-slate-900 font-black text-xl leading-tight">
+                    <p className="text-slate-900 font-black text-2xl leading-tight font-mono">
                       {activeStats.matchesPlayed}
                     </p>
-                    <p className="text-[10px] text-slate-500 font-bold mt-0.5">Matches</p>
-                  </div>
-
-                  <div className="p-3.5 rounded-[22px] bg-slate-950 text-white text-center shadow-xs">
-                    <p className="text-white font-black text-xl leading-tight">
-                      #{currentRank}
+                    <p className="text-[10px] text-slate-700 font-bold mt-0.5">🏸 Total Matches</p>
+                    <p className="text-[9px] text-slate-500">
+                      Diff: {activeStats.pointDiff >= 0 ? `+${activeStats.pointDiff}` : activeStats.pointDiff}
                     </p>
-                    <p className="text-[10px] text-slate-300 font-bold mt-0.5">Squad Rank</p>
                   </div>
                 </div>
               </div>
@@ -1034,40 +1231,215 @@ export default function ProfilesPage() {
                   </div>
                 </div>
 
-                {/* Complete H2H Squad Breakdown */}
+                {/* Complete H2H Squad Breakdown with Clean Shutout Badges */}
                 <div className="pt-2 border-t border-slate-100">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
-                    Record vs. Squad Opponents
-                  </p>
-                  <div className="space-y-1.5">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      Record vs. Squad Opponents
+                    </p>
+                    <span className="text-[10px] text-slate-400 italic">Tap row for matchup details</span>
+                  </div>
+                  <div className="space-y-2">
                     {FIXED_PLAYERS.filter((p) => p.id !== selectedPlayerId).map((opp) => {
-                      const rec = activeStats.h2h?.[opp.id] || { played: 0, won: 0, lost: 0 };
+                      const rec = activeStats.h2h?.[opp.id] || {
+                        played: 0,
+                        won: 0,
+                        lost: 0,
+                        shutsDelivered: 0,
+                        shutsReceived: 0,
+                        pointsFor: 0,
+                        pointsAgainst: 0,
+                      };
+                      const isExpanded = selectedOpponentH2H === opp.id;
+
                       return (
                         <div
                           key={opp.id}
-                          className="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-slate-50/80 text-xs"
+                          onClick={() => setSelectedOpponentH2H(isExpanded ? null : opp.id)}
+                          className={`p-2.5 rounded-2xl border transition-all cursor-pointer ${
+                            isExpanded
+                              ? "bg-indigo-50/80 border-indigo-200 shadow-xs"
+                              : "bg-slate-50/80 hover:bg-slate-100/70 border-slate-200/60"
+                          }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 flex items-center justify-center">
-                              <AvatarSVG type={opp.avatar} size={20} />
-                            </span>
-                            <span className="font-bold text-slate-800">{opp.name}</span>
-                          </div>
-                          <div className="font-mono text-[11px]">
-                            {rec.played > 0 ? (
-                              <span>
-                                <span className="font-bold text-emerald-700">{rec.won}W</span>
-                                <span className="text-slate-400 mx-1">-</span>
-                                <span className="font-bold text-rose-600">{rec.lost}L</span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shadow-xs">
+                                <AvatarSVG type={opp.avatar} size={18} />
                               </span>
-                            ) : (
-                              <span className="text-slate-400">0 - 0</span>
-                            )}
+                              <span className="font-extrabold text-xs text-slate-800">
+                                {opp.name}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {/* Clean Shutout Badges directly in the matrix row */}
+                              {rec.shutsDelivered > 0 && (
+                                <span
+                                  title={`${rec.shutsDelivered} shutouts delivered against ${opp.name}`}
+                                  className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-900 border border-amber-300/80 text-[10px] font-black shadow-2xs"
+                                >
+                                  <span>⚡</span>
+                                  <span>{rec.shutsDelivered} shut</span>
+                                </span>
+                              )}
+                              {rec.shutsReceived > 0 && (
+                                <span
+                                  title={`${rec.shutsReceived} shutouts conceded to ${opp.name}`}
+                                  className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-rose-100/90 text-rose-900 border border-rose-300/80 text-[10px] font-black shadow-2xs"
+                                >
+                                  <span>🛡️</span>
+                                  <span>{rec.shutsReceived} shutted</span>
+                                </span>
+                              )}
+
+                              {/* W-L Score */}
+                              <div className="font-mono text-xs ml-1 min-w-[50px] text-right">
+                                {rec.played > 0 ? (
+                                  <span>
+                                    <span className="font-black text-emerald-700">{rec.won}W</span>
+                                    <span className="text-slate-300 mx-1">-</span>
+                                    <span className="font-black text-rose-600">{rec.lost}L</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-400">0 - 0</span>
+                                )}
+                              </div>
+                            </div>
                           </div>
+
+                          {/* Expandable Matchup Details */}
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mt-2.5 pt-2.5 border-t border-slate-200/70 overflow-hidden text-[11px]"
+                              >
+                                <div className="grid grid-cols-3 gap-2 text-center">
+                                  <div className="p-2 rounded-xl bg-white border border-slate-100 shadow-xs">
+                                    <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                      Win Rate
+                                    </span>
+                                    <span className="font-black text-slate-800">
+                                      {rec.played > 0 ? Math.round((rec.won / rec.played) * 100) : 0}%
+                                    </span>
+                                  </div>
+                                  <div className="p-2 rounded-xl bg-white border border-slate-100 shadow-xs">
+                                    <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                      Points Aggregate
+                                    </span>
+                                    <span className="font-black text-slate-800 font-mono">
+                                      {rec.pointsFor} - {rec.pointsAgainst}
+                                    </span>
+                                  </div>
+                                  <div className="p-2 rounded-xl bg-white border border-slate-100 shadow-xs">
+                                    <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                      Net Margin
+                                    </span>
+                                    <span
+                                      className={`font-black font-mono ${
+                                        rec.pointsFor - rec.pointsAgainst >= 0
+                                          ? "text-emerald-700"
+                                          : "text-rose-600"
+                                      }`}
+                                    >
+                                      {rec.pointsFor - rec.pointsAgainst > 0
+                                        ? `+${rec.pointsFor - rec.pointsAgainst}`
+                                        : rec.pointsFor - rec.pointsAgainst}
+                                    </span>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       );
                     })}
                   </div>
+                </div>
+              </div>
+
+              {/* Dedicated Shutout Intelligence Dossier */}
+              <div className="rounded-[28px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">⚡</span>
+                      <h3 className="text-slate-900 font-black text-sm">Shutout Intelligence</h3>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      3-pt bonus wins (margin ≥4) &amp; Championship final blowouts
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60 font-mono">
+                    Margin ≥ 4
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Card 1: Shuts Delivered (Shutting) */}
+                  <button
+                    onClick={() => setShutoutModalType("delivered")}
+                    className="text-left rounded-[24px] bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-transparent border border-amber-200/80 hover:border-amber-400/90 p-4 transition-all active:scale-[0.98] shadow-xs hover:shadow-md group flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full">
+                          <span>⚡</span>
+                          <span>Shutting</span>
+                        </span>
+                        <span className="text-xs text-amber-600 font-bold group-hover:translate-x-0.5 transition-transform">
+                          →
+                        </span>
+                      </div>
+                      <p className="text-3xl font-black text-slate-900 font-mono mt-2.5 tracking-tight">
+                        {activeStats.shutsDelivered}
+                      </p>
+                      <p className="text-xs font-black text-amber-950 mt-1">
+                        Shuts Delivered
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                        Times {activeLore.name} handed out a blowout
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-amber-200/50 flex items-center justify-between text-[10px] font-bold text-amber-800">
+                      <span>Breakdown</span>
+                      <span className="underline">View who shut →</span>
+                    </div>
+                  </button>
+
+                  {/* Card 2: Times Shut Out (Shutted) */}
+                  <button
+                    onClick={() => setShutoutModalType("received")}
+                    className="text-left rounded-[24px] bg-gradient-to-br from-rose-500/10 via-rose-400/5 to-transparent border border-rose-200/80 hover:border-rose-400/90 p-4 transition-all active:scale-[0.98] shadow-xs hover:shadow-md group flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-rose-800 bg-rose-100/80 px-2 py-0.5 rounded-full">
+                          <span>🛡️</span>
+                          <span>Shutted</span>
+                        </span>
+                        <span className="text-xs text-rose-600 font-bold group-hover:translate-x-0.5 transition-transform">
+                          →
+                        </span>
+                      </div>
+                      <p className="text-3xl font-black text-slate-900 font-mono mt-2.5 tracking-tight">
+                        {activeStats.shutsReceived}
+                      </p>
+                      <p className="text-xs font-black text-rose-950 mt-1">
+                        Times Shut Out
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                        Blowout losses conceded to squad
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-rose-200/50 flex items-center justify-between text-[10px] font-bold text-rose-800">
+                      <span>Breakdown</span>
+                      <span className="underline">View who shut →</span>
+                    </div>
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -1091,6 +1463,167 @@ export default function ProfilesPage() {
           </Link>
         </div>
       </div>
+
+      {/* Interactive Shutout Drill-Down Modal */}
+      <AnimatePresence>
+        {shutoutModalType && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+            onClick={() => setShutoutModalType(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 16 }}
+              transition={{ type: "spring", duration: 0.25 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-[32px] p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4 max-h-[85vh] flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl">
+                    {shutoutModalType === "delivered" ? "⚡" : "🛡️"}
+                  </span>
+                  <div>
+                    <h3 className="text-slate-900 font-black text-base leading-tight">
+                      {shutoutModalType === "delivered"
+                        ? `Shuts Delivered by ${activeLore.name}`
+                        : `Times ${activeLore.name} Was Shut Out`}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      {shutoutModalType === "delivered"
+                        ? `${activeStats.shutsDelivered} total clean blowouts delivered against opponents`
+                        : `${activeStats.shutsReceived} total blowout losses suffered from opponents`}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShutoutModalType(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Opponents List */}
+              <div className="overflow-y-auto space-y-2.5 pr-1 flex-1">
+                {FIXED_PLAYERS.filter((p) => p.id !== selectedPlayerId)
+                  .map((opp) => {
+                    const rec = activeStats.h2h?.[opp.id] || {
+                      played: 0,
+                      won: 0,
+                      lost: 0,
+                      shutsDelivered: 0,
+                      shutsReceived: 0,
+                      regularShutsDelivered: 0,
+                      finalShutsDelivered: 0,
+                      regularShutsReceived: 0,
+                      finalShutsReceived: 0,
+                    };
+                    const count =
+                      shutoutModalType === "delivered"
+                        ? rec.shutsDelivered
+                        : rec.shutsReceived;
+                    const regularCount =
+                      shutoutModalType === "delivered"
+                        ? rec.regularShutsDelivered
+                        : rec.regularShutsReceived;
+                    const finalCount =
+                      shutoutModalType === "delivered"
+                        ? rec.finalShutsDelivered
+                        : rec.finalShutsReceived;
+
+                    return { opp, count, regularCount, finalCount, rec };
+                  })
+                  .sort((a, b) => b.count - a.count || b.rec.played - a.rec.played)
+                  .map(({ opp, count, regularCount, finalCount, rec }) => (
+                    <div
+                      key={opp.id}
+                      className={`p-3.5 rounded-2xl border transition-all ${
+                        count > 0
+                          ? shutoutModalType === "delivered"
+                            ? "bg-amber-50/50 border-amber-200/70"
+                            : "bg-rose-50/50 border-rose-200/70"
+                          : "bg-slate-50/60 border-slate-200/60 opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center shadow-xs">
+                            <AvatarSVG type={opp.avatar} size={22} />
+                          </span>
+                          <div>
+                            <p className="font-extrabold text-xs text-slate-900 leading-tight">
+                              {shutoutModalType === "delivered"
+                                ? `vs ${opp.name}`
+                                : `by ${opp.name}`}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                              {rec.played} total matches played ({rec.won}W - {rec.lost}L)
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black font-mono shadow-2xs ${
+                              count > 0
+                                ? shutoutModalType === "delivered"
+                                  ? "bg-amber-100 text-amber-900 border border-amber-300/80"
+                                  : "bg-rose-100 text-rose-900 border border-rose-300/80"
+                                : "bg-slate-100 text-slate-500 border border-slate-200"
+                            }`}
+                          >
+                            <span>{shutoutModalType === "delivered" ? "⚡" : "🛡️"}</span>
+                            <span>
+                              {count} {count === 1 ? "shut" : "shuts"}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+
+                      {count > 0 && (
+                        <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[10px] font-medium text-slate-600">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1">
+                              <span className="font-bold text-slate-800">{regularCount}</span>{" "}
+                              regular (3 pts)
+                            </span>
+                            <span>•</span>
+                            <span className="inline-flex items-center gap-1">
+                              <span className="font-bold text-slate-800">{finalCount}</span>{" "}
+                              final blowout (≥4)
+                            </span>
+                          </div>
+                          <span className="font-mono text-[10px] text-slate-400">
+                            {shutoutModalType === "delivered" && activeStats.shutsDelivered > 0
+                              ? `${Math.round((count / activeStats.shutsDelivered) * 100)}% of total`
+                              : shutoutModalType === "received" && activeStats.shutsReceived > 0
+                              ? `${Math.round((count / activeStats.shutsReceived) * 100)}% of total`
+                              : ""}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+
+              {/* Footer explaining condition */}
+              <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 leading-normal">
+                <p>
+                  <span className="font-bold text-slate-600">Rule definition:</span> A shutout
+                  occurs when a player wins by margin ≥4 earning 3 points in a match, or wins
+                  the Championship Final by margin ≥4.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

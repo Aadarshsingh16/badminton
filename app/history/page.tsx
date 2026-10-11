@@ -585,14 +585,16 @@ export default function HistoryPage() {
             const myPoints = isA
               ? (m.pointsAwarded?.[m.playerA] ?? m.pointsAwarded?.["sajal"] ?? 0)
               : (m.pointsAwarded?.[m.playerB] ?? m.pointsAwarded?.["sajal"] ?? 0);
-            const won = myScore > oppScore;
-            
+            const oppPoints = isA
+              ? (m.pointsAwarded?.[m.playerB] ?? 0)
+              : (m.pointsAwarded?.[m.playerA] ?? 0);
+
             if (won) leagueWins++;
             leaguePoints += myPoints;
             leaguePointDiff += (myScore - oppScore);
             
-            if (won && oppScore === 0) shutoutWins++;
-            if (!won && myScore === 0) shutoutLosses++;
+            if (won && (myPoints === 3 || (myScore - oppScore) >= 4)) shutoutWins++;
+            if (!won && (oppPoints === 3 || (oppScore - myScore) >= 4)) shutoutLosses++;
             if (won) highestWinMargin = Math.max(highestWinMargin, myScore - oppScore);
           }
         });
@@ -606,7 +608,12 @@ export default function HistoryPage() {
             const m = t.final;
             const myScore = isA ? (m.scoreA ?? 0) : (m.scoreB ?? 0);
             const oppScore = isA ? (m.scoreB ?? 0) : (m.scoreA ?? 0);
-            if (myScore > oppScore) finalsWon++;
+            if (myScore > oppScore) {
+              finalsWon++;
+              if ((myScore - oppScore) >= 4) shutoutWins++;
+            } else if (oppScore > myScore) {
+              if ((oppScore - myScore) >= 4) shutoutLosses++;
+            }
           }
         }
       });
