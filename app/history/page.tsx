@@ -875,33 +875,13 @@ export default function HistoryPage() {
     
     // Calculate Single-Day Score Record
     const playerSingleDayHigh: { [playerId: string]: { maxPts: number; date: string } } = {};
-    (displayedHistory?.days || []).forEach((d) => {
-      const dayScores: Record<string, number> = {};
-      (d.tournaments || []).forEach((t) => {
-        const pts =
-          t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
-            ? t.dayPointsAwarded
-            : computeDayPoints(t);
-        if (pts) {
-          Object.entries(pts).forEach(([pid, pVal]) => {
-            const norm = isSajalId(pid) ? "sajal" : pid;
-            dayScores[norm] = (dayScores[norm] || 0) + (pVal as number);
-          });
-        }
-      });
-      Object.entries(dayScores).forEach(([pid, val]) => {
-        if (!playerSingleDayHigh[pid] || val > playerSingleDayHigh[pid].maxPts) {
-          playerSingleDayHigh[pid] = { maxPts: val, date: d.date };
-        }
-      });
-    });
-
     (completedDays || []).forEach((cd) => {
       if (cd.totals) {
         Object.entries(cd.totals).forEach(([pid, val]) => {
           const norm = isSajalId(pid) ? "sajal" : pid;
-          if (!playerSingleDayHigh[norm] || (val as number) > playerSingleDayHigh[norm].maxPts) {
-            playerSingleDayHigh[norm] = { maxPts: val as number, date: cd.date };
+          const numVal = typeof val === "number" ? val : Number(val) || 0;
+          if (!playerSingleDayHigh[norm] || numVal > playerSingleDayHigh[norm].maxPts) {
+            playerSingleDayHigh[norm] = { maxPts: numVal, date: cd.date || "Past Day" };
           }
         });
       }
@@ -910,8 +890,9 @@ export default function HistoryPage() {
     if (dayTable?.totals) {
       Object.entries(dayTable.totals).forEach(([pid, val]) => {
         const norm = isSajalId(pid) ? "sajal" : pid;
-        if (!playerSingleDayHigh[norm] || (val as number) > playerSingleDayHigh[norm].maxPts) {
-          playerSingleDayHigh[norm] = { maxPts: val as number, date: dayTable.date || "Today" };
+        const numVal = typeof val === "number" ? val : Number(val) || 0;
+        if (!playerSingleDayHigh[norm] || numVal > playerSingleDayHigh[norm].maxPts) {
+          playerSingleDayHigh[norm] = { maxPts: numVal, date: dayTable.date || "Today" };
         }
       });
     }
@@ -919,7 +900,7 @@ export default function HistoryPage() {
     let peakDayScoreLeader: { playerId: string; name: string; maxPts: number; date: string } | null = null;
     Object.entries(playerSingleDayHigh).forEach(([pid, data]) => {
       if (!peakDayScoreLeader || data.maxPts > peakDayScoreLeader.maxPts) {
-        const pObj = players.find((p) => p.id === pid) || FIXED_PLAYERS.find((p) => p.id === pid);
+        const pObj = (players || []).find((p) => p.id === pid) || FIXED_PLAYERS.find((p) => p.id === pid);
         if (pObj && data.maxPts > 0) {
           peakDayScoreLeader = {
             playerId: pid,
@@ -949,7 +930,7 @@ export default function HistoryPage() {
       finalsPlayedLeader: null,
       finalsLostLeader: null,
       shutoutLossesLeader: null,
-      peakDayScoreLeader: null,
+      peakDayScoreLeader: null as { playerId: string; name: string; maxPts: number; date: string } | null,
     };
 
     return {
