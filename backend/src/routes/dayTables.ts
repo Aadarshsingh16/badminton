@@ -36,13 +36,13 @@ dayTablesRouter.get("/:date", async (req, res) => {
     if (day.id) {
       tourneysRes = await pool.query(
         `SELECT id, share_slug AS "shareSlug", status, config, created_at AS "createdAt", completed_at AS "completedAt"
-         FROM tournaments WHERE day_id = $1 ORDER BY created_at ASC`,
+         FROM tournaments WHERE day_id = $1 AND status != 'cancelled' ORDER BY created_at ASC`,
         [day.id]
       );
     } else {
       tourneysRes = await pool.query(
         `SELECT id, share_slug AS "shareSlug", status, config, created_at AS "createdAt", completed_at AS "completedAt"
-         FROM tournaments WHERE created_at::date::text = $1 ORDER BY created_at ASC`,
+         FROM tournaments WHERE created_at::date::text = $1 AND status != 'cancelled' ORDER BY created_at ASC`,
         [targetDate]
       );
     }
@@ -116,7 +116,8 @@ dayTablesRouter.get("/:date", async (req, res) => {
 
     if (tournamentsData.length > 0) {
       for (const t of tournamentsData) {
-        if (t.status === "completed" && Array.isArray(t.standings)) {
+        const hasPlayed = (t.matches || []).some((m: any) => m.played) || (t.final && t.final.played);
+        if (t.status === "completed" && t.status !== "cancelled" && hasPlayed && Array.isArray(t.standings)) {
           hasCompletedTournaments = true;
           for (const row of t.standings) {
             if (row.playerId) {

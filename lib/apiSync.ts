@@ -36,6 +36,22 @@ class ApiSyncService {
       const saved = localStorage.getItem(QUEUE_STORAGE_KEY);
       if (saved) {
         this.queue = JSON.parse(saved);
+        // Self-heal: purge any queue items belonging to deleted/cancelled tournaments
+        try {
+          const rawDel = localStorage.getItem("badminton_deleted_tournaments_v1");
+          if (rawDel) {
+            const arr = JSON.parse(rawDel);
+            if (Array.isArray(arr) && arr.length > 0) {
+              const delSet = new Set(arr);
+              this.queue = this.queue.filter((item) => {
+                const hasDel = Array.from(delSet).some(
+                  (delId) => (item.url && item.url.includes(delId)) || (item.body && (item.body.id === delId || item.body.tournamentId === delId))
+                );
+                return !hasDel;
+              });
+            }
+          }
+        } catch {}
         this.notify();
       }
     } catch (e) {
@@ -178,6 +194,15 @@ class ApiSyncService {
     if (typeof window === "undefined") return [];
     const tournamentsMap: { [id: string]: any } = {};
 
+    let deletedIds = new Set<string>();
+    try {
+      const rawDel = localStorage.getItem("badminton_deleted_tournaments_v1");
+      if (rawDel) {
+        const arr = JSON.parse(rawDel);
+        if (Array.isArray(arr)) deletedIds = new Set(arr);
+      }
+    } catch {}
+
     // 1. Read from permanent local archive
     try {
       const rawArchive = localStorage.getItem("badminton_archived_tournaments_v1");
@@ -185,7 +210,7 @@ class ApiSyncService {
         const archived = JSON.parse(rawArchive);
         if (Array.isArray(archived)) {
           for (const t of archived) {
-            if (t && t.id) tournamentsMap[t.id] = t;
+            if (t && t.id && !deletedIds.has(t.id)) tournamentsMap[t.id] = t;
           }
         }
       }
@@ -201,10 +226,10 @@ class ApiSyncService {
           const storeState = parsed?.state || parsed;
           if (storeState?.pastTournaments && Array.isArray(storeState.pastTournaments)) {
             for (const t of storeState.pastTournaments) {
-              if (t && t.id) tournamentsMap[t.id] = t;
+              if (t && t.id && !deletedIds.has(t.id)) tournamentsMap[t.id] = t;
             }
           }
-          if (storeState?.currentTournament && storeState.currentTournament.id) {
+          if (storeState?.currentTournament && storeState.currentTournament.id && !deletedIds.has(storeState.currentTournament.id)) {
             tournamentsMap[storeState.currentTournament.id] = storeState.currentTournament;
           }
         }
@@ -220,7 +245,7 @@ class ApiSyncService {
           for (const item of queue) {
             if (item.method === "POST" && item.url.includes("/tournaments") && item.body) {
               const b = item.body;
-              if (b.id && !tournamentsMap[b.id]) {
+              if (b.id && !deletedIds.has(b.id) && !tournamentsMap[b.id]) {
                 tournamentsMap[b.id] = {
                   id: b.id,
                   createdAt: Date.now(),
@@ -239,7 +264,7 @@ class ApiSyncService {
       }
     } catch {}
 
-    return Object.values(tournamentsMap).filter(t => !t.isPractice);
+    return Object.values(tournamentsMap).filter(t => !t.isPractice && !deletedIds.has(t.id));
   }
 
   /**
@@ -249,7 +274,10 @@ class ApiSyncService {
   public purgeTournament(tournamentId: string) {
     this.queue = this.queue.filter(
       (item) =>
-        !(item.url === "/tournaments" && item.body && item.body.id === tournamentId)
+        !(
+          (item.url && item.url.includes(tournamentId)) ||
+          (item.body && (item.body.id === tournamentId || item.body.tournamentId === tournamentId))
+        )
     );
     this.saveQueue();
   }

@@ -478,6 +478,21 @@ export const useStore = create<AppState>()(
       cancelTournament: () => {
         const { currentTournament } = get();
         if (!currentTournament) return;
+        const tournamentId = currentTournament.id;
+        const isPractice = !!currentTournament.isPractice;
+
+        // 1. Mark as permanently deleted so offline recovery never resurrects it
+        markTournamentDeleted(tournamentId);
+
+        // 2. Purge this tournament and any of its matches from the offline sync queue
+        apiSync.purgeTournament(tournamentId);
+
+        // 3. If it was synced to cloud, immediately fire DELETE to backend
+        if (!isPractice) {
+          apiSync.deleteTournamentFromBackend(tournamentId);
+          apiSync.enqueue(`/tournaments/${tournamentId}`, "DELETE", {});
+        }
+
         set({
           currentTournament: null,
           phase: "player-select",

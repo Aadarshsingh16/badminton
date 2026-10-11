@@ -99,10 +99,12 @@ export function computeTable(matches: any[], playerIds: string[], config: Tourna
     return rows;
   }
 
+  const hasPlayedMatches = matches.some((m) => m.played && m.scoreA !== null && m.scoreB !== null);
+
   return rrRows.map((r, idx) => ({
     ...r,
     rank: idx + 1,
-    dayPoints: Math.max(1, N - idx),
+    dayPoints: hasPlayedMatches ? Math.max(1, N - idx) : 0,
   }));
 }
 
@@ -133,12 +135,26 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
     );
     const dayId = dayRes.rows[0].id;
 
-    // Mark previous active tournaments for this day as completed (excluding this one if it's a double submit)
-    await pool.query(
-      `UPDATE tournaments SET status = 'completed', completed_at = now() 
-       WHERE day_id = $1 AND status = 'active' AND id != $2`,
+    // Clean up any previous active tournaments for this day:
+    // If they have 0 played matches, they were cancelled/abandoned: DELETE them.
+    // If they have played matches, mark them 'cancelled' (NEVER 'completed').
+    const prevActiveRes = await pool.query(
+      `SELECT t.id, COUNT(m.id) FILTER (WHERE m.played = true) as played_count
+       FROM tournaments t
+       LEFT JOIN matches m ON m.tournament_id = t.id
+       WHERE t.day_id = $1 AND t.status = 'active' AND t.id != $2
+       GROUP BY t.id`,
       [dayId, tourneyId]
     );
+
+    for (const prev of prevActiveRes.rows) {
+      if (parseInt(prev.played_count, 10) === 0) {
+        await pool.query(`DELETE FROM matches WHERE tournament_id = $1`, [prev.id]);
+        await pool.query(`DELETE FROM tournaments WHERE id = $1`, [prev.id]);
+      } else {
+        await pool.query(`UPDATE tournaments SET status = 'cancelled' WHERE id = $1`, [prev.id]);
+      }
+    }
 
     // Insert or update tournament
     const tourneyRes = await pool.query(
@@ -578,27 +594,25 @@ tournamentsRouter.delete("/:id", requireScorekeeper, async (req, res) => {
           [tourneyDayId]
         );
       } else {
-        const ptsQuery = await pool.query(
-          `SELECT player_id, SUM(pts) as total_pts FROM (
-             SELECT m.player_a AS player_id, SUM(m.points_a) AS pts
-             FROM matches m
-             JOIN tournaments t ON m.tournament_id = t.id
-             WHERE t.day_id = $1 AND m.played = true
-             GROUP BY m.player_a
-             UNION ALL
-             SELECT m.player_b AS player_id, SUM(m.points_b) AS pts
-             FROM matches m
-             JOIN tournaments t ON m.tournament_id = t.id
-             WHERE t.day_id = $1 AND m.played = true
-             GROUP BY m.player_b
-           ) sub
-           GROUP BY player_id`,
+        const tourneysInDay = await pool.query(
+          `SELECT t.id, t.config, t.player_ids
+           FROM tournaments t
+           WHERE t.day_id = $1 AND t.status = 'completed'`,
           [tourneyDayId]
         );
         const newTotals: Record<string, number> = {};
-        for (const row of ptsQuery.rows) {
-          if (row.player_id) {
-            newTotals[row.player_id] = parseInt(row.total_pts, 10) || 0;
+        for (const tRow of tourneysInDay.rows) {
+          const matchesRes = await pool.query(
+            `SELECT id, round, is_final AS "isFinal", player_a AS "playerA", player_b AS "playerB", court_side, score_a AS "scoreA", score_b AS "scoreB", points_a AS "pointsA", points_b AS "pointsB", played
+             FROM matches WHERE tournament_id = $1`,
+            [tRow.id]
+          );
+          const tCfg = typeof tRow.config === "string" ? JSON.parse(tRow.config) : (tRow.config || DEFAULT_CONFIG);
+          const tStandings = computeTable(matchesRes.rows, tRow.player_ids || [], tCfg);
+          for (const row of tStandings) {
+            if (row.playerId) {
+              newTotals[row.playerId] = (newTotals[row.playerId] || 0) + (row.dayPoints || 0);
+            }
           }
         }
         await pool.query(
@@ -608,7 +622,28 @@ tournamentsRouter.delete("/:id", requireScorekeeper, async (req, res) => {
       }
     }
 
+    let dayDate: string | undefined;
+    if (tourneyDayId) {
+      const dayDateRes = await pool.query("SELECT date::text FROM day_tables WHERE id = $1", [tourneyDayId]);
+      dayDate = dayDateRes.rows[0]?.date;
+    }
+
     await pool.query("COMMIT");
+
+    if (dayDate) {
+      io.to(`day:${dayDate}`).emit("day:update", {
+        type: "tournament:deleted",
+        tournamentId,
+        date: dayDate,
+      });
+    }
+
+    io.emit("live:update", {
+      type: "tournament:deleted",
+      tournamentId,
+      date: dayDate,
+    });
+
     res.json({ success: true, deletedId: tournamentId });
   } catch (err: any) {
     await pool.query("ROLLBACK");

@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useStore, recoverTournamentsFromSyncQueue } from "@/lib/store";
+import { useStore, recoverTournamentsFromSyncQueue, getDeletedTournamentIds } from "@/lib/store";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { computeTournamentTable } from "@/lib/ranking";
 import { Player, Tournament } from "@/lib/types";
@@ -70,14 +70,18 @@ export default function DayPage() {
 
   // Combine past tournaments + recovered tournaments + cloud fallback tournaments
   const effectiveTournaments = useMemo<Tournament[]>(() => {
-    let list = [...pastTournaments];
+    const deletedIds = getDeletedTournamentIds();
+    let list = pastTournaments.filter((t) => !deletedIds.has(t.id));
     if (list.length === 0) {
       const rec = recoverTournamentsFromSyncQueue();
-      if (rec.length > 0) list = rec;
+      if (rec.length > 0) list = rec.filter((t) => !deletedIds.has(t.id));
     }
 
     if (list.length === 0 && cloudDayData?.tournaments && cloudDayData.tournaments.length > 0) {
-      return cloudDayData.tournaments.map((ct: any) => {
+      const validCloudTourneys = cloudDayData.tournaments.filter(
+        (ct: any) => ct.status !== "cancelled" && !deletedIds.has(ct.id || ct.tournamentId)
+      );
+      return validCloudTourneys.map((ct: any) => {
         const mappedMatches = (ct.matches || []).map((m: any) => ({
           ...m,
           pointsAwarded: m.pointsAwarded || {

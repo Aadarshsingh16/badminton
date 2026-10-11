@@ -66,9 +66,10 @@ export function computeRoundRobinTable(tournament: Tournament): TournamentRow[] 
     return b.pointDiff - a.pointDiff;
   });
 
+  const hasPlayedMatches = matches.some((m) => m.played && m.scoreA !== undefined && m.scoreB !== undefined);
   rows.forEach((row, i) => {
     row.rank = i + 1;
-    row.dayPoints = Math.max(1, N - i);
+    row.dayPoints = hasPlayedMatches ? Math.max(1, N - i) : 0;
   });
 
   return rows;

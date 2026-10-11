@@ -290,8 +290,9 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
 
         // 4. Resolve full tournament details (matches, standings) for legacy backends
         const fullyResolvedTournaments = [];
-        const baseTournaments = json.tournaments || (resolvedActiveT ? [resolvedActiveT] : []);
+        const baseTournaments = (json.tournaments || (resolvedActiveT ? [resolvedActiveT] : [])).filter((t: any) => t.status !== "cancelled");
         for (const t of baseTournaments) {
+          if (t.status === "cancelled") continue;
           if (resolvedActiveT && t.id === resolvedActiveT.id) {
             fullyResolvedTournaments.push(resolvedActiveT);
           } else if (Array.isArray(t.matches) && t.matches.length > 0) {
