@@ -1722,21 +1722,58 @@ export default function HistoryPage() {
                             <span key={i} className={`w-5 h-5 flex items-center justify-center rounded-full text-[9px] font-black ${res === "W" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>{res}</span>
                           ))}
                         </div>
-                      </div>
-                    ) : null).filter(Boolean)}
-                  </div>
-                </div>
-
-                {/* Stat Leaders Grid */}
-                <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-[26px] p-4 shadow-xs flex flex-col max-h-64">
+                           {/* Stat Leaders Grid */}
+                <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-[26px] p-4 shadow-xs flex flex-col max-h-80">
                   <div className="flex items-center gap-2 mb-3 shrink-0">
                     <div className="w-8 h-8 rounded-xl bg-slate-200/80 flex items-center justify-center text-sm shadow-2xs">🏅</div>
                     <div>
-                      <h3 className="text-xs font-extrabold text-slate-900">Tournament Honors</h3>
-                      <p className="text-[10px] text-slate-500 font-semibold">Top performers across categories</p>
+                      <h3 className="text-xs font-extrabold text-slate-900">Tournament Honors & Records</h3>
+                      <p className="text-[10px] text-slate-500 font-semibold">Leaders across performance categories</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 h-full overflow-y-auto no-scrollbar pb-1">
+                    {/* Finals Clutch */}
+                    {(advancedInsights.statLeaders.finalsSpecialist?.finalsWon ?? 0) > 0 && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Finals Clutch</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsSpecialist?.name}</span>
+                             <span className="text-[10px] font-bold text-amber-500">{advancedInsights.statLeaders.finalsSpecialist?.finalsWon} titles</span>
+                           </div>
+                           <span className="text-lg opacity-80">🏆</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Finals Veteran (Most Finals Played) */}
+                    {(advancedInsights.statLeaders.finalsPlayedLeader?.finalsPlayed ?? 0) > 0 && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Finals Veteran</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsPlayedLeader?.name}</span>
+                             <span className="text-[10px] font-bold text-purple-600">{advancedInsights.statLeaders.finalsPlayedLeader?.finalsPlayed} finals played</span>
+                           </div>
+                           <span className="text-lg opacity-80">🏟️</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Finals Heartbreak (Most Finals Lost) */}
+                    {advancedInsights.statLeaders.finalsLostLeader && (advancedInsights.statLeaders.finalsLostLeader.finalsPlayed - advancedInsights.statLeaders.finalsLostLeader.finalsWon) > 0 && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Finals Heartbreak</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsLostLeader?.name}</span>
+                             <span className="text-[10px] font-bold text-rose-500">{advancedInsights.statLeaders.finalsLostLeader.finalsPlayed - advancedInsights.statLeaders.finalsLostLeader.finalsWon} runner-up</span>
+                           </div>
+                           <span className="text-lg opacity-80">💔</span>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Shutout King */}
                     {(advancedInsights.statLeaders.shutoutKing?.shutoutWins ?? 0) > 0 && (
                       <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
@@ -1745,6 +1782,20 @@ export default function HistoryPage() {
                            <div className="flex flex-col">
                              <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.shutoutKing?.name}</span>
                              <span className="text-[10px] font-bold text-blue-500">{advancedInsights.statLeaders.shutoutKing?.shutoutWins} shutouts</span>
+                           </div>
+                           <span className="text-lg opacity-80">⚡</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Shutout Magnet (Most Shutouts Conceded) */}
+                    {(advancedInsights.statLeaders.shutoutLossesLeader?.shutoutLosses ?? 0) > 0 && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Shutout Magnet</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.shutoutLossesLeader?.name}</span>
+                             <span className="text-[10px] font-bold text-orange-600">{advancedInsights.statLeaders.shutoutLossesLeader?.shutoutLosses} shutted</span>
                            </div>
                            <span className="text-lg opacity-80">🛡️</span>
                         </div>
@@ -1765,16 +1816,16 @@ export default function HistoryPage() {
                       </div>
                     )}
 
-                    {/* Finals Specialist */}
-                    {(advancedInsights.statLeaders.finalsSpecialist?.finalsWon ?? 0) > 0 && (
+                    {/* Single-Day High Record */}
+                    {advancedInsights.statLeaders.peakDayScoreLeader && (
                       <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Finals Clutch</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Day Point Record</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsSpecialist?.name}</span>
-                             <span className="text-[10px] font-bold text-amber-500">{advancedInsights.statLeaders.finalsSpecialist?.finalsWon} titles</span>
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.peakDayScoreLeader.name}</span>
+                             <span className="text-[10px] font-bold text-indigo-600">{advancedInsights.statLeaders.peakDayScoreLeader.maxPts} pts (1 day)</span>
                            </div>
-                           <span className="text-lg opacity-80">🏆</span>
+                           <span className="text-lg opacity-80">👑</span>
                         </div>
                       </div>
                     )}
@@ -1789,6 +1840,11 @@ export default function HistoryPage() {
                              <span className="text-[10px] font-bold text-indigo-500">{(advancedInsights.statLeaders.ironMan?.leagueMatchesPlayed ?? 0) + (advancedInsights.statLeaders.ironMan?.finalsPlayed ?? 0)} played</span>
                            </div>
                            <span className="text-lg opacity-80">🔋</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
                         </div>
                       </div>
                     )}
