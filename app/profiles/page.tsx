@@ -248,6 +248,7 @@ export default function ProfilesPage() {
   const [cloudHistory, setCloudHistory] = useState<any | null>(null);
   const [cloudDayHonors, setCloudDayHonors] = useState<any | null>(null);
   const [cloudLeaderboard, setCloudLeaderboard] = useState<any[] | null>(null);
+  const [cloudLoading, setCloudLoading] = useState(false);
   const [shutoutModalType, setShutoutModalType] = useState<"delivered" | "received" | null>(null);
   const [selectedOpponentH2H, setSelectedOpponentH2H] = useState<string | null>(null);
   const [compareOpponentId, setCompareOpponentId] = useState<string>(
@@ -1896,6 +1897,193 @@ export default function ProfilesPage() {
                       🚀 Career-Best: {activeStats.longestWinStreak} Consecutive Wins
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Tale of the Tape: Head-to-Head Split-Screen Comparison Card */}
+              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">🥊</span>
+                      <h3 className="text-slate-900 font-black text-xs">Tale of the Tape</h3>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                      Direct head-to-head split-screen comparison
+                    </p>
+                  </div>
+                  <span className="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-2.5 py-0.5 rounded-full font-bold">
+                    Select Opponent
+                  </span>
+                </div>
+
+                {/* Opponent Selector Chips */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                  {FIXED_PLAYERS.filter((p) => p.id !== selectedPlayerId).map((opp) => (
+                    <button
+                      key={opp.id}
+                      type="button"
+                      onClick={() => setCompareOpponentId(opp.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-black transition-all flex items-center gap-1.5 shrink-0 ${
+                        compareOpponentId === opp.id
+                          ? "bg-slate-950 text-white shadow-xs"
+                          : "bg-slate-100 hover:bg-slate-200/80 text-slate-600"
+                      }`}
+                    >
+                      <AvatarSVG type={opp.avatar} size={14} />
+                      <span>{opp.name}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Split-Screen Face-off Header */}
+                <div className="p-4 rounded-[26px] bg-gradient-to-r from-indigo-50 via-purple-50/40 to-pink-50/50 border border-indigo-100/90 flex items-center justify-between gap-3 relative overflow-hidden">
+                  {/* Player 1 (Active) */}
+                  <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                    <div className="w-12 h-12 rounded-2xl bg-white border border-indigo-200 flex items-center justify-center shrink-0 shadow-xs relative">
+                      <AvatarSVG type={activeLore.avatar} size={36} />
+                      <span className="absolute -bottom-1 -left-1 px-1.5 py-0.2 rounded-full bg-slate-900 text-white text-[8px] font-black">
+                        #{currentRank}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-slate-900 truncate">{activeLore.name}</p>
+                      <p className="text-[10px] text-indigo-600 font-extrabold truncate">{activeLore.origin}</p>
+                    </div>
+                  </div>
+
+                  {/* VS Badge in Center */}
+                  <div className="w-9 h-9 rounded-full bg-slate-950 text-white flex items-center justify-center font-black text-[11px] shadow-sm shrink-0 font-mono tracking-tighter">
+                    VS
+                  </div>
+
+                  {/* Player 2 (Compare Opponent) */}
+                  <div className="flex-1 min-w-0 flex items-center justify-end gap-2.5 text-right">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-slate-900 truncate">{compareOpponent.oppLore.name}</p>
+                      <p className="text-[10px] text-purple-600 font-extrabold truncate">{compareOpponent.oppLore.origin}</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-2xl bg-white border border-purple-200 flex items-center justify-center shrink-0 shadow-xs relative">
+                      <AvatarSVG type={compareOpponent.oppLore.avatar} size={36} />
+                      <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-full bg-slate-900 text-white text-[8px] font-black">
+                        #{compareOpponent.oppRank}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tug-of-War H2H Wins Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-mono font-black">
+                    <span className="text-indigo-700">{compareOpponent.h2hRecord.won} Wins</span>
+                    <span className="text-[10px] text-slate-400 font-sans font-bold">
+                      {compareOpponent.h2hRecord.played} Total Encounters
+                    </span>
+                    <span className="text-purple-700">{compareOpponent.h2hRecord.lost} Wins</span>
+                  </div>
+                  <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden flex p-0.5 gap-0.5">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-500"
+                      style={{
+                        width:
+                          compareOpponent.h2hRecord.played > 0
+                            ? `${(compareOpponent.h2hRecord.won / compareOpponent.h2hRecord.played) * 100}%`
+                            : "50%",
+                      }}
+                    />
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-600 transition-all duration-500"
+                      style={{
+                        width:
+                          compareOpponent.h2hRecord.played > 0
+                            ? `${(compareOpponent.h2hRecord.lost / compareOpponent.h2hRecord.played) * 100}%`
+                            : "50%",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Tale of the Tape Comparative Matrix Rows */}
+                <div className="space-y-2 text-xs">
+                  {/* Row: Finals Head to Head */}
+                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
+                    <span className="font-mono font-black text-indigo-700 w-16">
+                      {compareOpponent.h2hRecord.finalsWon}W
+                    </span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                      🏆 Finals Face-Offs
+                    </span>
+                    <span className="font-mono font-black text-purple-700 w-16 text-right">
+                      {compareOpponent.h2hRecord.finalsLost}W
+                    </span>
+                  </div>
+
+                  {/* Row: Blowouts Handed (Shutouts) */}
+                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
+                    <span className="font-mono font-black text-indigo-700 w-16">
+                      ⚡ {compareOpponent.h2hRecord.shutsDelivered}
+                    </span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                      Blowouts Handed
+                    </span>
+                    <span className="font-mono font-black text-purple-700 w-16 text-right">
+                      ⚡ {compareOpponent.h2hRecord.shutsReceived}
+                    </span>
+                  </div>
+
+                  {/* Row: Total Match Points Aggregate */}
+                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
+                    <span className="font-mono font-black text-indigo-700 w-16">
+                      {compareOpponent.h2hRecord.pointsFor}
+                    </span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                      H2H Points Scored
+                    </span>
+                    <span className="font-mono font-black text-purple-700 w-16 text-right">
+                      {compareOpponent.h2hRecord.pointsAgainst}
+                    </span>
+                  </div>
+
+                  {/* Row: Career Win Rate */}
+                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
+                    <span className="font-mono font-black text-indigo-700 w-16">
+                      {winRate}%
+                    </span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                      Career Win Rate
+                    </span>
+                    <span className="font-mono font-black text-purple-700 w-16 text-right">
+                      {compareOpponent.oppWinRate}%
+                    </span>
+                  </div>
+
+                  {/* Row: Career Day Points */}
+                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
+                    <span className="font-mono font-black text-indigo-700 w-16">
+                      ⭐ {activeStats.dayPointsTotal}
+                    </span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                      Career Day Points
+                    </span>
+                    <span className="font-mono font-black text-purple-700 w-16 text-right">
+                      ⭐ {compareOpponent.oppStats.dayPointsTotal}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Head-to-Head Verdict Badge */}
+                <div className="p-3 rounded-2xl bg-gradient-to-r from-indigo-50/60 to-purple-50/60 border border-indigo-100 flex items-center justify-center text-center">
+                  <p className="text-xs font-black text-slate-800">
+                    {compareOpponent.h2hRecord.played === 0 ? (
+                      "⚔️ Maiden Clash: No direct encounters recorded yet"
+                    ) : compareOpponent.h2hRecord.won > compareOpponent.h2hRecord.lost ? (
+                      `👑 ${activeLore.name} commands an active head-to-head advantage (+${compareOpponent.h2hRecord.won - compareOpponent.h2hRecord.lost})`
+                    ) : compareOpponent.h2hRecord.lost > compareOpponent.h2hRecord.won ? (
+                      `😈 ${compareOpponent.oppLore.name} holds the upper hand (+${compareOpponent.h2hRecord.lost - compareOpponent.h2hRecord.won})`
+                    ) : (
+                      "⚖️ Deadlock Rivalry: Perfectly even honors between both fighters"
+                    )}
+                  </p>
                 </div>
               </div>
 
