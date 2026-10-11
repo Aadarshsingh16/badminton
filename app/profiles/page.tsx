@@ -1653,6 +1653,131 @@ export default function ProfilesPage() {
                 </div>
               </div>
 
+              {/* Historical Session Trend Sparkline Card */}
+              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">📈</span>
+                      <h3 className="text-slate-900 font-black text-xs">Session-by-Session Trajectory</h3>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                      Day Points earned across each court meet
+                    </p>
+                  </div>
+                  {playerSessionTrends.length > 0 && (
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                        Peak: {Math.max(0, ...playerSessionTrends.map((s) => s.points))} pts
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {playerSessionTrends.length >= 2 ? (
+                  <div className="space-y-3">
+                    <div className="w-full h-28 relative">
+                      <svg viewBox="0 0 320 90" className="w-full h-full overflow-visible">
+                        <defs>
+                          <linearGradient id="trend-gradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.25" />
+                            <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+                          </linearGradient>
+                        </defs>
+
+                        {/* Baseline Guides */}
+                        <line x1="20" y1="70" x2="300" y2="70" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+                        <line x1="20" y1="20" x2="300" y2="20" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+
+                        {(() => {
+                          const maxPts = Math.max(1, ...playerSessionTrends.map((s) => s.points));
+                          const n = playerSessionTrends.length;
+                          const coords = playerSessionTrends.map((s, idx) => {
+                            const x = 20 + (idx / (n - 1)) * 280;
+                            const y = 70 - (s.points / maxPts) * 50;
+                            return { ...s, x, y };
+                          });
+
+                          const pathData = coords.reduce((acc, pt, i) => `${acc} ${i === 0 ? "M" : "L"} ${pt.x} ${pt.y}`, "");
+                          const areaData = `${pathData} L ${coords[coords.length - 1].x} 70 L ${coords[0].x} 70 Z`;
+
+                          return (
+                            <>
+                              {/* Area fill */}
+                              <path d={areaData} fill="url(#trend-gradient)" />
+
+                              {/* Stroke line */}
+                              <path
+                                d={pathData}
+                                fill="none"
+                                stroke="#6366f1"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+
+                              {/* Data nodes */}
+                              {coords.map((pt, i) => (
+                                <g key={i}>
+                                  <circle
+                                    cx={pt.x}
+                                    cy={pt.y}
+                                    r={pt.isTop || pt.isSpoon ? "5" : "3.5"}
+                                    fill={pt.isTop ? "#f59e0b" : pt.isSpoon ? "#f43f5e" : "#4f46e5"}
+                                    stroke="#ffffff"
+                                    strokeWidth="2"
+                                  />
+                                  {/* Value bubble above */}
+                                  <text
+                                    x={pt.x}
+                                    y={pt.y - 7}
+                                    textAnchor="middle"
+                                    className="fill-slate-700 font-mono"
+                                    style={{ fontSize: "8px", fontWeight: 800 }}
+                                  >
+                                    {pt.points}
+                                  </text>
+                                  {/* Session date label below */}
+                                  <text
+                                    x={pt.x}
+                                    y="84"
+                                    textAnchor="middle"
+                                    className="fill-slate-400 font-mono"
+                                    style={{ fontSize: "7px", fontWeight: 700 }}
+                                  >
+                                    {pt.date.length > 5 ? pt.date.slice(-5) : pt.date}
+                                  </text>
+                                </g>
+                              ))}
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
+                      <span className="flex items-center gap-1 font-semibold">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> Crown Meet
+                      </span>
+                      <span className="flex items-center gap-1 font-semibold">
+                        <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Spoon Meet
+                      </span>
+                      <span className="font-mono font-bold text-slate-700">
+                        {playerSessionTrends.length} Completed Sessions
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 text-center">
+                    <p className="text-xs font-bold text-slate-600">
+                      {playerSessionTrends.length === 1
+                        ? `Session record: ${playerSessionTrends[0].points} Day Points earned`
+                        : "Session trajectory will populate as daily tables are completed"}
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Finals & Clutch Performance Hub */}
               <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3.5">
                 <div className="flex items-center justify-between">
