@@ -849,6 +849,173 @@ export default function ProfilesPage() {
     return { bunny: topBunny, nemesis: topNemesis };
   }, [activeStats.h2h]);
 
+  // 1. Session Trend History (Day Points earned session by session)
+  const playerSessionTrends = useMemo(() => {
+    const list: { date: string; points: number; isTop: boolean; isSpoon: boolean }[] = [];
+    const seenDates = new Set<string>();
+
+    (completedDays || []).forEach((cd) => {
+      if (cd.date && !seenDates.has(cd.date)) {
+        seenDates.add(cd.date);
+        let pts = 0;
+        if (cd.totals) {
+          pts = cd.totals[selectedPlayerId] ?? 0;
+          if (selectedPlayerId === "sajal") {
+            for (const alias of SAJAL_ALIASES) {
+              if (cd.totals[alias] !== undefined) pts += cd.totals[alias];
+            }
+          }
+        }
+        const topId = normalizePlayerId(cd.topPlayerId || "");
+        const spoonId = normalizePlayerId(cd.spoonPlayerId || "");
+        list.push({
+          date: cd.date,
+          points: pts,
+          isTop: topId === selectedPlayerId,
+          isSpoon: spoonId === selectedPlayerId,
+        });
+      }
+    });
+
+    if (dayTable?.totals && Object.keys(dayTable.totals).length > 0) {
+      const todayDate = dayTable.date || "Today";
+      if (!seenDates.has(todayDate)) {
+        let pts = dayTable.totals[selectedPlayerId] ?? 0;
+        if (selectedPlayerId === "sajal") {
+          for (const alias of SAJAL_ALIASES) {
+            if (dayTable.totals[alias] !== undefined) pts += dayTable.totals[alias];
+          }
+        }
+        const sorted = Object.entries(dayTable.totals).sort(([, a], [, b]) => b - a);
+        const topId = sorted.length > 0 ? normalizePlayerId(sorted[0][0]) : null;
+        const spoonId = sorted.length > 1 ? normalizePlayerId(sorted[sorted.length - 1][0]) : null;
+        list.push({
+          date: "Today",
+          points: pts,
+          isTop: topId === selectedPlayerId,
+          isSpoon: spoonId === selectedPlayerId,
+        });
+      }
+    }
+
+    return list;
+  }, [completedDays, dayTable, selectedPlayerId]);
+
+  // 2. Player Skill Pentagon / Radar Attributes (Certified Court Specs out of 99)
+  const playerRadarStats = useMemo(() => {
+    const avgPts = activeStats.matchesPlayed > 0 ? activeStats.leaguePoints / activeStats.matchesPlayed : 0;
+    const offense = Math.min(99, Math.max(45, Math.round(avgPts * 30 + activeStats.shutsDelivered * 3)));
+
+    const defense = Math.min(
+      99,
+      Math.max(40, Math.round(82 - activeStats.shutsReceived * 6 + (activeStats.pointDiff > 0 ? 8 : -8)))
+    );
+
+    const finalsWr = activeStats.finalsPlayed > 0 ? (activeStats.tournamentsWon / activeStats.finalsPlayed) * 100 : winRate;
+    const tightWr = activeStats.clutchMatches > 0 ? (activeStats.clutchWins / activeStats.clutchMatches) * 100 : winRate;
+    const clutch = Math.min(99, Math.max(40, Math.round(finalsWr * 0.6 + tightWr * 0.4)));
+
+    const streakBonus = Math.min(25, activeStats.longestWinStreak * 5);
+    const consistency = Math.min(99, Math.max(45, Math.round(winRate * 0.7 + streakBonus)));
+
+    const maxMatchesSquad = Math.max(1, ...Object.values(playerStatsMap).map((s) => s.matchesPlayed));
+    const stamina = Math.min(99, Math.max(50, Math.round((activeStats.matchesPlayed / maxMatchesSquad) * 95)));
+
+    const overallRating = Math.round((offense + defense + clutch + consistency + stamina) / 5);
+
+    const cx = 140;
+    const cy = 130;
+    const radius = 75;
+    const axes = [
+      { key: "offense", label: "Offense", emoji: "⚡", value: offense },
+      { key: "consistency", label: "Consistency", emoji: "🎯", value: consistency },
+      { key: "stamina", label: "Stamina", emoji: "🔋", value: stamina },
+      { key: "defense", label: "Defense", emoji: "🛡️", value: defense },
+      { key: "clutch", label: "Clutch", emoji: "💓", value: clutch },
+    ];
+
+    const angleStep = (2 * Math.PI) / 5;
+    const startAngle = -Math.PI / 2;
+
+    const dataPoints = axes.map((axis, i) => {
+      const angle = startAngle + i * angleStep;
+      const r = (axis.value / 100) * radius;
+      return {
+        ...axis,
+        x: cx + r * Math.cos(angle),
+        y: cy + r * Math.sin(angle),
+        labelX: cx + (radius + 20) * Math.cos(angle),
+        labelY: cy + (radius + 14) * Math.sin(angle),
+      };
+    });
+
+    const polygonPoints = dataPoints.map((p) => `${p.x},${p.y}`).join(" ");
+
+    const gridPolygons = [0.25, 0.5, 0.75, 1.0].map((frac) => {
+      return axes
+        .map((_, i) => {
+          const angle = startAngle + i * angleStep;
+          const r = frac * radius;
+          return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+        })
+        .join(" ");
+    });
+
+    return {
+      axes: dataPoints,
+      overallRating,
+      polygonPoints,
+      gridPolygons,
+      cx,
+      cy,
+      radius,
+    };
+  }, [activeStats, winRate, playerStatsMap]);
+
+  // 3. Head-to-Head Comparison "Tale of the Tape"
+  const compareOpponent = useMemo(() => {
+    const opp = FIXED_PLAYERS.find((p) => p.id === compareOpponentId) || FIXED_PLAYERS[1];
+    const oppLore = PLAYER_LORES[opp.id] || PLAYER_LORES["adarsh"];
+    const oppStats = playerStatsMap[opp.id] || {
+      matchesPlayed: 0,
+      wins: 0,
+      losses: 0,
+      dayWins: 0,
+      tournamentsWon: 0,
+      finalsPlayed: 0,
+      finalsLost: 0,
+      dayPointsTotal: 0,
+      leaguePoints: 0,
+      shutsDelivered: 0,
+      shutsReceived: 0,
+    };
+    const oppRankIndex = rankingList.findIndex((r) => r.id === opp.id);
+    const oppRank = oppRankIndex !== -1 ? oppRankIndex + 1 : 2;
+    const oppWinRate = oppStats.matchesPlayed > 0 ? Math.round((oppStats.wins / oppStats.matchesPlayed) * 100) : 0;
+
+    const h2hRecord = activeStats.h2h?.[opp.id] || {
+      played: 0,
+      won: 0,
+      lost: 0,
+      finalsPlayed: 0,
+      finalsWon: 0,
+      finalsLost: 0,
+      shutsDelivered: 0,
+      shutsReceived: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+    };
+
+    return {
+      opp,
+      oppLore,
+      oppStats,
+      oppRank,
+      oppWinRate,
+      h2hRecord,
+    };
+  }, [compareOpponentId, playerStatsMap, rankingList, activeStats.h2h]);
+
   return (
     <div className="min-h-screen bg-[#F7F9FD] text-slate-900 pb-32">
       {/* Spectator Mode Banner */}
@@ -1133,6 +1300,138 @@ export default function ProfilesPage() {
                   <p className="text-xs font-black text-slate-900 mt-0.5 truncate">
                     {activeLore.specialMove}
                   </p>
+                </div>
+              </div>
+
+              {/* Court Skill Radar / Pentagon Attributes Card */}
+              <div className="rounded-[28px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">🕸️</span>
+                      <h3 className="text-slate-900 font-black text-sm">Court Skill Radar</h3>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      5-axis attribute radar calibrated from official match performance
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/70 text-indigo-900 font-black text-xs font-mono shadow-2xs">
+                    <span className="text-[10px] text-indigo-500 font-bold uppercase">OVR</span>
+                    <span className="text-sm font-black text-indigo-700">{playerRadarStats.overallRating}</span>
+                  </div>
+                </div>
+
+                {/* SVG Pentagon Visualization & Stat Bars */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-2">
+                  <div className="w-[280px] h-[260px] flex items-center justify-center relative shrink-0">
+                    <svg viewBox="0 0 280 260" className="w-full h-full overflow-visible">
+                      <defs>
+                        <radialGradient id="radar-glow" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stopColor="#818cf8" stopOpacity="0.4" />
+                          <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
+                        </radialGradient>
+                      </defs>
+
+                      {/* Concentric Grid Pentagons */}
+                      {playerRadarStats.gridPolygons.map((pts, idx) => (
+                        <polygon
+                          key={idx}
+                          points={pts}
+                          fill="none"
+                          stroke="#e2e8f0"
+                          strokeWidth="1"
+                          strokeDasharray={idx < 3 ? "2 2" : undefined}
+                        />
+                      ))}
+
+                      {/* Axis Spoke Lines */}
+                      {playerRadarStats.axes.map((axis, idx) => {
+                        const angle = -Math.PI / 2 + idx * ((2 * Math.PI) / 5);
+                        return (
+                          <line
+                            key={idx}
+                            x1={playerRadarStats.cx}
+                            y1={playerRadarStats.cy}
+                            x2={playerRadarStats.cx + playerRadarStats.radius * Math.cos(angle)}
+                            y2={playerRadarStats.cy + playerRadarStats.radius * Math.sin(angle)}
+                            stroke="#e2e8f0"
+                            strokeWidth="1"
+                          />
+                        );
+                      })}
+
+                      {/* Player Data Polygon */}
+                      <polygon
+                        points={playerRadarStats.polygonPoints}
+                        fill="url(#radar-glow)"
+                        stroke="#6366f1"
+                        strokeWidth="2.5"
+                        strokeLinejoin="round"
+                      />
+
+                      {/* Vertex Dots */}
+                      {playerRadarStats.axes.map((pt, idx) => (
+                        <circle
+                          key={idx}
+                          cx={pt.x}
+                          cy={pt.y}
+                          r="4"
+                          fill="#4f46e5"
+                          stroke="#ffffff"
+                          strokeWidth="2"
+                        />
+                      ))}
+
+                      {/* Vertex Labels */}
+                      {playerRadarStats.axes.map((pt, idx) => (
+                        <g key={`lbl-${idx}`} transform={`translate(${pt.labelX}, ${pt.labelY})`}>
+                          <text
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            className="fill-slate-800"
+                            style={{ fontSize: "10px", fontWeight: 800 }}
+                          >
+                            {pt.emoji} {pt.label}
+                          </text>
+                          <text
+                            y="11"
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            className="fill-indigo-600 font-mono"
+                            style={{ fontSize: "9px", fontWeight: 900 }}
+                          >
+                            {pt.value}
+                          </text>
+                        </g>
+                      ))}
+                    </svg>
+                  </div>
+
+                  {/* Attribute Progress Bars */}
+                  <div className="w-full space-y-2">
+                    {playerRadarStats.axes.map((stat, idx) => (
+                      <div
+                        key={idx}
+                        className="p-2 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between text-xs"
+                      >
+                        <span className="font-extrabold text-slate-700 flex items-center gap-1.5">
+                          <span>{stat.emoji}</span>
+                          <span>{stat.label}</span>
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600"
+                              style={{ width: `${stat.value}%` }}
+                            />
+                          </div>
+                          <span className="font-mono font-black text-slate-900 text-xs w-6 text-right">
+                            {stat.value}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </motion.div>
