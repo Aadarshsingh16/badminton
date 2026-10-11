@@ -11,6 +11,7 @@ import {
   getDeletedTournamentIds,
   SAJAL_ALIASES,
   isSajalId,
+  FIXED_PLAYERS,
   normalizePlayerId,
 } from "@/lib/store";
 import { computeDayPoints } from "@/lib/ranking";
