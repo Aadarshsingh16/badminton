@@ -199,7 +199,7 @@ interface AppState {
   closeTournament: () => void;
   deleteTournament: (id: string, skipSync?: boolean) => void;
   startNextTournament: () => void;
-  startNewDay: () => void;
+  startNewDay: (overrideTotals?: Record<string, number>, overrideTournaments?: string[]) => void;
   resetDayTable: (date?: string) => void;
   // UI state
   isScoreSheetOpen: boolean;

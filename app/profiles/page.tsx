@@ -512,32 +512,29 @@ export default function ProfilesPage() {
 
         const isFinalMatch = !!m.isFinal || m.round === -1;
         const diff = Math.abs(scoreA - scoreB);
-        const bonusMargin = isFinalMatch
-          ? t.config?.finalBonusMargin ?? 4
-          : t.config?.bonusMargin ?? 4;
 
-        // Match Points (2 pts win, 3 pts shutout / bonus)
-        const ptsAwardedA = m.pointsAwarded?.[m.playerA] ?? m.pointsAwarded?.[pA];
-        const ptsAwardedB = m.pointsAwarded?.[m.playerB] ?? m.pointsAwarded?.[pB];
-        const ptsA =
-          ptsAwardedA !== undefined
-            ? ptsAwardedA
-            : scoreA > scoreB
-            ? diff >= bonusMargin
-              ? 3
-              : 2
-            : 0;
-        const ptsB =
-          ptsAwardedB !== undefined
-            ? ptsAwardedB
-            : scoreB > scoreA
-            ? diff >= bonusMargin
-              ? 3
-              : 2
-            : 0;
+        // Match Points (2 pts win, 3 pts shutout / bonus) — strictly for round-robin matches (not finals)
+        if (!isFinalMatch) {
+          const rrBonusMargin = t.config?.bonusMargin ?? 4;
+          const rrWinPts = t.config?.winPoints ?? 2;
+          const rrBonusPts = t.config?.bonusPoints ?? 1;
 
-        stats[pA].leaguePoints += ptsA;
-        stats[pB].leaguePoints += ptsB;
+          const ptsA =
+            scoreA > scoreB
+              ? diff >= rrBonusMargin
+                ? rrWinPts + rrBonusPts
+                : rrWinPts
+              : 0;
+          const ptsB =
+            scoreB > scoreA
+              ? diff >= rrBonusMargin
+                ? rrWinPts + rrBonusPts
+                : rrWinPts
+              : 0;
+
+          stats[pA].leaguePoints += ptsA;
+          stats[pB].leaguePoints += ptsB;
+        }
 
         if (scoreA > scoreB) {
           stats[pA].wins += 1;
@@ -545,11 +542,11 @@ export default function ProfilesPage() {
           stats[pA].h2h[pB].won += 1;
           stats[pB].h2h[pA].lost += 1;
 
-          // Shutout Condition: 3 points earned in regular match OR diff >= bonusMargin (>=4)
-          // Final: win by final specified margin (diff >= finalBonusMargin)
-          const isShutout = isFinalMatch
-            ? diff >= bonusMargin
-            : ptsA === 3 || diff >= bonusMargin;
+          // Shutout Condition: Margin >= 4 (3 points earned in regular match or final blowout)
+          const bonusMargin = isFinalMatch
+            ? t.config?.finalBonusMargin ?? 4
+            : t.config?.bonusMargin ?? 4;
+          const isShutout = diff >= bonusMargin;
 
           if (isShutout) {
             stats[pA].shutsDelivered += 1;
@@ -570,15 +567,16 @@ export default function ProfilesPage() {
           stats[pB].h2h[pA].won += 1;
           stats[pA].h2h[pB].lost += 1;
 
-          const isShutout = isFinalMatch
-            ? diff >= bonusMargin
-            : ptsB === 3 || diff >= bonusMargin;
+          const bonusMargin = isFinalMatch
+            ? t.config?.finalBonusMargin ?? 4
+            : t.config?.bonusMargin ?? 4;
+          const isShutout = diff >= bonusMargin;
 
           if (isShutout) {
             stats[pB].shutsDelivered += 1;
             stats[pA].shutsReceived += 1;
-            stats[pB].h2h[pA].shutsDelivered += 1;
             stats[pA].h2h[pB].shutsReceived += 1;
+            stats[pB].h2h[pA].shutsDelivered += 1;
             if (isFinalMatch) {
               stats[pB].h2h[pA].finalShutsDelivered += 1;
               stats[pA].h2h[pB].finalShutsReceived += 1;

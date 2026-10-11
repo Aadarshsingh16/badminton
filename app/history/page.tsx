@@ -582,19 +582,25 @@ export default function HistoryPage() {
             leagueMatchesPlayed++;
             const myScore = isA ? (m.scoreA ?? 0) : (m.scoreB ?? 0);
             const oppScore = isA ? (m.scoreB ?? 0) : (m.scoreA ?? 0);
+            const won = myScore > oppScore;
+            const diff = Math.abs(myScore - oppScore);
+            const rrBonusMargin = t.config?.bonusMargin ?? 4;
+            const rrWinPts = t.config?.winPoints ?? 2;
+            const rrBonusPts = t.config?.bonusPoints ?? 1;
+
             const myPoints = isA
-              ? (m.pointsAwarded?.[m.playerA] ?? m.pointsAwarded?.["sajal"] ?? 0)
-              : (m.pointsAwarded?.[m.playerB] ?? m.pointsAwarded?.["sajal"] ?? 0);
+              ? (m.pointsAwarded?.[m.playerA] ?? m.pointsAwarded?.["sajal"] ?? (won ? (diff >= rrBonusMargin ? rrWinPts + rrBonusPts : rrWinPts) : 0))
+              : (m.pointsAwarded?.[m.playerB] ?? m.pointsAwarded?.["sajal"] ?? (won ? (diff >= rrBonusMargin ? rrWinPts + rrBonusPts : rrWinPts) : 0));
             const oppPoints = isA
-              ? (m.pointsAwarded?.[m.playerB] ?? 0)
-              : (m.pointsAwarded?.[m.playerA] ?? 0);
+              ? (m.pointsAwarded?.[m.playerB] ?? (!won ? (diff >= rrBonusMargin ? rrWinPts + rrBonusPts : rrWinPts) : 0))
+              : (m.pointsAwarded?.[m.playerA] ?? (!won ? (diff >= rrBonusMargin ? rrWinPts + rrBonusPts : rrWinPts) : 0));
 
             if (won) leagueWins++;
             leaguePoints += myPoints;
             leaguePointDiff += (myScore - oppScore);
             
-            if (won && (myPoints === 3 || (myScore - oppScore) >= 4)) shutoutWins++;
-            if (!won && (oppPoints === 3 || (oppScore - myScore) >= 4)) shutoutLosses++;
+            if (won && (myPoints === 3 || diff >= rrBonusMargin)) shutoutWins++;
+            if (!won && (oppPoints === 3 || diff >= rrBonusMargin)) shutoutLosses++;
             if (won) highestWinMargin = Math.max(highestWinMargin, myScore - oppScore);
           }
         });
