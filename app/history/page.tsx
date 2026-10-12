@@ -2496,16 +2496,16 @@ export default function HistoryPage() {
                   </div>
 
                   {/* Intensity Tiers & Key Archetypes */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* Tier 1: Wire Thrillers */}
                     <div className="p-3.5 rounded-2xl bg-gradient-to-br from-rose-50/70 via-rose-50/30 to-white border border-rose-200/70 flex flex-col justify-between space-y-3 shadow-2xs">
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-1.5">
                           <span className="text-[11px] font-black uppercase tracking-wider text-rose-800 flex items-center gap-1.5">
                             🔥 1-Point Thrillers
                           </span>
-                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
-                            {advancedInsights.scoringSpectrum.thrillerPct}% of games
+                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 shrink-0">
+                            {advancedInsights.scoringSpectrum.thrillerPct}%
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
@@ -2514,16 +2514,16 @@ export default function HistoryPage() {
                       </div>
 
                       {advancedInsights.scoringSpectrum.thrillerLeader && (
-                        <div className="pt-2 border-t border-rose-100 flex items-center justify-between">
-                          <div>
-                            <div className="text-[9px] uppercase font-bold text-rose-600/80 tracking-wider">
+                        <div className="pt-2 border-t border-rose-100 flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[9px] uppercase font-bold text-rose-600/80 tracking-wider truncate">
                               Top Clutch Finisher
                             </div>
-                            <div className="text-xs font-black text-slate-900">
+                            <div className="text-xs font-black text-slate-900 truncate">
                               {advancedInsights.scoringSpectrum.thrillerLeader.name}
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right shrink-0">
                             <div className="text-xs font-mono font-black text-rose-700">
                               {advancedInsights.scoringSpectrum.thrillerLeader.thrillerWins}W - {advancedInsights.scoringSpectrum.thrillerLeader.thrillerLosses}L
                             </div>
@@ -2538,12 +2538,12 @@ export default function HistoryPage() {
                     {/* Tier 2: Decisive / Tactical Battles */}
                     <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-indigo-50/30 to-white border border-indigo-200/70 flex flex-col justify-between space-y-3 shadow-2xs">
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-1.5">
                           <span className="text-[11px] font-black uppercase tracking-wider text-indigo-800 flex items-center gap-1.5">
                             ⚔️ Decisive Battles
                           </span>
-                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-                            {advancedInsights.scoringSpectrum.competitivePct}% of games
+                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 shrink-0">
+                            {advancedInsights.scoringSpectrum.competitivePct}%
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
@@ -2552,26 +2552,28 @@ export default function HistoryPage() {
                       </div>
 
                       {advancedInsights.scoringSpectrum.blowoutResilient ? (
-                        <div className="pt-2 border-t border-indigo-100 flex items-center justify-between">
-                          <div>
-                            <div className="text-[9px] uppercase font-bold text-indigo-600/80 tracking-wider">
+                        <div className="pt-2 border-t border-indigo-100 flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[9px] uppercase font-bold text-indigo-600/80 tracking-wider truncate">
                               Iron Shield (Toughest Out)
                             </div>
-                            <div className="text-xs font-black text-slate-900">
+                            <div className="text-xs font-black text-slate-900 truncate">
                               {advancedInsights.scoringSpectrum.blowoutResilient.name}
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right shrink-0">
                             <div className="text-xs font-mono font-black text-indigo-700">
-                              Only {advancedInsights.scoringSpectrum.blowoutResilient.blowoutsSuffered} Blowout
+                              {advancedInsights.scoringSpectrum.blowoutResilient.blowoutsSuffered === 0
+                                ? "0 Conceded"
+                                : `${advancedInsights.scoringSpectrum.blowoutResilient.blowoutsSuffered} Conceded`}
                             </div>
                             <div className="text-[9px] font-mono font-bold text-slate-400">
-                              Fewest lopsided losses conceded
+                              Fewest blowouts
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="pt-2 border-t border-indigo-100 flex items-center justify-between">
+                        <div className="pt-2 border-t border-indigo-100 flex items-center justify-between gap-2">
                           <div className="text-[9px] uppercase font-bold text-indigo-600/80 tracking-wider">
                             Squad Core
                           </div>
@@ -2585,12 +2587,12 @@ export default function HistoryPage() {
                     {/* Tier 3: Demolitions & Blowouts */}
                     <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50/70 via-emerald-50/30 to-white border border-emerald-200/70 flex flex-col justify-between space-y-3 shadow-2xs">
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-1.5">
                           <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
                             💥 Demolitions (≥4 pts)
                           </span>
-                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            {advancedInsights.scoringSpectrum.blowoutsPct}% of games
+                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                            {advancedInsights.scoringSpectrum.blowoutsPct}%
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
@@ -2599,21 +2601,21 @@ export default function HistoryPage() {
                       </div>
 
                       {advancedInsights.scoringSpectrum.blowoutDeliverer && (
-                        <div className="pt-2 border-t border-emerald-100 flex items-center justify-between">
-                          <div>
-                            <div className="text-[9px] uppercase font-bold text-emerald-600/80 tracking-wider">
+                        <div className="pt-2 border-t border-emerald-100 flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[9px] uppercase font-bold text-emerald-600/80 tracking-wider truncate">
                               Demolition Hammer
                             </div>
-                            <div className="text-xs font-black text-slate-900">
+                            <div className="text-xs font-black text-slate-900 truncate">
                               {advancedInsights.scoringSpectrum.blowoutDeliverer.name}
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right shrink-0">
                             <div className="text-xs font-mono font-black text-emerald-700">
-                              {advancedInsights.scoringSpectrum.blowoutDeliverer.blowoutsDelivered} Blowouts
+                              {advancedInsights.scoringSpectrum.blowoutDeliverer.blowoutsDelivered} Dealt
                             </div>
                             <div className="text-[9px] font-mono font-bold text-slate-400">
-                              Most lopsided wins dealt
+                              ≥4 pt blowouts
                             </div>
                           </div>
                         </div>
