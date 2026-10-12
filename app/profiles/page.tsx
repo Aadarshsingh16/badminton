@@ -236,6 +236,16 @@ const PLAYER_LORES: { [id: string]: PlayerLore } = {
   },
 };
 
+// Known chronological tournament sequence to guarantee exact historical order
+const KNOWN_TOURNEY_ORDER = [
+  "1ay64ld7mv2ai45f", // Oct 10 T1
+  "pojz5ruumv2cgqtv", // Oct 10 T2
+  "cvn6q9vimv3q3d9v", // Oct 11 T1
+  "jmvuh9gsmv3rfkru", // Oct 11 T2
+  "5h4w6113mv3sa2qu", // Oct 11 T3
+];
+
+
 export default function ProfilesPage() {
   const { players, pastTournaments, currentTournament, completedDays, dayTable } = useStore();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(FIXED_PLAYERS[0]?.id || "adarsh");
@@ -318,6 +328,7 @@ export default function ProfilesPage() {
   // Combine all tournaments for stats (local store + recovered + cloud history)
   const allTourneys = useMemo(() => {
     const tourneyMap = new Map<string, any>();
+    let orderCounter = 0;
 
     // 1. Populate from cloud history (full history across all days)
     if (cloudHistory?.days && cloudHistory.days.length > 0) {
@@ -353,6 +364,7 @@ export default function ProfilesPage() {
           if (tId) {
             tourneyMap.set(tId, {
               id: tId,
+              orderIndex: orderCounter++,
               date: day.date,
               createdAt: ct.matches?.[0]?.tournamentCreatedAt || day.date,
               playerIds,
@@ -385,6 +397,7 @@ export default function ProfilesPage() {
         tourneyMap.set(recT.id, {
           ...existing,
           ...recT,
+          orderIndex: existing?.orderIndex ?? orderCounter++,
           date: recT.date || existing?.date,
           createdAt: recT.createdAt || existing?.createdAt,
         });
@@ -398,6 +411,7 @@ export default function ProfilesPage() {
         tourneyMap.set(locT.id, {
           ...existing,
           ...locT,
+          orderIndex: existing?.orderIndex ?? orderCounter++,
           date: locT.date || existing?.date,
           createdAt: locT.createdAt || existing?.createdAt,
         });
@@ -410,6 +424,7 @@ export default function ProfilesPage() {
       tourneyMap.set(currentTournament.id, {
         ...existing,
         ...currentTournament,
+        orderIndex: existing?.orderIndex ?? orderCounter++,
         date: currentTournament.date || existing?.date,
         createdAt: currentTournament.createdAt || existing?.createdAt,
       });
@@ -419,6 +434,12 @@ export default function ProfilesPage() {
 
     // 5. Strictly sort all tournaments chronologically (Oldest -> Newest)
     list.sort((a, b) => {
+      const idxA = KNOWN_TOURNEY_ORDER.indexOf(a.id);
+      const idxB = KNOWN_TOURNEY_ORDER.indexOf(b.id);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+
       const timeA = a.createdAt
         ? new Date(a.createdAt).getTime()
         : a.date
@@ -430,7 +451,7 @@ export default function ProfilesPage() {
         ? new Date(b.date).getTime()
         : 0;
       if (timeA !== timeB) return timeA - timeB;
-      return (a.id || "").localeCompare(b.id || "");
+      return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
     });
 
     return list;
@@ -563,8 +584,19 @@ export default function ProfilesPage() {
       const rrMatches = [...(t.matches || [])]
         .filter((m: any) => m.played && !m.isFinal && m.round !== -1)
         .sort((m1: any, m2: any) => {
-          const r1 = m1.round ?? 0;
-          const r2 = m2.round ?? 0;
+          const getEffectiveRound = (m: any) => {
+            // In Oct 11 Tournament 2 (jmvuh9gsmv3rfkru), Akshat's match vs Sajal was played first on court
+            if (
+              t.id === "jmvuh9gsmv3rfkru" &&
+              (m.id?.includes("akshat") || m.playerA === "akshat" || m.playerB === "akshat") &&
+              (m.id?.includes("custom-1791717061642") || m.id?.includes("sajal") || isSajalId(m.playerA) || isSajalId(m.playerB))
+            ) {
+              return -0.5;
+            }
+            return m.round ?? 0;
+          };
+          const r1 = getEffectiveRound(m1);
+          const r2 = getEffectiveRound(m2);
           if (r1 !== r2) return r1 - r2;
           const t1 = m1.playedAt ? new Date(m1.playedAt).getTime() : 0;
           const t2 = m2.playedAt ? new Date(m2.playedAt).getTime() : 0;
