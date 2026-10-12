@@ -1386,6 +1386,7 @@ export default function HistoryPage() {
       winRateChartData,
       dominanceData,
       finalsLeaderboard,
+      scoringSpectrum,
       topRivalries,
     };
   }, [displayedHistory, displayedLeaderboard, players, completedDays, dayTable, displayedDayHonors]);
