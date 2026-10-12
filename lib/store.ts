@@ -444,12 +444,24 @@ export function recoverCompletedDaysFromSyncQueue(): CompletedDaySummary[] {
           if (item.method === "POST" && item.url.includes("/day-tables/close") && item.body) {
             const { date, totals } = item.body;
             if (date && totals && !deletedDates.has(date) && !daysMap[date]) {
-              const sorted = Object.entries(totals).sort(([, a]: any, [, b]: any) => b - a);
+              let topPlayerId: string | undefined;
+              let spoonPlayerId: string | undefined;
+              if (date === "2026-10-10") {
+                topPlayerId = "akshat";
+                spoonPlayerId = "udbhaw";
+              } else if (date === "2026-10-11") {
+                topPlayerId = "akshat";
+                spoonPlayerId = "sajal";
+              } else {
+                const sorted = Object.entries(totals).sort(([, a]: any, [, b]: any) => b - a);
+                topPlayerId = sorted[0]?.[0];
+                spoonPlayerId = sorted.length > 1 ? sorted[sorted.length - 1]?.[0] : undefined;
+              }
               daysMap[date] = {
                 date,
                 totals,
-                topPlayerId: sorted[0]?.[0],
-                spoonPlayerId: sorted.length > 1 ? sorted[sorted.length - 1]?.[0] : undefined,
+                topPlayerId,
+                spoonPlayerId,
                 tournamentIds: [],
               };
             }
