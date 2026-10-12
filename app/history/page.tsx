@@ -2635,7 +2635,7 @@ export default function HistoryPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                       {advancedInsights.scoringSpectrum.topScorelines.slice(0, 6).map((sc, i) => (
                         <div
-                          key={sc.scoreline}
+                          key={sc.score}
                           className={`p-2.5 rounded-xl border flex flex-col justify-between items-center text-center transition-all ${
                             sc.margin >= 4
                               ? "bg-emerald-50/50 border-emerald-200/70"
@@ -2661,10 +2661,10 @@ export default function HistoryPage() {
                             </span>
                           </div>
                           <div className="text-base font-black font-mono text-slate-900 my-1">
-                            {sc.scoreline}
+                            {sc.score}
                           </div>
                           <div className="text-[10px] font-semibold text-slate-500 font-mono">
-                            <strong className="text-slate-900">{sc.count}</strong> matches ({sc.pct}%)
+                            <strong className="text-slate-900">{sc.count}</strong> matches ({sc.percentage}%)
                           </div>
                         </div>
                       ))}
