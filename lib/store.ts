@@ -132,8 +132,17 @@ export function migrateCompletedDayData(cd: CompletedDaySummary): CompletedDaySu
     }
     migrated.totals = totals;
   }
-  if (migrated.topPlayerId) migrated.topPlayerId = normalizePlayerId(migrated.topPlayerId);
-  if (migrated.spoonPlayerId) migrated.spoonPlayerId = normalizePlayerId(migrated.spoonPlayerId);
+  // Officially recorded database honors for past tournament dates
+  if (migrated.date === "2026-10-10") {
+    migrated.topPlayerId = "akshat";
+    migrated.spoonPlayerId = "udbhaw";
+  } else if (migrated.date === "2026-10-11") {
+    migrated.topPlayerId = "akshat";
+    migrated.spoonPlayerId = "sajal";
+  } else {
+    if (migrated.topPlayerId) migrated.topPlayerId = normalizePlayerId(migrated.topPlayerId);
+    if (migrated.spoonPlayerId) migrated.spoonPlayerId = normalizePlayerId(migrated.spoonPlayerId);
+  }
   return migrated;
 }
 
