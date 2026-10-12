@@ -2216,7 +2216,7 @@ export default function HistoryPage() {
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
                              <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.ironMan?.name}</span>
-                             <span className="text-[10px] font-bold text-indigo-500">{(advancedInsights.statLeaders.ironMan?.leagueMatchesPlayed ?? 0) + (advancedInsights.statLeaders.ironMan?.finalsPlayed ?? 0)} played</span>
+                             <span className="text-[10px] font-bold text-indigo-500">{(advancedInsights.statLeaders.ironMan?.matchesPlayed ?? ((advancedInsights.statLeaders.ironMan?.leagueMatchesPlayed ?? 0) + (advancedInsights.statLeaders.ironMan?.finalsPlayed ?? 0)))} played</span>
                            </div>
                            <span className="text-lg opacity-80">🔋</span>
                         </div>
