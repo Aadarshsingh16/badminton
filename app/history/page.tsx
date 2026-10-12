@@ -933,7 +933,7 @@ export default function HistoryPage() {
     }
 
     let peakDayScoreLeader: { playerId: string; name: string; maxPts: number; date: string } | null = null;
-    Object.entries(playerSingleDayHigh).forEach(([pid, data]) => {
+    for (const [pid, data] of Object.entries(playerSingleDayHigh)) {
       if (!peakDayScoreLeader || data.maxPts > peakDayScoreLeader.maxPts) {
         const pObj = (players || []).find((p) => p.id === pid) || FIXED_PLAYERS.find((p) => p.id === pid);
         if (pObj && data.maxPts > 0) {
@@ -945,7 +945,7 @@ export default function HistoryPage() {
           };
         }
       }
-    });
+    }
 
     // 1-Point Deciders / Cardiac King (matches decided by 1 point)
     const tightWins: Record<string, number> = {};
@@ -963,7 +963,7 @@ export default function HistoryPage() {
     });
 
     let cardiacKing: { playerId: string; name: string; wins: number; matches: number } | null = null;
-    Object.entries(tightWins).forEach(([pid, wins]) => {
+    for (const [pid, wins] of Object.entries(tightWins)) {
       if (!cardiacKing || wins > cardiacKing.wins) {
         const pObj = (players || []).find((p) => p.id === pid) || FIXED_PLAYERS.find((p) => p.id === pid);
         if (pObj && wins > 0) {
@@ -975,7 +975,7 @@ export default function HistoryPage() {
           };
         }
       }
-    });
+    }
 
     // Full Finals Leaderboard (ranking all squad members by finals won, played, WR%)
     const finalsLeaderboard = displayedLeaderboard
