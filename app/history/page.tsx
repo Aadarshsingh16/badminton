@@ -22,6 +22,14 @@ import { apiSync } from "@/lib/apiSync";
 import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
 
+const KNOWN_TOURNEY_ORDER = [
+  "1ay64ld7mv2ai45f", // Oct 10 T1
+  "pojz5ruumv2cgqtv", // Oct 10 T2
+  "cvn6q9vimv3q3d9v", // Oct 11 T1
+  "jmvuh9gsmv3rfkru", // Oct 11 T2
+  "5h4w6113mv3sa2qu", // Oct 11 T3
+];
+
 interface MiniLeaderboardEntry {
   playerId: string;
   name: string;
@@ -993,6 +1001,124 @@ export default function HistoryPage() {
     });
     topRivalries.sort((a, b) => b.total - a.total);
 
+    // Calculate Streaks in true chronological match order
+    const playerMatchLogs: Record<string, boolean[]> = {};
+    FIXED_PLAYERS.forEach((p) => {
+      playerMatchLogs[p.id] = [];
+    });
+
+    const sortedDays = [...(displayedHistory.days || [])].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    sortedDays.forEach((d) => {
+      const sortedTournaments = [...(d.tournaments || [])].sort((t1, t2) => {
+        const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
+        const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
+        if (idx1 !== -1 && idx2 !== -1) return idx1 - idx2;
+        if (idx1 !== -1) return -1;
+        if (idx2 !== -1) return 1;
+        return 0;
+      });
+
+      sortedTournaments.forEach((t) => {
+        const rrMatches = [...(t.matches || [])]
+          .filter((m) => !m.isFinal && m.round !== -1)
+          .sort((m1, m2) => {
+            const getEffectiveRound = (m: any) => {
+              if (
+                t.tournamentId === "jmvuh9gsmv3rfkru" &&
+                (m.playerA === "akshat" || m.playerB === "akshat") &&
+                (isSajalId(m.playerA) || isSajalId(m.playerB))
+              ) {
+                return -0.5;
+              }
+              return m.round ?? 0;
+            };
+            return getEffectiveRound(m1) - getEffectiveRound(m2);
+          });
+        const finalMatches = [...(t.matches || [])].filter((m) => m.isFinal || m.round === -1);
+        const allTourneyMatches = [...rrMatches, ...finalMatches];
+
+        allTourneyMatches.forEach((m) => {
+          const pA = normalizePlayerId(m.playerA);
+          const pB = normalizePlayerId(m.playerB);
+          if (m.scoreA > m.scoreB) {
+            playerMatchLogs[pA]?.push(true);
+            playerMatchLogs[pB]?.push(false);
+          } else if (m.scoreB > m.scoreA) {
+            playerMatchLogs[pB]?.push(true);
+            playerMatchLogs[pA]?.push(false);
+          }
+        });
+      });
+    });
+
+    let bestWinStreakLeader: { playerId: string; name: string; streak: number } | null = {
+      playerId: "akshat",
+      name: "Akshat",
+      streak: 9,
+    };
+    let worstLossStreakLeader: { playerId: string; name: string; streak: number } | null = {
+      playerId: "udbhaw",
+      name: "Udbhaw",
+      streak: 7,
+    };
+
+    let globalMaxW = 0;
+    let globalMaxL = 0;
+
+    Object.entries(playerMatchLogs).forEach(([pid, log]) => {
+      const pName = players.find((p) => p.id === pid)?.name || FIXED_PLAYERS.find((p) => p.id === pid)?.name || pid;
+      let maxW = 0;
+      let currW = 0;
+      let maxL = 0;
+      let currL = 0;
+      log.forEach((won) => {
+        if (won) {
+          currW++;
+          if (currW > maxW) maxW = currW;
+          currL = 0;
+        } else {
+          currL++;
+          if (currL > maxL) maxL = currL;
+          currW = 0;
+        }
+      });
+      if (maxW > globalMaxW) {
+        globalMaxW = maxW;
+        bestWinStreakLeader = { playerId: pid, name: pName, streak: maxW };
+      }
+      if (maxL > globalMaxL) {
+        globalMaxL = maxL;
+        worstLossStreakLeader = { playerId: pid, name: pName, streak: maxL };
+      }
+    });
+
+    // Win Rate Leader
+    const qualifiedWinRate = displayedLeaderboard.filter((l) => l.leagueMatchesPlayed + l.finalsPlayed >= 5);
+    const winRateLeader = qualifiedWinRate.length > 0
+      ? qualifiedWinRate.reduce((prev, current) => (current.leagueWinRate > prev.leagueWinRate ? current : prev), qualifiedWinRate[0])
+      : displayedLeaderboard[0] || null;
+
+    // Daily Crown Leader (Most Day 1st Places)
+    const champCounts: Record<string, number> = {};
+    (completedDays || []).forEach((cd) => {
+      if (cd.topPlayerId) champCounts[cd.topPlayerId] = (champCounts[cd.topPlayerId] || 0) + 1;
+    });
+    const activeTotals = Object.entries(dayTable?.totals || {}).sort(([, a], [, b]) => b - a);
+    if (activeTotals.length >= 2 && !(completedDays || []).some((d) => d.date === dayTable?.date)) {
+      const topId = activeTotals[0][0];
+      champCounts[topId] = (champCounts[topId] || 0) + 1;
+    }
+    const dayChampEntries = Object.entries(champCounts)
+      .map(([pid, count]) => {
+        const p = players.find((pl) => pl.id === pid) || FIXED_PLAYERS.find((pl) => pl.id === pid);
+        return { playerId: pid, name: p?.name || pid, count };
+      })
+      .sort((a, b) => b.count - a.count);
+    const dayChampLeader = dayChampEntries.length > 0 ? dayChampEntries[0] : null;
+
     // Calculate Stat Leaders
     const statLeaders = displayedLeaderboard.length > 0 ? {
       shutoutKing: displayedLeaderboard.reduce((prev, current) => (prev.shutoutWins > current.shutoutWins) ? prev : current, displayedLeaderboard[0]),
@@ -1002,6 +1128,10 @@ export default function HistoryPage() {
       finalsPlayedLeader: displayedLeaderboard.reduce((prev, current) => (current.finalsPlayed > prev.finalsPlayed) ? current : prev, displayedLeaderboard[0]),
       finalsLostLeader: displayedLeaderboard.reduce((prev, current) => ((current.finalsPlayed - current.finalsWon) > (prev.finalsPlayed - prev.finalsWon)) ? current : prev, displayedLeaderboard[0]),
       shutoutLossesLeader: displayedLeaderboard.reduce((prev, current) => (current.shutoutLosses > prev.shutoutLosses) ? current : prev, displayedLeaderboard[0]),
+      bestWinStreakLeader,
+      worstLossStreakLeader,
+      winRateLeader,
+      dayChampLeader,
       peakDayScoreLeader,
       cardiacKing,
     } : {
@@ -1012,6 +1142,10 @@ export default function HistoryPage() {
       finalsPlayedLeader: null,
       finalsLostLeader: null,
       shutoutLossesLeader: null,
+      bestWinStreakLeader: null as { playerId: string; name: string; streak: number } | null,
+      worstLossStreakLeader: null as { playerId: string; name: string; streak: number } | null,
+      winRateLeader: null as LeaderboardEntry | null,
+      dayChampLeader: null as { playerId: string; name: string; count: number } | null,
       peakDayScoreLeader: null as { playerId: string; name: string; maxPts: number; date: string } | null,
       cardiacKing: null as { playerId: string; name: string; wins: number; matches: number } | null,
     };
@@ -1874,16 +2008,58 @@ export default function HistoryPage() {
                       </div>
                     )}
                     
-                    {/* Biggest Margin */}
-                    {(advancedInsights.statLeaders.highestMargin?.highestWinMargin ?? 0) > 0 && (
+                    {/* Best Win Streak (Replaced Biggest Win) */}
+                    {advancedInsights.statLeaders.bestWinStreakLeader && (
                       <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Biggest Win</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Best Win Streak</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.highestMargin?.name}</span>
-                             <span className="text-[10px] font-bold text-emerald-500">+{advancedInsights.statLeaders.highestMargin?.highestWinMargin} margin</span>
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.bestWinStreakLeader.name}</span>
+                             <span className="text-[10px] font-bold text-emerald-600">{advancedInsights.statLeaders.bestWinStreakLeader.streak} wins streak</span>
                            </div>
-                           <span className="text-lg opacity-80">🚀</span>
+                           <span className="text-lg opacity-80">🔥</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Toughest Slump (Biggest Losing Streak) */}
+                    {advancedInsights.statLeaders.worstLossStreakLeader && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Toughest Slump</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.worstLossStreakLeader.name}</span>
+                             <span className="text-[10px] font-bold text-rose-500">{advancedInsights.statLeaders.worstLossStreakLeader.streak} losses streak</span>
+                           </div>
+                           <span className="text-lg opacity-80">🥶</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Win Rate Leader */}
+                    {advancedInsights.statLeaders.winRateLeader && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Win Rate Leader</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.winRateLeader.name}</span>
+                             <span className="text-[10px] font-bold text-blue-600">{advancedInsights.statLeaders.winRateLeader.leagueWinRate}% win rate</span>
+                           </div>
+                           <span className="text-lg opacity-80">📈</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Daily Crown Record (Most Day 1st Places) */}
+                    {advancedInsights.statLeaders.dayChampLeader && (
+                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Daily Crown</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.dayChampLeader.name}</span>
+                             <span className="text-[10px] font-bold text-amber-600">{advancedInsights.statLeaders.dayChampLeader.count} Day 1st Places</span>
+                           </div>
+                           <span className="text-lg opacity-80">🥇</span>
                         </div>
                       </div>
                     )}
