@@ -2098,13 +2098,13 @@ export default function HistoryPage() {
                     )}
 
                     {/* Finals Heartbreak (Most Finals Lost) */}
-                    {advancedInsights.statLeaders.finalsLostLeader && (advancedInsights.statLeaders.finalsLostLeader.finalsPlayed - advancedInsights.statLeaders.finalsLostLeader.finalsWon) > 0 && (
+                    {advancedInsights.statLeaders.finalsLostLeader && (advancedInsights.statLeaders.finalsLostLeader.lostCount ?? (advancedInsights.statLeaders.finalsLostLeader.finalsPlayed - advancedInsights.statLeaders.finalsLostLeader.finalsWon)) > 0 && (
                       <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
                         <span className="text-[9px] font-bold text-slate-400 uppercase">Finals Heartbreak</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
                              <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsLostLeader?.name}</span>
-                             <span className="text-[10px] font-bold text-rose-500">{advancedInsights.statLeaders.finalsLostLeader.finalsPlayed - advancedInsights.statLeaders.finalsLostLeader.finalsWon} runner-up</span>
+                             <span className="text-[10px] font-bold text-rose-500">{advancedInsights.statLeaders.finalsLostLeader.lostCount ?? (advancedInsights.statLeaders.finalsLostLeader.finalsPlayed - advancedInsights.statLeaders.finalsLostLeader.finalsWon)} runner-up</span>
                            </div>
                            <span className="text-lg opacity-80">💔</span>
                         </div>
