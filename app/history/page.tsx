@@ -1094,9 +1094,16 @@ export default function HistoryPage() {
     const blowoutsPct = totalMatchesCount > 0 ? Math.max(0, 100 - thrillerPct - competitivePct) : 0;
 
     // Tempo Leaders
-    const thrillerLeader = Object.values(playerIntensityStats)
+    const thrillerLeaderRaw = Object.values(playerIntensityStats)
       .filter((p) => p.thrillerMatches >= 2)
       .sort((a, b) => (b.thrillerWins / b.thrillerMatches) - (a.thrillerWins / a.thrillerMatches) || b.thrillerWins - a.thrillerWins)[0] || null;
+
+    const thrillerLeader = thrillerLeaderRaw
+      ? {
+          ...thrillerLeaderRaw,
+          thrillerWinRate: Math.round((thrillerLeaderRaw.thrillerWins / thrillerLeaderRaw.thrillerMatches) * 100),
+        }
+      : null;
 
     const blowoutDeliverer = Object.values(playerIntensityStats)
       .sort((a, b) => b.blowoutsDelivered - a.blowoutsDelivered)[0] || null;
@@ -1387,7 +1394,7 @@ export default function HistoryPage() {
       dominanceData,
       finalsLeaderboard,
       scoringSpectrum,
-      topRivalries,
+      topRivalries: [] as any[],
     };
   }, [displayedHistory, displayedLeaderboard, players, completedDays, dayTable, displayedDayHonors]);
 
