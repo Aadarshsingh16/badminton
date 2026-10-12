@@ -1726,9 +1726,9 @@ export default function HistoryPage() {
                   <div className="overflow-x-auto overflow-y-hidden no-scrollbar w-full h-48">
                     <div style={{ minWidth: `${Math.max(100, advancedInsights.winRateChartData.length * 20)}%`, height: '100%' }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={advancedInsights.winRateChartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <BarChart data={advancedInsights.winRateChartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} interval={0} padding={{ left: 10, right: 10 }} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
                           <YAxis hide domain={[0, 100]} />
                           <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 700 }} />
                           <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 600 }} />
@@ -1747,9 +1747,9 @@ export default function HistoryPage() {
                   <div className="overflow-x-auto overflow-y-hidden no-scrollbar w-full h-48">
                     <div style={{ minWidth: `${Math.max(100, advancedInsights.dominanceData.length * 20)}%`, height: '100%' }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={advancedInsights.dominanceData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <BarChart data={advancedInsights.dominanceData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} interval={0} padding={{ left: 10, right: 10 }} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
                           <YAxis hide />
                           <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 700 }} />
                           <Bar dataKey="Avg Diff" radius={[4, 4, 0, 0]} barSize={24}>

@@ -261,6 +261,7 @@ export default function ProfilesPage() {
   const [cloudLoading, setCloudLoading] = useState(false);
   const [shutoutModalType, setShutoutModalType] = useState<"delivered" | "received" | null>(null);
   const [selectedOpponentH2H, setSelectedOpponentH2H] = useState<string | null>(null);
+  const [h2hDisplayMode, setH2hDisplayMode] = useState<"cards" | "table">("cards");
   const [compareOpponentId, setCompareOpponentId] = useState<string>(
     FIXED_PLAYERS.find((p) => p.id !== (FIXED_PLAYERS[0]?.id || "adarsh"))?.id || "gautam"
   );
@@ -2013,7 +2014,7 @@ export default function ProfilesPage() {
               </div>
 
               {/* Tale of the Tape: Head-to-Head Split-Screen Comparison Card */}
-              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-4">
+              <div id="tale-of-the-tape" className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-1.5">
@@ -2201,18 +2202,43 @@ export default function ProfilesPage() {
 
               {/* Rivalry & Head-to-Head Matrix Hub */}
               <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div>
                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
                       Rivalry Matrix &amp; Final Face-Offs
                     </p>
-                    <p className="text-slate-900 font-extrabold text-xs mt-0.5">
-                      Complete Head-to-Head Squad Table
+                    <p className="text-slate-900 font-extrabold text-sm mt-0.5">
+                      Head-to-Head Squad Breakdown
                     </p>
                   </div>
-                  <span className="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-2.5 py-0.5 rounded-full font-bold">
-                    Tap Row for Matchup
-                  </span>
+
+                  {/* View Switcher: Cards vs Table */}
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200/60">
+                    <button
+                      type="button"
+                      onClick={() => setH2hDisplayMode("cards")}
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                        h2hDisplayMode === "cards"
+                          ? "bg-white text-indigo-700 shadow-xs"
+                          : "text-slate-500 hover:text-slate-900"
+                      }`}
+                    >
+                      <span>🎴</span>
+                      <span>Cards</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setH2hDisplayMode("table")}
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                        h2hDisplayMode === "table"
+                          ? "bg-white text-indigo-700 shadow-xs"
+                          : "text-slate-500 hover:text-slate-900"
+                      }`}
+                    >
+                      <span>📊</span>
+                      <span>Table</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Bunny & Nemesis Highlights */}
@@ -2254,195 +2280,407 @@ export default function ProfilesPage() {
                   </div>
                 </div>
 
-                {/* Comprehensive Table Container */}
-                <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-200/80">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                        <th className="py-2.5 pl-3 pr-2">Opponent</th>
-                        <th className="py-2.5 px-2 text-center">Record</th>
-                        <th className="py-2.5 px-2 text-center">🏆 Finals</th>
-                        <th className="py-2.5 px-2 text-center">⚡/🛡️ Shutouts</th>
-                        <th className="py-2.5 px-2 text-center">Diff</th>
-                        <th className="py-2.5 pr-3 pl-2 text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {FIXED_PLAYERS.filter((p) => p.id !== selectedPlayerId).map((opp) => {
-                        const rec = activeStats.h2h?.[opp.id] || {
-                          played: 0,
-                          won: 0,
-                          lost: 0,
-                          finalsPlayed: 0,
-                          finalsWon: 0,
-                          finalsLost: 0,
-                          shutsDelivered: 0,
-                          shutsReceived: 0,
-                          pointsFor: 0,
-                          pointsAgainst: 0,
-                        };
-                        const oppWr = rec.played > 0 ? Math.round((rec.won / rec.played) * 100) : 0;
-                        const netMargin = rec.pointsFor - rec.pointsAgainst;
-                        const isExpanded = selectedOpponentH2H === opp.id;
+                {/* Mode 1: Highly Readable Rivalry Cards (Default) */}
+                {h2hDisplayMode === "cards" ? (
+                  <div className="space-y-3">
+                    {FIXED_PLAYERS.filter((p) => p.id !== selectedPlayerId).map((opp) => {
+                      const rec = activeStats.h2h?.[opp.id] || {
+                        played: 0,
+                        won: 0,
+                        lost: 0,
+                        finalsPlayed: 0,
+                        finalsWon: 0,
+                        finalsLost: 0,
+                        shutsDelivered: 0,
+                        shutsReceived: 0,
+                        pointsFor: 0,
+                        pointsAgainst: 0,
+                      };
+                      const oppWr = rec.played > 0 ? Math.round((rec.won / rec.played) * 100) : 0;
+                      const netMargin = rec.pointsFor - rec.pointsAgainst;
+                      const isExpanded = selectedOpponentH2H === opp.id;
 
-                        // Relationship Status Tag
-                        const isBunny = rec.played >= 2 && oppWr >= 65;
-                        const isNemesis = rec.played >= 2 && oppWr <= 35;
+                      const isBunny = rec.played >= 2 && oppWr >= 65;
+                      const isNemesis = rec.played >= 2 && oppWr <= 35;
+                      const isDeadlock = rec.played > 0 && rec.won === rec.lost;
 
-                        return (
-                          <React.Fragment key={opp.id}>
-                            <tr
-                              onClick={() => setSelectedOpponentH2H(isExpanded ? null : opp.id)}
-                              className={`cursor-pointer transition-colors ${
-                                isExpanded
-                                  ? "bg-indigo-50/70"
-                                  : "hover:bg-slate-50/80"
-                              }`}
-                            >
-                              {/* Opponent */}
-                              <td className="py-2.5 pl-3 pr-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="w-6 h-6 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shadow-xs shrink-0">
-                                    <AvatarSVG type={opp.avatar} size={18} />
-                                  </span>
+                      return (
+                        <div
+                          key={opp.id}
+                          className={`p-3.5 rounded-2xl border transition-all ${
+                            isExpanded
+                              ? "bg-indigo-50/40 border-indigo-300 ring-2 ring-indigo-200/50 shadow-xs"
+                              : "bg-white border-slate-200/80 hover:border-slate-300 shadow-2xs"
+                          }`}
+                        >
+                          {/* Card Header: Opponent Info & Overall Record */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center shadow-xs shrink-0">
+                                <AvatarSVG type={opp.avatar} size={24} emoji={opp.avatarEmoji} color={opp.avatarColor} />
+                              </span>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
                                   <span className="font-extrabold text-xs text-slate-900 truncate">
                                     {opp.name}
                                   </span>
+                                  {isBunny ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black shrink-0">
+                                      🐰 Bunny (+{rec.won - rec.lost})
+                                    </span>
+                                  ) : isNemesis ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-black shrink-0">
+                                      😈 Nemesis (-{rec.lost - rec.won})
+                                    </span>
+                                  ) : isDeadlock ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black shrink-0">
+                                      ⚖️ Deadlocked
+                                    </span>
+                                  ) : rec.played > 0 ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold shrink-0">
+                                      ⚔️ Rival (+{rec.won - rec.lost})
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-400 text-[10px] font-medium shrink-0">
+                                      Unplayed
+                                    </span>
+                                  )}
                                 </div>
-                              </td>
+                                <p className="text-[10px] text-slate-400 font-medium">
+                                  {rec.played > 0 ? `${rec.played} Total Encounters` : "No direct matches yet"}
+                                </p>
+                              </div>
+                            </div>
 
-                              {/* Overall Record */}
-                              <td className="py-2.5 px-2 text-center font-mono">
-                                {rec.played > 0 ? (
-                                  <div>
-                                    <span className="font-black text-emerald-700">{rec.won}W</span>
-                                    <span className="text-slate-300 mx-0.5">-</span>
-                                    <span className="font-black text-rose-600">{rec.lost}L</span>
-                                    <span className="text-[10px] text-slate-400 block">{oppWr}%</span>
+                            {/* Win Record & Percentage */}
+                            <div className="text-right shrink-0">
+                              {rec.played > 0 ? (
+                                <div className="flex flex-col items-end">
+                                  <div className="flex items-baseline gap-1 font-mono">
+                                    <span className="font-black text-sm text-emerald-700">{rec.won}W</span>
+                                    <span className="text-slate-300 font-bold">-</span>
+                                    <span className="font-black text-sm text-rose-600">{rec.lost}L</span>
                                   </div>
-                                ) : (
-                                  <span className="text-slate-400 font-medium">0 - 0</span>
-                                )}
-                              </td>
-
-                              {/* Final Face-Offs */}
-                              <td className="py-2.5 px-2 text-center">
-                                {rec.finalsPlayed > 0 ? (
-                                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-900 border border-amber-300/80 text-[10px] font-black shadow-2xs font-mono">
-                                    <span>🏆</span>
-                                    <span>{rec.finalsWon}W - {rec.finalsLost}L</span>
+                                  <span
+                                    className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                                      oppWr >= 50
+                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                                        : "bg-rose-50 text-rose-700 border border-rose-200/60"
+                                    }`}
+                                  >
+                                    {oppWr}% Win Rate
                                   </span>
-                                ) : (
-                                  <span className="text-slate-300 font-mono text-[11px]">—</span>
-                                )}
-                              </td>
+                                </div>
+                              ) : (
+                                <span className="text-slate-300 text-xs font-mono font-bold">0 - 0</span>
+                              )}
+                            </div>
+                          </div>
 
-                              {/* Shutouts Delivered vs Received */}
-                              <td className="py-2.5 px-2 text-center">
-                                {rec.shutsDelivered > 0 || rec.shutsReceived > 0 ? (
-                                  <div className="flex items-center justify-center gap-1 font-mono text-[10px]">
-                                    {rec.shutsDelivered > 0 && (
-                                      <span
-                                        title={`${rec.shutsDelivered} blowouts delivered`}
-                                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 font-bold"
-                                      >
-                                        <span>⚡</span>
-                                        <span>{rec.shutsDelivered}</span>
-                                      </span>
-                                    )}
-                                    {rec.shutsReceived > 0 && (
-                                      <span
-                                        title={`${rec.shutsReceived} blowouts conceded`}
-                                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-900 border border-rose-200 font-bold"
-                                      >
-                                        <span>🛡️</span>
-                                        <span>{rec.shutsReceived}</span>
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-slate-300 text-[11px]">—</span>
-                                )}
-                              </td>
+                          {/* Visual Momentum / Dominance Bar */}
+                          {rec.played > 0 && (
+                            <div className="mt-2.5">
+                              <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden flex shadow-inner">
+                                <div
+                                  style={{ width: `${oppWr}%` }}
+                                  className="bg-emerald-500 h-full transition-all duration-500"
+                                  title={`${activeLore.name}: ${rec.won} wins (${oppWr}%)`}
+                                />
+                                <div
+                                  style={{ width: `${100 - oppWr}%` }}
+                                  className="bg-rose-500 h-full transition-all duration-500"
+                                  title={`${opp.name}: ${rec.lost} wins (${100 - oppWr}%)`}
+                                />
+                              </div>
+                            </div>
+                          )}
 
-                              {/* Net Margin */}
-                              <td className="py-2.5 px-2 text-center font-mono font-bold text-[11px]">
-                                {rec.played > 0 ? (
-                                  <span className={netMargin > 0 ? "text-emerald-700" : netMargin < 0 ? "text-rose-600" : "text-slate-400"}>
-                                    {netMargin > 0 ? `+${netMargin}` : netMargin}
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-300">0</span>
-                                )}
-                              </td>
+                          {/* Key Metrics: 3 Clearly Spaced Badges */}
+                          <div className="grid grid-cols-3 gap-2 mt-2.5 pt-2 border-t border-slate-100 text-center">
+                            {/* 1. Finals Face-Offs */}
+                            <div
+                              className={`p-1.5 rounded-xl flex flex-col justify-center items-center ${
+                                rec.finalsPlayed > 0
+                                  ? "bg-amber-50 border border-amber-200 text-amber-950"
+                                  : "bg-slate-50 border border-slate-100 text-slate-400"
+                              }`}
+                            >
+                              <span className="text-[8px] font-black uppercase tracking-wider block">
+                                🏆 Finals
+                              </span>
+                              <span className="text-[11px] font-mono font-black mt-0.5">
+                                {rec.finalsPlayed > 0 ? `${rec.finalsWon}W - ${rec.finalsLost}L` : "None"}
+                              </span>
+                            </div>
 
-                              {/* Dynamic Relationship Tag */}
-                              <td className="py-2.5 pr-3 pl-2 text-right">
-                                {isBunny ? (
-                                  <span className="px-2 py-0.5 rounded-full bg-emerald-100/80 text-emerald-800 text-[9px] font-black">
-                                    🐰 Bunny
-                                  </span>
-                                ) : isNemesis ? (
-                                  <span className="px-2 py-0.5 rounded-full bg-rose-100/80 text-rose-800 text-[9px] font-black">
-                                    😈 Nemesis
-                                  </span>
-                                ) : rec.played > 0 ? (
-                                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[9px] font-bold">
-                                    ⚔️ Rival
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-400 text-[10px]">Unplayed</span>
-                                )}
-                              </td>
-                            </tr>
+                            {/* 2. Shutouts Delivered vs Conceded */}
+                            <div
+                              className={`p-1.5 rounded-xl flex flex-col justify-center items-center ${
+                                rec.shutsDelivered > 0 || rec.shutsReceived > 0
+                                  ? "bg-purple-50 border border-purple-200 text-purple-950"
+                                  : "bg-slate-50 border border-slate-100 text-slate-400"
+                              }`}
+                            >
+                              <span className="text-[8px] font-black uppercase tracking-wider block">
+                                ⚡ Blowouts
+                              </span>
+                              <span className="text-[11px] font-mono font-black mt-0.5">
+                                {rec.shutsDelivered > 0 || rec.shutsReceived > 0
+                                  ? `+${rec.shutsDelivered} / -${rec.shutsReceived}`
+                                  : "0 Blowouts"}
+                              </span>
+                            </div>
 
-                            {/* Expandable Drill-Down Row */}
-                            {isExpanded && (
-                              <tr className="bg-indigo-50/40">
-                                <td colSpan={6} className="p-3">
-                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11px]">
-                                    <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
-                                      <span className="text-[9px] uppercase font-bold text-slate-400 block">
-                                        Total Head-to-Head
-                                      </span>
-                                      <span className="font-black text-slate-800 font-mono">
-                                        {rec.played} Matches ({oppWr}% Win)
-                                      </span>
-                                    </div>
-                                    <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
-                                      <span className="text-[9px] uppercase font-bold text-slate-400 block">
-                                        Championship Finals
-                                      </span>
-                                      <span className="font-black text-amber-700 font-mono">
-                                        {rec.finalsPlayed > 0 ? `${rec.finalsWon}W - ${rec.finalsLost}L in Finals` : "Never met in Finals"}
-                                      </span>
-                                    </div>
-                                    <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
-                                      <span className="text-[9px] uppercase font-bold text-slate-400 block">
-                                        Points Aggregate
-                                      </span>
-                                      <span className="font-black text-slate-800 font-mono">
-                                        {rec.pointsFor} - {rec.pointsAgainst}
-                                      </span>
-                                    </div>
-                                    <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
-                                      <span className="text-[9px] uppercase font-bold text-slate-400 block">
-                                        Blowout Margin
-                                      </span>
-                                      <span className="font-black text-indigo-700 font-mono">
-                                        {rec.shutsDelivered} delivered / {rec.shutsReceived} conceded
-                                      </span>
-                                    </div>
+                            {/* 3. Point Differential */}
+                            <div
+                              className={`p-1.5 rounded-xl flex flex-col justify-center items-center ${
+                                netMargin > 0
+                                  ? "bg-emerald-50 border border-emerald-200 text-emerald-950"
+                                  : netMargin < 0
+                                  ? "bg-rose-50 border border-rose-200 text-rose-950"
+                                  : "bg-slate-50 border border-slate-100 text-slate-400"
+                              }`}
+                            >
+                              <span className="text-[8px] font-black uppercase tracking-wider block">
+                                🎯 Diff
+                              </span>
+                              <span className="text-[11px] font-mono font-black mt-0.5">
+                                {rec.played > 0 ? (netMargin > 0 ? `+${netMargin} pts` : `${netMargin} pts`) : "0 pts"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Quick Actions Row */}
+                          <div className="mt-2.5 pt-2 flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedOpponentH2H(isExpanded ? null : opp.id)}
+                              className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                            >
+                              <span>{isExpanded ? "Hide Breakdown" : "View Breakdown"}</span>
+                              <span>{isExpanded ? "▲" : "▼"}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCompareOpponentId(opp.id);
+                                const el = document.getElementById("tale-of-the-tape");
+                                if (el) el.scrollIntoView({ behavior: "smooth" });
+                              }}
+                              className="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-md transition-colors flex items-center gap-1"
+                            >
+                              <span>🥊 Tale of Tape</span>
+                            </button>
+                          </div>
+
+                          {/* Expanded Drill-Down */}
+                          {isExpanded && (
+                            <div className="mt-2.5 p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-100/80 grid grid-cols-2 gap-2 text-center text-[10px]">
+                              <div className="p-2 rounded-lg bg-white border border-indigo-100 shadow-2xs">
+                                <span className="text-[8px] uppercase font-bold text-slate-400 block">
+                                  Points Aggregate
+                                </span>
+                                <span className="font-black text-slate-800 font-mono text-[11px]">
+                                  {rec.pointsFor} - {rec.pointsAgainst} ({netMargin > 0 ? `+${netMargin}` : netMargin})
+                                </span>
+                              </div>
+                              <div className="p-2 rounded-lg bg-white border border-indigo-100 shadow-2xs">
+                                <span className="text-[8px] uppercase font-bold text-slate-400 block">
+                                  Championship Finals
+                                </span>
+                                <span className="font-black text-amber-700 font-mono text-[11px]">
+                                  {rec.finalsPlayed > 0
+                                    ? `${rec.finalsWon}W - ${rec.finalsLost}L in Finals`
+                                    : "Never Met in Finals"}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Mode 2: Clean Matrix Table View */
+                  <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-200/80">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                          <th className="py-2.5 pl-3 pr-2">Opponent</th>
+                          <th className="py-2.5 px-2 text-center">Record</th>
+                          <th className="py-2.5 px-2 text-center">🏆 Finals</th>
+                          <th className="py-2.5 px-2 text-center">⚡/🛡️ Shutouts</th>
+                          <th className="py-2.5 px-2 text-center">Diff</th>
+                          <th className="py-2.5 pr-3 pl-2 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {FIXED_PLAYERS.filter((p) => p.id !== selectedPlayerId).map((opp) => {
+                          const rec = activeStats.h2h?.[opp.id] || {
+                            played: 0,
+                            won: 0,
+                            lost: 0,
+                            finalsPlayed: 0,
+                            finalsWon: 0,
+                            finalsLost: 0,
+                            shutsDelivered: 0,
+                            shutsReceived: 0,
+                            pointsFor: 0,
+                            pointsAgainst: 0,
+                          };
+                          const oppWr = rec.played > 0 ? Math.round((rec.won / rec.played) * 100) : 0;
+                          const netMargin = rec.pointsFor - rec.pointsAgainst;
+                          const isExpanded = selectedOpponentH2H === opp.id;
+
+                          const isBunny = rec.played >= 2 && oppWr >= 65;
+                          const isNemesis = rec.played >= 2 && oppWr <= 35;
+
+                          return (
+                            <React.Fragment key={opp.id}>
+                              <tr
+                                onClick={() => setSelectedOpponentH2H(isExpanded ? null : opp.id)}
+                                className={`cursor-pointer transition-colors ${
+                                  isExpanded ? "bg-indigo-50/70" : "hover:bg-slate-50/80"
+                                }`}
+                              >
+                                <td className="py-2.5 pl-3 pr-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-6 h-6 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shadow-xs shrink-0">
+                                      <AvatarSVG type={opp.avatar} size={18} emoji={opp.avatarEmoji} color={opp.avatarColor} />
+                                    </span>
+                                    <span className="font-extrabold text-xs text-slate-900 truncate">
+                                      {opp.name}
+                                    </span>
                                   </div>
                                 </td>
+
+                                <td className="py-2.5 px-2 text-center font-mono">
+                                  {rec.played > 0 ? (
+                                    <div>
+                                      <span className="font-black text-emerald-700">{rec.won}W</span>
+                                      <span className="text-slate-300 mx-0.5">-</span>
+                                      <span className="font-black text-rose-600">{rec.lost}L</span>
+                                      <span className="text-[10px] text-slate-400 block">{oppWr}%</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-slate-400 font-medium">0 - 0</span>
+                                  )}
+                                </td>
+
+                                <td className="py-2.5 px-2 text-center">
+                                  {rec.finalsPlayed > 0 ? (
+                                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-900 border border-amber-300/80 text-[10px] font-black shadow-2xs font-mono">
+                                      <span>🏆</span>
+                                      <span>{rec.finalsWon}W - {rec.finalsLost}L</span>
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-300 font-mono text-[11px]">—</span>
+                                  )}
+                                </td>
+
+                                <td className="py-2.5 px-2 text-center">
+                                  {rec.shutsDelivered > 0 || rec.shutsReceived > 0 ? (
+                                    <div className="flex items-center justify-center gap-1 font-mono text-[10px]">
+                                      {rec.shutsDelivered > 0 && (
+                                        <span
+                                          title={`${rec.shutsDelivered} blowouts delivered`}
+                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 font-bold"
+                                        >
+                                          <span>⚡</span>
+                                          <span>{rec.shutsDelivered}</span>
+                                        </span>
+                                      )}
+                                      {rec.shutsReceived > 0 && (
+                                        <span
+                                          title={`${rec.shutsReceived} blowouts conceded`}
+                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-900 border border-rose-200 font-bold"
+                                        >
+                                          <span>🛡️</span>
+                                          <span>{rec.shutsReceived}</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <span className="text-slate-300 text-[11px]">—</span>
+                                  )}
+                                </td>
+
+                                <td className="py-2.5 px-2 text-center font-mono font-bold text-[11px]">
+                                  {rec.played > 0 ? (
+                                    <span className={netMargin > 0 ? "text-emerald-700" : netMargin < 0 ? "text-rose-600" : "text-slate-400"}>
+                                      {netMargin > 0 ? `+${netMargin}` : netMargin}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-300">0</span>
+                                  )}
+                                </td>
+
+                                <td className="py-2.5 pr-3 pl-2 text-right">
+                                  {isBunny ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-100/80 text-emerald-800 text-[9px] font-black">
+                                      🐰 Bunny
+                                    </span>
+                                  ) : isNemesis ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-rose-100/80 text-rose-800 text-[9px] font-black">
+                                      😈 Nemesis
+                                    </span>
+                                  ) : rec.played > 0 ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[9px] font-bold">
+                                      ⚔️ Rival
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400 text-[10px]">Unplayed</span>
+                                  )}
+                                </td>
                               </tr>
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+
+                              {isExpanded && (
+                                <tr className="bg-indigo-50/40">
+                                  <td colSpan={6} className="p-3">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11px]">
+                                      <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                                        <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                          Total Head-to-Head
+                                        </span>
+                                        <span className="font-black text-slate-800 font-mono">
+                                          {rec.played} Matches ({oppWr}% Win)
+                                        </span>
+                                      </div>
+                                      <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                                        <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                          Championship Finals
+                                        </span>
+                                        <span className="font-black text-amber-700 font-mono">
+                                          {rec.finalsPlayed > 0 ? `${rec.finalsWon}W - ${rec.finalsLost}L in Finals` : "Never met in Finals"}
+                                        </span>
+                                      </div>
+                                      <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                                        <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                          Points Aggregate
+                                        </span>
+                                        <span className="font-black text-slate-800 font-mono">
+                                          {rec.pointsFor} - {rec.pointsAgainst}
+                                        </span>
+                                      </div>
+                                      <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                                        <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                          Blowout Margin
+                                        </span>
+                                        <span className="font-black text-indigo-700 font-mono">
+                                          {rec.shutsDelivered} delivered / {rec.shutsReceived} conceded
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
               {/* Dedicated Shutout Intelligence Dossier */}
