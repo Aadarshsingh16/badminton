@@ -38,6 +38,7 @@ leaderboardRouter.get("/", async (req, res) => {
           SUM(
             COALESCE((d.totals->>p.id)::int, 0) +
             CASE WHEN p.id = 'sajal' THEN (
+              COALESCE((d.totals->>'custom-1791717061642')::int, 0) +
               COALESCE((d.totals->>'custom-1791630401707')::int, 0) +
               COALESCE((d.totals->>'custom-1791021029857')::int, 0) +
               COALESCE((d.totals->>'custom-1791025802127')::int, 0) +
@@ -48,6 +49,7 @@ leaderboardRouter.get("/", async (req, res) => {
         CROSS JOIN date_filtered_days d
         WHERE (d.totals->>p.id) IS NOT NULL
            OR (p.id = 'sajal' AND (
+             d.totals ? 'custom-1791717061642' OR
              d.totals ? 'custom-1791630401707' OR
              d.totals ? 'custom-1791021029857' OR
              d.totals ? 'custom-1791025802127' OR
@@ -60,31 +62,31 @@ leaderboardRouter.get("/", async (req, res) => {
           p.id as player_id,
           COUNT(m.id) as league_matches_played,
           SUM(CASE WHEN (
-            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
           ) OR (
-            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
           ) THEN 1 ELSE 0 END) as league_wins,
-          SUM(CASE WHEN (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) THEN m.points_a ELSE m.points_b END) as league_points,
-          SUM(CASE WHEN (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) THEN (m.score_a - m.score_b) ELSE (m.score_b - m.score_a) END) as league_point_diff,
+          SUM(CASE WHEN (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) THEN m.points_a ELSE m.points_b END) as league_points,
+          SUM(CASE WHEN (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) THEN (m.score_a - m.score_b) ELSE (m.score_b - m.score_a) END) as league_point_diff,
           SUM(CASE WHEN (
-            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_a = 3 OR (m.score_a - m.score_b) >= 4)
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_a = 3 OR (m.score_a - m.score_b) >= 4)
           ) OR (
-            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_b = 3 OR (m.score_b - m.score_a) >= 4)
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_b = 3 OR (m.score_b - m.score_a) >= 4)
           ) THEN 1 ELSE 0 END) as shutout_wins,
           SUM(CASE WHEN (
-            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_b = 3 OR (m.score_b - m.score_a) >= 4)
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_b = 3 OR (m.score_b - m.score_a) >= 4)
           ) OR (
-            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_a = 3 OR (m.score_a - m.score_b) >= 4)
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.points_a = 3 OR (m.score_a - m.score_b) >= 4)
           ) THEN 1 ELSE 0 END) as shutout_losses,
           MAX(CASE WHEN (
-            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
           ) THEN (m.score_a - m.score_b) WHEN (
-            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
           ) THEN (m.score_b - m.score_a) ELSE 0 END) as highest_win_margin
         FROM players p
         JOIN matches m ON (
           m.player_a = p.id OR m.player_b = p.id OR
-          (p.id = 'sajal' AND (m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909') OR m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909')))
+          (p.id = 'sajal' AND (m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909') OR m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909')))
         ) AND m.played = true AND (m.is_final = false AND m.round != -1)
         JOIN tournaments t ON m.tournament_id = t.id
         JOIN date_filtered_days d ON t.day_id = d.id
@@ -95,24 +97,24 @@ leaderboardRouter.get("/", async (req, res) => {
           p.id as player_id,
           COUNT(m.id) as finals_played,
           SUM(CASE WHEN (
-            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
           ) OR (
-            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
           ) THEN 1 ELSE 0 END) as finals_won,
           SUM(CASE WHEN (
-            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_a - m.score_b) >= 4
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_a - m.score_b) >= 4
           ) OR (
-            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_b - m.score_a) >= 4
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_b - m.score_a) >= 4
           ) THEN 1 ELSE 0 END) as final_shutout_wins,
           SUM(CASE WHEN (
-            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_b - m.score_a) >= 4
+            (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_b - m.score_a) >= 4
           ) OR (
-            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_a - m.score_b) >= 4
+            (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_a - m.score_b) >= 4
           ) THEN 1 ELSE 0 END) as final_shutout_losses
         FROM players p
         JOIN matches m ON (
           m.player_a = p.id OR m.player_b = p.id OR
-          (p.id = 'sajal' AND (m.player_a IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909') OR m.player_b IN ('custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909')))
+          (p.id = 'sajal' AND (m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909') OR m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909')))
         ) AND m.played = true AND (m.is_final = true OR m.round = -1)
         JOIN tournaments t ON m.tournament_id = t.id
         JOIN date_filtered_days d ON t.day_id = d.id

@@ -31,6 +31,7 @@ export const FIXED_PLAYERS: Player[] = [
 ];
 
 export const SAJAL_ALIASES = new Set([
+  "custom-1791717061642",
   "custom-1791630401707",
   "custom-1791021029857",
   "custom-1791025802127",
@@ -39,7 +40,8 @@ export const SAJAL_ALIASES = new Set([
 
 export function isSajalId(id: string | undefined | null): boolean {
   if (!id) return false;
-  return id === "sajal" || SAJAL_ALIASES.has(id);
+  const lower = id.toLowerCase().trim();
+  return lower === "sajal" || SAJAL_ALIASES.has(id) || SAJAL_ALIASES.has(lower);
 }
 
 export function normalizePlayerId(id: string): string {

@@ -8,6 +8,7 @@ import { TournamentConfig, DEFAULT_CONFIG } from "../lib/scoring";
 export const dayTablesRouter = Router();
 
 const SAJAL_ALIASES = new Set([
+  "custom-1791717061642",
   "custom-1791630401707",
   "custom-1791021029857",
   "custom-1791025802127",

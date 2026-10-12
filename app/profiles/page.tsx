@@ -315,60 +315,123 @@ export default function ProfilesPage() {
     }
   }, [pastTournaments.length, completedDays?.length]);
 
-  // Combine all tournaments for stats (local store + recovered + cloud fallback)
+  // Combine all tournaments for stats (local store + recovered + cloud history)
   const allTourneys = useMemo(() => {
-    let list = [...pastTournaments];
-    if (list.length === 0) {
-      const rec = recoverTournamentsFromSyncQueue();
-      if (rec.length > 0) list = rec;
-    }
-    if (currentTournament) list.push(currentTournament);
+    const tourneyMap = new Map<string, any>();
 
-    // If local has 0 tournaments (e.g. spectator device), populate from cloud history
-    if (list.length === 0 && cloudHistory?.days && cloudHistory.days.length > 0) {
-      const cloudTourneys: any[] = [];
+    // 1. Populate from cloud history (full history across all days)
+    if (cloudHistory?.days && cloudHistory.days.length > 0) {
       cloudHistory.days.forEach((day: any) => {
         (day.tournaments || []).forEach((ct: any) => {
-          const mappedMatches = (ct.matches || []).map((m: any) => ({
-            id: m.id,
-            round: m.round,
-            isFinal: !!m.isFinal,
-            playerA: m.playerA,
-            playerB: m.playerB,
-            scoreA: m.scoreA,
-            scoreB: m.scoreB,
-            played: !!m.played,
-            pointsAwarded: {
-              [m.playerA]: m.pointsA ?? 0,
-              [m.playerB]: m.pointsB ?? 0,
-            },
-          }));
+          const mappedMatches = (ct.matches || []).map((m: any) => {
+            const pA = normalizePlayerId(m.playerA);
+            const pB = normalizePlayerId(m.playerB);
+            return {
+              id: m.id,
+              round: m.round,
+              isFinal: !!m.isFinal || m.round === -1,
+              playerA: pA,
+              playerB: pB,
+              scoreA: m.scoreA ?? 0,
+              scoreB: m.scoreB ?? 0,
+              played: !!m.played,
+              playedAt: m.playedAt,
+              pointsAwarded: {
+                [pA]: m.pointsA ?? 0,
+                [pB]: m.pointsB ?? 0,
+              },
+            };
+          });
 
           const finalMatch = mappedMatches.find((m: any) => m.isFinal);
           const rrMatches = mappedMatches.filter((m: any) => !m.isFinal);
+          const playerIds = Array.from(
+            new Set(mappedMatches.flatMap((m: any) => [m.playerA, m.playerB]))
+          ).filter(Boolean);
 
-          cloudTourneys.push({
-            id: ct.tournamentId,
-            shareSlug: ct.shareSlug,
-            matches: rrMatches,
-            final: finalMatch,
-            dayPointsAwarded: {},
-            config: ct.config || {
-              winScore: 5,
-              bonusMargin: 4,
-              finalBonusMargin: 4,
-              winPoints: 2,
-              bonusPoints: 1,
-              finalWinScore: 6,
-              finalWinBase: 2,
-              finalWinBonus: 0,
-              finalLoserPenalty: -1,
-            },
-          });
+          const tId = ct.tournamentId || ct.id;
+          if (tId) {
+            tourneyMap.set(tId, {
+              id: tId,
+              date: day.date,
+              createdAt: ct.matches?.[0]?.tournamentCreatedAt || day.date,
+              playerIds,
+              shareSlug: ct.shareSlug,
+              matches: rrMatches,
+              final: finalMatch,
+              dayPointsAwarded: {},
+              config: ct.config || {
+                winScore: 5,
+                bonusMargin: 4,
+                finalBonusMargin: 4,
+                winPoints: 2,
+                bonusPoints: 1,
+                finalWinScore: 6,
+                finalWinBase: 2,
+                finalWinBonus: 0,
+                finalLoserPenalty: -1,
+              },
+            });
+          }
         });
       });
-      return cloudTourneys;
     }
+
+    // 2. Overlay recovered tournaments from sync queue
+    const recovered = recoverTournamentsFromSyncQueue();
+    recovered.forEach((recT: any) => {
+      if (recT?.id) {
+        const existing = tourneyMap.get(recT.id);
+        tourneyMap.set(recT.id, {
+          ...existing,
+          ...recT,
+          date: recT.date || existing?.date,
+          createdAt: recT.createdAt || existing?.createdAt,
+        });
+      }
+    });
+
+    // 3. Overlay local pastTournaments (contains client dayPointsAwarded, local configs)
+    (pastTournaments || []).forEach((locT: any) => {
+      if (locT?.id) {
+        const existing = tourneyMap.get(locT.id);
+        tourneyMap.set(locT.id, {
+          ...existing,
+          ...locT,
+          date: locT.date || existing?.date,
+          createdAt: locT.createdAt || existing?.createdAt,
+        });
+      }
+    });
+
+    // 4. Overlay current active tournament (if any)
+    if (currentTournament?.id) {
+      const existing = tourneyMap.get(currentTournament.id);
+      tourneyMap.set(currentTournament.id, {
+        ...existing,
+        ...currentTournament,
+        date: currentTournament.date || existing?.date,
+        createdAt: currentTournament.createdAt || existing?.createdAt,
+      });
+    }
+
+    const list = Array.from(tourneyMap.values());
+
+    // 5. Strictly sort all tournaments chronologically (Oldest -> Newest)
+    list.sort((a, b) => {
+      const timeA = a.createdAt
+        ? new Date(a.createdAt).getTime()
+        : a.date
+        ? new Date(a.date).getTime()
+        : 0;
+      const timeB = b.createdAt
+        ? new Date(b.createdAt).getTime()
+        : b.date
+        ? new Date(b.date).getTime()
+        : 0;
+      if (timeA !== timeB) return timeA - timeB;
+      return (a.id || "").localeCompare(b.id || "");
+    });
 
     return list;
   }, [pastTournaments, currentTournament, cloudHistory]);
@@ -496,9 +559,26 @@ export default function ProfilesPage() {
         });
       }
 
-      // Matches (Round-Robin & Final)
-      const allMatches = [...(t.matches || []).filter((m: any) => m.played)];
-      if (t.final && t.final.played) allMatches.push(t.final);
+      // Matches (Round-Robin & Final) — strictly sorted: round-robin matches by round ASC, then final at the very end
+      const rrMatches = [...(t.matches || [])]
+        .filter((m: any) => m.played && !m.isFinal && m.round !== -1)
+        .sort((m1: any, m2: any) => {
+          const r1 = m1.round ?? 0;
+          const r2 = m2.round ?? 0;
+          if (r1 !== r2) return r1 - r2;
+          const t1 = m1.playedAt ? new Date(m1.playedAt).getTime() : 0;
+          const t2 = m2.playedAt ? new Date(m2.playedAt).getTime() : 0;
+          return t1 - t2;
+        });
+
+      const finalMatch = (t.final && t.final.played)
+        ? t.final
+        : (t.matches || []).find((m: any) => m.played && (m.isFinal || m.round === -1));
+
+      const allMatches = [...rrMatches];
+      if (finalMatch) {
+        allMatches.push(finalMatch);
+      }
 
       allMatches.forEach((m: any) => {
         const { playerA, playerB, scoreA = 0, scoreB = 0 } = m;
@@ -667,7 +747,7 @@ export default function ProfilesPage() {
       stats[p.id].clutchMatches = clutchM.length;
       stats[p.id].clutchWins = clutchM.filter((m) => m.won).length;
       stats[p.id].clutchLosses = clutchM.filter((m) => !m.won).length;
-      stats[p.id].recentForm = log.slice(-5).map((m) => (m.won ? "W" : "L"));
+      stats[p.id].recentForm = log.slice(-5).reverse().map((m) => (m.won ? "W" : "L"));
 
       let maxW = 0;
       let currW = 0;
@@ -704,9 +784,9 @@ export default function ProfilesPage() {
       cloudLeaderboard.forEach((entry: any) => {
         const normId = normalizePlayerId(entry.playerId);
         if (stats[normId]) {
-          if (stats[normId].dayPointsTotal === 0 && (entry.dayPointsTotal || 0) > 0) {
-            stats[normId].dayPointsTotal = entry.dayPointsTotal;
-            stats[normId].totalPoints = entry.dayPointsTotal;
+          if ((entry.dayPointsTotal || 0) > 0) {
+            stats[normId].dayPointsTotal = Math.max(stats[normId].dayPointsTotal, entry.dayPointsTotal);
+            stats[normId].totalPoints = stats[normId].dayPointsTotal;
           }
           if (stats[normId].leaguePoints === 0 && (entry.leaguePoints || 0) > 0) {
             stats[normId].leaguePoints = entry.leaguePoints;
