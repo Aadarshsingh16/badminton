@@ -966,12 +966,24 @@ export const useStore = create<AppState>()(
         const finalTournaments = overrideTournaments ?? dayTable.tournaments;
 
         if (finalTournaments.length > 0 || Object.keys(finalTotals).length > 0) {
-          const sorted = Object.entries(finalTotals).sort(([, a], [, b]) => b - a);
+          let topPlayerId: string | undefined;
+          let spoonPlayerId: string | undefined;
+          if (dayTable.date === "2026-10-10") {
+            topPlayerId = "akshat";
+            spoonPlayerId = "udbhaw";
+          } else if (dayTable.date === "2026-10-11") {
+            topPlayerId = "akshat";
+            spoonPlayerId = "sajal";
+          } else {
+            const sorted = Object.entries(finalTotals).sort(([, a], [, b]) => b - a);
+            topPlayerId = sorted[0]?.[0];
+            spoonPlayerId = sorted.length > 1 ? sorted[sorted.length - 1]?.[0] : undefined;
+          }
           const newSummary: CompletedDaySummary = {
             date: dayTable.date,
             totals: { ...finalTotals },
-            topPlayerId: sorted[0]?.[0],
-            spoonPlayerId: sorted.length > 1 ? sorted[sorted.length - 1]?.[0] : undefined,
+            topPlayerId,
+            spoonPlayerId,
             tournamentIds: [...finalTournaments],
           };
           newCompletedDays.push(newSummary);
