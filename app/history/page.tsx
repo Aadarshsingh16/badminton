@@ -992,41 +992,134 @@ export default function HistoryPage() {
       }))
       .sort((a, b) => b.finalsWon - a.finalsWon || b.finalsPlayed - a.finalsPlayed || b.winRate - a.winRate);
 
-    // Top Head-to-Head Rivalries across squad
-    const topRivalries: {
-      playerA: string;
-      playerB: string;
-      nameA: string;
-      nameB: string;
-      winsA: number;
-      winsB: number;
-      total: number;
-    }[] = [];
-    const seenPairs = new Set<string>();
-    Object.entries(h2h).forEach(([pA, opps]) => {
-      Object.entries(opps).forEach(([pB, rec]) => {
-        const key = [pA, pB].sort().join("::");
-        if (!seenPairs.has(key)) {
-          seenPairs.add(key);
-          const rev = h2h[pB]?.[pA] || { wins: 0, losses: 0 };
-          const total = rec.wins + rev.wins;
-          if (total >= 2) {
-            const nameA = players.find((p) => p.id === pA)?.name || FIXED_PLAYERS.find((p) => p.id === pA)?.name || pA;
-            const nameB = players.find((p) => p.id === pB)?.name || FIXED_PLAYERS.find((p) => p.id === pB)?.name || pB;
-            topRivalries.push({
-              playerA: pA,
-              playerB: pB,
-              nameA,
-              nameB,
-              winsA: rec.wins,
-              winsB: rev.wins,
-              total,
-            });
-          }
-        }
-      });
+    // Match Intensity & Scoring Spectrum Analytics
+    let totalMatchesCount = 0;
+    let totalMarginSum = 0;
+    let totalPointsSum = 0;
+    let thrillersCount = 0; // margin === 1
+    let competitiveCount = 0; // margin === 2 || margin === 3
+    let blowoutsCount = 0; // margin >= 4
+
+    const scorelineFrequencies: Record<string, { count: number; margin: number; winnerScore: number; loserScore: number }> = {};
+    const playerIntensityStats: Record<string, {
+      playerId: string;
+      name: string;
+      avatar: string;
+      avatarEmoji?: string;
+      avatarColor?: string;
+      thrillerWins: number;
+      thrillerLosses: number;
+      thrillerMatches: number;
+      blowoutsDelivered: number;
+      blowoutsSuffered: number;
+    }> = {};
+
+    players.forEach((p) => {
+      playerIntensityStats[p.id] = {
+        playerId: p.id,
+        name: p.name,
+        avatar: p.avatar,
+        avatarEmoji: p.avatarEmoji,
+        avatarColor: p.avatarColor,
+        thrillerWins: 0,
+        thrillerLosses: 0,
+        thrillerMatches: 0,
+        blowoutsDelivered: 0,
+        blowoutsSuffered: 0,
+      };
     });
-    topRivalries.sort((a, b) => b.total - a.total);
+
+    allChronologicalMatches.forEach((m) => {
+      const sA = m.scoreA ?? 0;
+      const sB = m.scoreB ?? 0;
+      if (sA === sB || (sA === 0 && sB === 0)) return;
+
+      totalMatchesCount++;
+      const margin = Math.abs(sA - sB);
+      totalMarginSum += margin;
+      totalPointsSum += (sA + sB);
+
+      const winScore = Math.max(sA, sB);
+      const loseScore = Math.min(sA, sB);
+      const key = `${winScore}-${loseScore}`;
+      if (!scorelineFrequencies[key]) {
+        scorelineFrequencies[key] = { count: 0, margin, winnerScore: winScore, loserScore: loseScore };
+      }
+      scorelineFrequencies[key].count++;
+
+      const pA = normalizePlayerId(m.playerA);
+      const pB = normalizePlayerId(m.playerB);
+      const aWon = sA > sB;
+
+      if (margin === 1) {
+        thrillersCount++;
+        if (playerIntensityStats[pA]) {
+          playerIntensityStats[pA].thrillerMatches++;
+          if (aWon) playerIntensityStats[pA].thrillerWins++;
+          else playerIntensityStats[pA].thrillerLosses++;
+        }
+        if (playerIntensityStats[pB]) {
+          playerIntensityStats[pB].thrillerMatches++;
+          if (!aWon) playerIntensityStats[pB].thrillerWins++;
+          else playerIntensityStats[pB].thrillerLosses++;
+        }
+      } else if (margin >= 4) {
+        blowoutsCount++;
+        if (playerIntensityStats[pA]) {
+          if (aWon) playerIntensityStats[pA].blowoutsDelivered++;
+          else playerIntensityStats[pA].blowoutsSuffered++;
+        }
+        if (playerIntensityStats[pB]) {
+          if (!aWon) playerIntensityStats[pB].blowoutsDelivered++;
+          else playerIntensityStats[pB].blowoutsSuffered++;
+        }
+      } else {
+        competitiveCount++;
+      }
+    });
+
+    const topScorelines = Object.entries(scorelineFrequencies)
+      .map(([score, data]) => ({
+        score,
+        ...data,
+        percentage: totalMatchesCount > 0 ? Math.round((data.count / totalMatchesCount) * 1000) / 10 : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const avgWinMargin = totalMatchesCount > 0 ? (totalMarginSum / totalMatchesCount).toFixed(1) : "0.0";
+    const avgMatchPoints = totalMatchesCount > 0 ? (totalPointsSum / totalMatchesCount).toFixed(1) : "0.0";
+
+    const thrillerPct = totalMatchesCount > 0 ? Math.round((thrillersCount / totalMatchesCount) * 100) : 0;
+    const competitivePct = totalMatchesCount > 0 ? Math.round((competitiveCount / totalMatchesCount) * 100) : 0;
+    const blowoutsPct = totalMatchesCount > 0 ? Math.max(0, 100 - thrillerPct - competitivePct) : 0;
+
+    // Tempo Leaders
+    const thrillerLeader = Object.values(playerIntensityStats)
+      .filter((p) => p.thrillerMatches >= 2)
+      .sort((a, b) => (b.thrillerWins / b.thrillerMatches) - (a.thrillerWins / a.thrillerMatches) || b.thrillerWins - a.thrillerWins)[0] || null;
+
+    const blowoutDeliverer = Object.values(playerIntensityStats)
+      .sort((a, b) => b.blowoutsDelivered - a.blowoutsDelivered)[0] || null;
+
+    const blowoutResilient = Object.values(playerIntensityStats)
+      .filter((p) => (p.thrillerMatches + p.blowoutsDelivered + p.blowoutsSuffered) >= 3)
+      .sort((a, b) => a.blowoutsSuffered - b.blowoutsSuffered || b.blowoutsDelivered - a.blowoutsDelivered)[0] || null;
+
+    const scoringSpectrum = {
+      totalMatchesCount,
+      avgWinMargin,
+      avgMatchPoints,
+      thrillersCount,
+      thrillerPct,
+      competitiveCount,
+      competitivePct,
+      blowoutsCount,
+      blowoutsPct,
+      topScorelines,
+      thrillerLeader,
+      blowoutDeliverer,
+      blowoutResilient,
+    };
 
     // Calculate Streaks in true chronological match order
     const playerMatchLogs: Record<string, boolean[]> = {};
