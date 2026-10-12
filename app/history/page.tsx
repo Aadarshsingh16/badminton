@@ -2425,52 +2425,243 @@ export default function HistoryPage() {
                 </div>
               </div>
 
-              {/* Row 4: Top Squad Rivalries Matrix */}
-              {advancedInsights.topRivalries.length > 0 && (
-                <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-sm shadow-2xs">
-                        ⚔️
+              {/* Row 4: Match Intensity & Scoring Spectrum Hub */}
+              {advancedInsights.scoringSpectrum && advancedInsights.scoringSpectrum.totalMatchesCount > 0 && (
+                <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-5">
+                  {/* Header */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center text-sm shadow-2xs">
+                        ⚡
                       </span>
                       <div>
-                        <h3 className="text-xs font-extrabold text-slate-900">
-                          Squad Rivalries &amp; Clash Matrix
+                        <h3 className="text-xs font-extrabold text-slate-900 tracking-tight">
+                          Match Intensity &amp; Scoring Spectrum
                         </h3>
                         <p className="text-[10px] text-slate-400 font-medium">
-                          Most contested head-to-head match-ups
+                          Margin distribution across {advancedInsights.scoringSpectrum.totalMatchesCount} matches, clutch finishes &amp; blowouts
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200/60">
-                      H2H Leaders
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-mono font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200/80">
+                        Avg Win Margin: <strong className="text-slate-900">{advancedInsights.scoringSpectrum.avgWinMargin} pts</strong>
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200/60">
+                        Avg Match Pts: <strong className="text-indigo-900">{advancedInsights.scoringSpectrum.avgMatchPoints}</strong>
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                    {advancedInsights.topRivalries.slice(0, 6).map((riv, i) => (
+                  {/* Segmented Intensity Spectrum Bar */}
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center justify-between text-[11px] font-semibold text-slate-500 px-0.5 gap-y-1">
+                      <span className="flex items-center gap-1.5 text-rose-700">
+                        <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                        Wire Thrillers (1 pt): <strong className="font-mono text-rose-900">{advancedInsights.scoringSpectrum.thrillersCount} ({advancedInsights.scoringSpectrum.thrillerPct}%)</strong>
+                      </span>
+                      <span className="flex items-center gap-1.5 text-indigo-700">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        Decisive (2-3 pts): <strong className="font-mono text-indigo-900">{advancedInsights.scoringSpectrum.competitiveCount} ({advancedInsights.scoringSpectrum.competitivePct}%)</strong>
+                      </span>
+                      <span className="flex items-center gap-1.5 text-emerald-700">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Blowouts (≥4 pts): <strong className="font-mono text-emerald-900">{advancedInsights.scoringSpectrum.blowoutsCount} ({advancedInsights.scoringSpectrum.blowoutsPct}%)</strong>
+                      </span>
+                    </div>
+                    <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden flex p-0.5 border border-slate-200/70 shadow-inner">
                       <div
-                        key={i}
-                        className="p-3 rounded-2xl bg-gradient-to-br from-slate-50 to-white border border-slate-200/80 flex flex-col justify-between space-y-2 shadow-2xs"
-                      >
-                        <div className="flex items-center justify-between text-xs font-black text-slate-900">
-                          <span className="truncate">{riv.nameA}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase mx-1">vs</span>
-                          <span className="truncate">{riv.nameB}</span>
+                        className="h-full rounded-l-full bg-gradient-to-r from-rose-500 to-rose-400 transition-all duration-500"
+                        style={{ width: `${advancedInsights.scoringSpectrum.thrillerPct}%` }}
+                        title={`Thrillers: ${advancedInsights.scoringSpectrum.thrillersCount} matches (${advancedInsights.scoringSpectrum.thrillerPct}%)`}
+                      />
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 transition-all duration-500"
+                        style={{ width: `${advancedInsights.scoringSpectrum.competitivePct}%` }}
+                        title={`Decisive: ${advancedInsights.scoringSpectrum.competitiveCount} matches (${advancedInsights.scoringSpectrum.competitivePct}%)`}
+                      />
+                      <div
+                        className="h-full rounded-r-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
+                        style={{ width: `${advancedInsights.scoringSpectrum.blowoutsPct}%` }}
+                        title={`Blowouts: ${advancedInsights.scoringSpectrum.blowoutsCount} matches (${advancedInsights.scoringSpectrum.blowoutsPct}%)`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Intensity Tiers & Key Archetypes */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Tier 1: Wire Thrillers */}
+                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-rose-50/70 via-rose-50/30 to-white border border-rose-200/70 flex flex-col justify-between space-y-3 shadow-2xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-rose-800 flex items-center gap-1.5">
+                            🔥 1-Point Thrillers
+                          </span>
+                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                            {advancedInsights.scoringSpectrum.thrillerPct}% of games
+                          </span>
                         </div>
-                        <div className="flex items-center justify-between text-xs font-mono font-black">
-                          <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200/60">
-                            {riv.winsA}W
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-semibold font-sans">
-                            {riv.total} Matches
-                          </span>
-                          <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 border border-purple-200/60">
-                            {riv.winsB}W
-                          </span>
-                        </div>
+                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                          Nail-biting sudden death matches decided at 5-4 or finals deuce 6-5.
+                        </p>
                       </div>
-                    ))}
+
+                      {advancedInsights.scoringSpectrum.thrillerLeader && (
+                        <div className="pt-2 border-t border-rose-100 flex items-center justify-between">
+                          <div>
+                            <div className="text-[9px] uppercase font-bold text-rose-600/80 tracking-wider">
+                              Top Clutch Finisher
+                            </div>
+                            <div className="text-xs font-black text-slate-900">
+                              {advancedInsights.scoringSpectrum.thrillerLeader.name}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs font-mono font-black text-rose-700">
+                              {advancedInsights.scoringSpectrum.thrillerLeader.thrillerWins}W - {advancedInsights.scoringSpectrum.thrillerLeader.thrillerLosses}L
+                            </div>
+                            <div className="text-[9px] font-mono font-bold text-slate-400">
+                              {advancedInsights.scoringSpectrum.thrillerLeader.thrillerWinRate}% clutch WR
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tier 2: Decisive / Tactical Battles */}
+                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-indigo-50/30 to-white border border-indigo-200/70 flex flex-col justify-between space-y-3 shadow-2xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-indigo-800 flex items-center gap-1.5">
+                            ⚔️ Decisive Battles
+                          </span>
+                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                            {advancedInsights.scoringSpectrum.competitivePct}% of games
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                          Controlled 2–3 pt margins (5-2, 5-3) where tactical point swings decided the outcome.
+                        </p>
+                      </div>
+
+                      {advancedInsights.scoringSpectrum.blowoutResilient ? (
+                        <div className="pt-2 border-t border-indigo-100 flex items-center justify-between">
+                          <div>
+                            <div className="text-[9px] uppercase font-bold text-indigo-600/80 tracking-wider">
+                              Iron Shield (Toughest Out)
+                            </div>
+                            <div className="text-xs font-black text-slate-900">
+                              {advancedInsights.scoringSpectrum.blowoutResilient.name}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs font-mono font-black text-indigo-700">
+                              Only {advancedInsights.scoringSpectrum.blowoutResilient.blowoutsSuffered} Blowout
+                            </div>
+                            <div className="text-[9px] font-mono font-bold text-slate-400">
+                              Fewest lopsided losses conceded
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-2 border-t border-indigo-100 flex items-center justify-between">
+                          <div className="text-[9px] uppercase font-bold text-indigo-600/80 tracking-wider">
+                            Squad Core
+                          </div>
+                          <div className="text-xs font-mono font-black text-indigo-700">
+                            {advancedInsights.scoringSpectrum.competitiveCount} matches
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tier 3: Demolitions & Blowouts */}
+                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50/70 via-emerald-50/30 to-white border border-emerald-200/70 flex flex-col justify-between space-y-3 shadow-2xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                            💥 Demolitions (≥4 pts)
+                          </span>
+                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            {advancedInsights.scoringSpectrum.blowoutsPct}% of games
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                          Runaway blowouts (5-1) and merciless 5-0 bagels with total offensive supremacy.
+                        </p>
+                      </div>
+
+                      {advancedInsights.scoringSpectrum.blowoutDeliverer && (
+                        <div className="pt-2 border-t border-emerald-100 flex items-center justify-between">
+                          <div>
+                            <div className="text-[9px] uppercase font-bold text-emerald-600/80 tracking-wider">
+                              Demolition Hammer
+                            </div>
+                            <div className="text-xs font-black text-slate-900">
+                              {advancedInsights.scoringSpectrum.blowoutDeliverer.name}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs font-mono font-black text-emerald-700">
+                              {advancedInsights.scoringSpectrum.blowoutDeliverer.blowoutsDelivered} Blowouts
+                            </div>
+                            <div className="text-[9px] font-mono font-bold text-slate-400">
+                              Most lopsided wins dealt
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Most Frequent Scorelines in Squad History */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex flex-wrap items-center justify-between gap-1">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        📊 Most Frequent Final Scorelines in Squad History
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        Ranked by total historical occurrences
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                      {advancedInsights.scoringSpectrum.topScorelines.slice(0, 6).map((sc, i) => (
+                        <div
+                          key={sc.scoreline}
+                          className={`p-2.5 rounded-xl border flex flex-col justify-between items-center text-center transition-all ${
+                            sc.margin >= 4
+                              ? "bg-emerald-50/50 border-emerald-200/70"
+                              : sc.margin === 1
+                              ? "bg-rose-50/50 border-rose-200/70"
+                              : "bg-indigo-50/50 border-indigo-200/70"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-[9px] font-mono font-bold text-slate-400">
+                              #{i + 1}
+                            </span>
+                            <span
+                              className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-full ${
+                                sc.margin >= 4
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : sc.margin === 1
+                                  ? "bg-rose-100 text-rose-800"
+                                  : "bg-indigo-100 text-indigo-800"
+                              }`}
+                            >
+                              {sc.margin >= 4 ? "Blowout" : sc.margin === 1 ? "Thriller" : "Decisive"}
+                            </span>
+                          </div>
+                          <div className="text-base font-black font-mono text-slate-900 my-1">
+                            {sc.scoreline}
+                          </div>
+                          <div className="text-[10px] font-semibold text-slate-500 font-mono">
+                            <strong className="text-slate-900">{sc.count}</strong> matches ({sc.pct}%)
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
