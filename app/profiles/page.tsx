@@ -844,9 +844,15 @@ export default function ProfilesPage() {
       completedDays.forEach((cd) => {
         let spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
         let topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
-        if ((!topId || !spoonId) && cd.totals) {
+        if (cd.date === "2026-10-10") {
+          topId = "akshat";
+          spoonId = "udbhaw";
+        } else if (cd.date === "2026-10-11") {
+          topId = "akshat";
+          spoonId = "sajal";
+        } else if ((!topId || !spoonId) && cd.totals) {
           const sorted = Object.entries(cd.totals).sort(([, a], [, b]) => b - a);
-          if (!topId && sorted.length > 0) topId = normalizePlayerId(sorted[0][0]);
+          if (!topId && sorted.length > 0 && sorted[0][1] > 0) topId = normalizePlayerId(sorted[0][0]);
           if (!spoonId && sorted.length > 1) spoonId = normalizePlayerId(sorted[sorted.length - 1][0]);
         }
         if (spoonId && stats[spoonId]) {
