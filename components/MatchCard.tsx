@@ -14,9 +14,10 @@ interface MatchCardProps {
   isUpNext: boolean;
   index: number;
   onTap: (match: Match) => void;
+  readOnly?: boolean;
 }
 
-export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: MatchCardProps) {
+export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap, readOnly = false }: MatchCardProps) {
   const played = match.played;
   const winnerIsA = played && match.scoreA !== undefined && match.scoreB !== undefined && match.scoreA > match.scoreB;
   const winnerIsB = played && match.scoreA !== undefined && match.scoreB !== undefined && match.scoreB > match.scoreA;
@@ -28,13 +29,17 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03, duration: 0.25 }}
-      onClick={() => onTap(match)}
-      className={`relative mb-3.5 rounded-[26px] border transition-all cursor-pointer ${
+      onClick={() => {
+        if (!readOnly) onTap(match);
+      }}
+      className={`relative mb-3.5 rounded-[26px] border transition-all ${
+        readOnly ? "cursor-default" : "cursor-pointer"
+      } ${
         played
-          ? "bg-white border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-slate-300"
+          ? `bg-white border-slate-200/80 shadow-2xs ${readOnly ? "" : "hover:shadow-xs hover:border-slate-300"}`
           : isUpNext
-          ? "bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border-2 border-indigo-300 shadow-md shadow-indigo-100/50 hover:shadow-lg"
-          : "bg-white border-slate-200/80 shadow-2xs hover:border-slate-300 hover:shadow-xs"
+          ? `bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border-2 border-indigo-300 shadow-md shadow-indigo-100/50 ${readOnly ? "" : "hover:shadow-lg"}`
+          : `bg-white border-slate-200/80 shadow-2xs ${readOnly ? "" : "hover:border-slate-300 hover:shadow-xs"}`
       }`}
     >
       {/* Up Next badge */}
@@ -45,8 +50,8 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
         </div>
       )}
 
-      {/* Edit badge on played matches */}
-      {played && (
+      {/* Edit badge on played matches (hidden in spectator/readOnly mode) */}
+      {played && !readOnly && (
         <div className="absolute -top-2.5 right-4 bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-2xs">
           ✏️ tap to edit
         </div>
@@ -99,9 +104,11 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap }: M
           ) : (
             <div className="flex flex-col items-center gap-1">
               <span className="text-slate-300 text-sm font-black">VS</span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isUpNext ? "bg-indigo-600 text-white shadow-2xs" : "bg-slate-100 text-slate-500 border border-slate-200"}`}>
-                Score
-              </span>
+              {!readOnly && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isUpNext ? "bg-indigo-600 text-white shadow-2xs" : "bg-slate-100 text-slate-500 border border-slate-200"}`}>
+                  Score
+                </span>
+              )}
             </div>
           )}
         </div>

@@ -9,6 +9,7 @@ const VIEWER_ACTIVE_KEY = "badminton_is_viewer";
 export function setViewerSlug(slug: string) {
   if (typeof window !== "undefined" && slug) {
     localStorage.setItem(VIEWER_SLUG_KEY, slug.trim());
+    localStorage.setItem(VIEWER_ACTIVE_KEY, "true");
     window.dispatchEvent(new Event("viewer-mode-change"));
   }
 }
@@ -22,7 +23,7 @@ export function getViewerSlug(): string | null {
 
 export function isViewerMode(): boolean {
   if (typeof window !== "undefined") {
-    return window.location.pathname.startsWith("/live");
+    return window.location.pathname.startsWith("/live") || localStorage.getItem(VIEWER_ACTIVE_KEY) === "true";
   }
   return false;
 }
