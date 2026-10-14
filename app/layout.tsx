@@ -20,7 +20,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#F7F9FD",
+  themeColor: "#14161B",
 };
 
 import { SessionGate } from "@/components/SessionGate";
@@ -32,15 +32,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={outfit.variable}>
-      <body className="bg-[#EEF1F7] font-outfit antialiased text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+      <body className="bg-[#BAC7B8] font-outfit antialiased text-[#F3F4EE] selection:bg-[#FF5E48] selection:text-white min-h-screen flex justify-center">
         {/* Mobile viewport container */}
-        <div className="relative min-h-screen max-w-md mx-auto bg-[#F7F9FD] flex flex-col shadow-2xl border-x border-slate-200/60 overflow-x-hidden">
-          {/* Subtle soft pastel ambient aura */}
-          <div className="fixed inset-0 max-w-md mx-auto pointer-events-none overflow-hidden">
-            <div className="absolute -top-12 -left-12 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl" />
-            <div className="absolute top-1/3 -right-16 w-64 h-64 bg-purple-300/15 rounded-full blur-3xl" />
-          </div>
-
+        <div className="relative min-h-screen w-full max-w-md mx-auto bg-[#14161B] text-[#F3F4EE] flex flex-col shadow-[0_25px_70px_rgba(0,0,0,0.35)] sm:my-4 sm:min-h-[calc(100vh-2rem)] sm:rounded-[40px] sm:border sm:border-black/30 overflow-x-hidden">
           <SessionGate>
             {/* Scrollable content area above the tab bar */}
             <main className="flex-1 overflow-y-auto pb-24 relative">

@@ -9,22 +9,24 @@
    ========================================== */
 
 :root {
-  --bg-primary: #F4F6FA;
-  --bg-secondary: #FFFFFF;
-  --bg-card: #FFFFFF;
-  --border-subtle: rgba(0, 0, 0, 0.06);
-  --purple-accent: #8B5CF6;
-  --blue-accent: #3B82F6;
-  --gold: #FFB020;
+  --bg-ground: #14161B;
+  --bg-slab: #1E2128;
+  --bg-slab-elevated: #282C36;
+  --coral-accent: #FF5E48;
+  --mustard-accent: #F5BA38;
+  --periwinkle-accent: #6C79E0;
+  --mint-accent: #9EC9A8;
+  --paper-cream: #F3F4EE;
+  --text-muted: #8E95A5;
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
-  background-color: #F4F6FA;
-  color: #0F172A;
+  background-color: #BAC7B8;
+  color: #F3F4EE;
   font-family: var(--font-outfit), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
