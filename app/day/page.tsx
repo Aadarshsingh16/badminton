@@ -248,36 +248,36 @@ export default function DayPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9FD] text-slate-900 pb-32">
+    <div className="min-h-full bg-[#14161B] text-[#F3F4EE] pb-32">
       <ConfettiBurst active={showConfetti} onComplete={() => setShowConfetti(false)} />
 
       {/* Spectator Mode Banner */}
       {isViewer && (
-        <div className="bg-indigo-50/90 border border-indigo-200/80 rounded-2xl px-4 py-2.5 mx-4 mt-3 flex items-center justify-between text-xs text-indigo-950 shadow-xs">
-          <span className="font-bold flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="bg-[#1E2128] border border-white/10 rounded-2xl px-4 py-2.5 mx-4 mt-3 flex items-center justify-between text-xs text-[#F3F4EE] shadow-sm">
+          <span className="font-black uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#9EC9A8] animate-pulse" />
             Spectator Mode · Day Table Standings
           </span>
           {viewerSlug && (
             <Link
               href={`/live/${viewerSlug}`}
-              className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-full font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
+              className="text-[#14161B] bg-[#9EC9A8] hover:bg-[#8bb794] px-3 py-1 rounded-full font-black uppercase tracking-wider text-[10px] flex items-center gap-1 shadow-xs transition-colors"
             >
-              <span>🏸 Live Court</span>
+              <span>🏸 Live Court ↗</span>
             </Link>
           )}
         </div>
       )}
 
       {/* Top Header */}
-      <div className="px-5 pt-6 pb-3 border-b border-slate-200/60 bg-[#F7F9FD]/90 backdrop-blur-md sticky top-0 z-20">
+      <div className="px-5 pt-6 pb-3 border-b border-white/10 bg-[#14161B]/90 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xl">📊</span>
-              <h1 className="text-slate-900 font-black text-2xl tracking-tight">Day Table</h1>
+              <h1 className="text-[#F3F4EE] font-black text-2xl uppercase tracking-tight">Day Table</h1>
             </div>
-            <p className="text-slate-500 text-xs mt-0.5 font-medium">
+            <p className="text-[#8E95A5] text-[10px] font-bold uppercase tracking-wider mt-0.5">
               {formatDateDDMMYY(dayTable.date || new Date().toISOString().split("T")[0])} · {effectiveTournaments.length} tournament
               {effectiveTournaments.length !== 1 ? "s" : ""}
             </p>
@@ -287,14 +287,14 @@ export default function DayPage() {
             <button
               onClick={() => setShowShareModal(true)}
               title="Share day live stream"
-              className="w-8 h-8 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-full bg-[#1E2128] hover:bg-[#252932] text-[#F3F4EE] border border-white/10 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
             >
               <span className="text-xs">📡</span>
             </button>
             {!isViewer && hasData && (
               <button
                 onClick={() => setShowFinishDayModal(true)}
-                className="text-xs bg-slate-950 hover:bg-slate-800 text-white font-black px-3.5 py-1.5 rounded-full shadow-sm active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="text-xs bg-[#FF5E48] hover:bg-[#fa6249] text-white font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-[0_10px_25px_rgba(255,94,72,0.35)] active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <span>👑</span>
                 <span>Finish Day</span>
@@ -304,7 +304,7 @@ export default function DayPage() {
               <button
                 onClick={() => setShowConfirmReset(true)}
                 title="Reset Day"
-                className="w-8 h-8 rounded-full bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/80 hover:border-rose-200 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+                className="w-8 h-8 rounded-full bg-[#1E2128] hover:bg-[#FF5E48]/20 text-[#8E95A5] hover:text-[#FF5E48] border border-white/10 hover:border-[#FF5E48]/30 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
               >
                 <span className="text-xs">🗑️</span>
               </button>
@@ -321,78 +321,78 @@ export default function DayPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/75 backdrop-blur-sm z-40"
               onClick={() => setShowFinishDayModal(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto bg-white border border-slate-200/80 rounded-[32px] p-6 shadow-2xl space-y-4"
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto bg-[#1E2128] border border-white/15 rounded-[32px] p-6 shadow-2xl space-y-4 text-[#F3F4EE]"
             >
               <div className="text-center space-y-1">
-                <div className="w-14 h-14 rounded-full bg-amber-50 border border-amber-200 text-3xl flex items-center justify-center mx-auto mb-2 shadow-xs">
+                <div className="w-14 h-14 rounded-full bg-[#F5BA38]/15 border border-[#F5BA38]/30 text-3xl flex items-center justify-center mx-auto mb-2 shadow-xs">
                   👑
                 </div>
-                <h3 className="text-slate-900 font-black text-xl">Crown Day Champions</h3>
-                <p className="text-slate-400 text-xs font-medium">Finish session for {formatDateDDMMYY(dayTable.date)}</p>
+                <h3 className="text-[#F3F4EE] font-black text-xl uppercase tracking-tight">Crown Day Champions</h3>
+                <p className="text-[#8E95A5] text-xs font-semibold uppercase tracking-wider">Session for {formatDateDDMMYY(dayTable.date)}</p>
               </div>
 
               {/* Honors Preview */}
               <div className="space-y-2 py-1">
                 {sortedPlayers[0] && (
-                  <div className="p-3.5 rounded-[22px] bg-amber-50/80 border border-amber-200/80 flex items-center justify-between">
+                  <div className="p-3.5 rounded-[22px] bg-[#14161B] border border-[#F5BA38]/40 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="text-2xl">👑</div>
                       <div>
-                        <p className="text-[10px] uppercase font-black tracking-wider text-amber-800">
+                        <p className="text-[9px] uppercase font-black tracking-wider text-[#F5BA38]">
                           Day Champion
                         </p>
-                        <p className="text-sm font-black text-slate-900">{getPlayer(sortedPlayers[0].id).name}</p>
+                        <p className="text-sm font-black text-[#F3F4EE] uppercase">{getPlayer(sortedPlayers[0].id).name}</p>
                       </div>
                     </div>
-                    <div className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-black text-xs">
+                    <div className="px-3 py-1 rounded-full bg-[#F5BA38] text-[#14161B] font-black text-xs">
                       {sortedPlayers[0].pts} pts
                     </div>
                   </div>
                 )}
 
                 {sortedPlayers.length >= 2 && sortedPlayers[sortedPlayers.length - 1] && (
-                  <div className="p-3.5 rounded-[22px] bg-rose-50/80 border border-rose-200/80 flex items-center justify-between">
+                  <div className="p-3.5 rounded-[22px] bg-[#14161B] border border-[#FF5E48]/40 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="text-2xl">🥄</div>
                       <div>
-                        <p className="text-[10px] uppercase font-black tracking-wider text-rose-800">
+                        <p className="text-[9px] uppercase font-black tracking-wider text-[#FF5E48]">
                           Wooden Spoon
                         </p>
-                        <p className="text-sm font-black text-slate-900">
+                        <p className="text-sm font-black text-[#F3F4EE] uppercase">
                           {getPlayer(sortedPlayers[sortedPlayers.length - 1].id).name}
                         </p>
                       </div>
                     </div>
-                    <div className="px-3 py-1 rounded-full bg-rose-100 text-rose-800 font-black text-xs">
+                    <div className="px-3 py-1 rounded-full bg-[#FF5E48] text-white font-black text-xs">
                       {sortedPlayers[sortedPlayers.length - 1].pts} pts
                     </div>
                   </div>
                 )}
               </div>
 
-              <p className="text-xs text-slate-500 text-center leading-relaxed font-medium">
-                This saves today's champions into your permanent Hall of Fame and starts a fresh day table for your next session.
+              <p className="text-xs text-[#8E95A5] text-center leading-relaxed font-medium">
+                This saves today's champions into the permanent Hall of Fame and starts a fresh day session.
               </p>
 
               <div className="flex gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowFinishDayModal(false)}
-                  className="flex-1 py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+                  className="flex-1 py-3 rounded-full bg-[#181B22] border border-white/10 hover:border-white/20 text-[#F3F4EE] font-black text-xs uppercase tracking-wider transition-colors"
                 >
                   Keep Playing
                 </button>
                 <button
                   type="button"
                   onClick={handleFinishDay}
-                  className="flex-1 py-3 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-black text-xs shadow-md active:scale-95 transition-all"
+                  className="flex-1 py-3 rounded-full bg-[#FF5E48] hover:bg-[#fa6249] text-white font-black text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all"
                 >
                   Crown &amp; Finish 👑
                 </button>
@@ -410,20 +410,20 @@ export default function DayPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/75 backdrop-blur-sm z-40"
               onClick={() => setShowConfirmReset(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="fixed inset-x-5 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto bg-white border border-slate-200/80 rounded-[32px] p-6 text-center shadow-2xl space-y-3"
+              className="fixed inset-x-5 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto bg-[#1E2128] border border-white/15 rounded-[32px] p-6 text-center shadow-2xl space-y-3 text-[#F3F4EE]"
             >
-              <div className="w-14 h-14 rounded-full bg-rose-50 border border-rose-200 text-2xl flex items-center justify-center mx-auto mb-2 text-rose-600 shadow-xs">
+              <div className="w-14 h-14 rounded-full bg-[#FF5E48]/15 border border-[#FF5E48]/30 text-2xl flex items-center justify-center mx-auto mb-2 text-[#FF5E48] shadow-xs">
                 🗑️
               </div>
-              <h3 className="text-slate-900 font-black text-xl">Reset Day Table?</h3>
-              <p className="text-slate-500 text-xs leading-relaxed font-medium">
+              <h3 className="text-[#F3F4EE] font-black text-xl uppercase tracking-tight">Reset Day Table?</h3>
+              <p className="text-[#8E95A5] text-xs leading-relaxed font-medium">
                 This will clear today's table without recording Day Champions. Cannot be undone.
               </p>
               <div className="flex gap-2.5 pt-2">
@@ -431,7 +431,7 @@ export default function DayPage() {
                   type="button"
                   onClick={() => setShowConfirmReset(false)}
                   disabled={isDeleting}
-                  className="flex-1 py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+                  className="flex-1 py-3 rounded-full bg-[#181B22] border border-white/10 hover:border-white/20 text-[#F3F4EE] font-black text-xs uppercase tracking-wider transition-colors"
                 >
                   Cancel
                 </button>
@@ -439,7 +439,7 @@ export default function DayPage() {
                   type="button"
                   onClick={handleResetDay}
                   disabled={isDeleting}
-                  className="flex-1 py-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 py-3 rounded-full bg-[#FF5E48] hover:bg-[#fa6249] text-white font-black text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-1.5"
                 >
                   {isDeleting ? <span>Resetting...</span> : <span>Reset</span>}
                 </button>
@@ -466,27 +466,26 @@ export default function DayPage() {
       {/* Loading state */}
       {loading && !hasData && (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-8 gap-3 py-16">
-          <div className="w-10 h-10 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-500 text-xs font-semibold">Loading live session standings...</p>
+          <div className="w-10 h-10 border-2 border-white/10 border-t-[#FF5E48] rounded-full animate-spin" />
+          <p className="text-[#8E95A5] text-xs font-semibold uppercase tracking-wider">Loading live session standings...</p>
         </div>
       )}
 
       {/* Empty state */}
       {!loading && !hasData && (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16">
-          <div className="w-20 h-20 rounded-[28px] bg-white border border-slate-200/80 flex items-center justify-center text-4xl shadow-xs mb-4">
+          <div className="w-20 h-20 rounded-[28px] bg-[#1E2128] border border-white/10 flex items-center justify-center text-4xl shadow-sm mb-4">
             🏸
           </div>
-          <h3 className="text-slate-900 font-black text-xl tracking-tight">No Day Matches Yet</h3>
-          <p className="text-slate-500 text-xs mt-1 max-w-xs leading-relaxed font-medium">
+          <h3 className="text-[#F3F4EE] font-black text-xl uppercase tracking-tight">No Day Matches Yet</h3>
+          <p className="text-[#8E95A5] text-xs mt-1 max-w-xs leading-relaxed font-medium">
             Complete tournament matches to start racking up today&apos;s cumulative points!
           </p>
           <Link
             href="/"
-            className="mt-5 px-5 py-2.5 rounded-full bg-slate-950 text-white font-black text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5"
+            className="mt-5 px-6 py-3 rounded-full bg-[#FF5E48] text-white font-black text-xs uppercase tracking-wider shadow-[0_10px_25px_rgba(255,94,72,0.35)] hover:bg-[#fa6249] active:scale-95 transition-all flex items-center gap-1.5"
           >
-            <span>Start Tournament</span>
-            <span>&rarr;</span>
+            <span>Start Tournament ↗</span>
           </Link>
         </div>
       )}
@@ -495,13 +494,13 @@ export default function DayPage() {
       {(hasData || hasTournaments) && (
         <div className="px-5 pt-3">
           {/* Section Segmented Pill Switcher */}
-          <div className="flex gap-1.5 p-1 bg-white rounded-full border border-slate-200/80 shadow-xs mb-4">
+          <div className="flex gap-1.5 p-1 bg-[#181B22] rounded-full border border-white/10 shadow-sm mb-4">
             <button
               onClick={() => setActiveDayTab("standings")}
-              className={`flex-1 py-2 px-3 rounded-full text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2 px-3 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
                 activeDayTab === "standings"
-                  ? "bg-slate-950 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                  : "text-[#8E95A5] hover:text-[#F3F4EE]"
               }`}
             >
               <span>🏆</span>
@@ -509,10 +508,10 @@ export default function DayPage() {
             </button>
             <button
               onClick={() => setActiveDayTab("tournaments")}
-              className={`flex-1 py-2 px-3 rounded-full text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2 px-3 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
                 activeDayTab === "tournaments"
-                  ? "bg-slate-950 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                  : "text-[#8E95A5] hover:text-[#F3F4EE]"
               }`}
             >
               <span>🏸</span>
@@ -530,29 +529,29 @@ export default function DayPage() {
             >
               {/* Highlight Hero Card for Session Leader */}
               {sortedPlayers[0] && (
-                <div className="rounded-[28px] p-4 bg-gradient-to-br from-amber-50/90 via-yellow-50/50 to-white border border-amber-200/70 shadow-xs flex items-center justify-between">
+                <div className="rounded-[28px] p-4 bg-[#1E2128] border border-[#F5BA38]/40 shadow-sm flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-[20px] bg-white border border-amber-200 p-1 flex items-center justify-center relative shadow-xs">
+                    <div className="w-12 h-12 rounded-[20px] bg-[#14161B] border border-white/10 p-1 flex items-center justify-center relative shadow-xs">
                       <AvatarSVG type={getPlayer(sortedPlayers[0].id).avatar} size={38} />
                       <div className="absolute -top-1 -right-1 text-xs">👑</div>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase font-black tracking-wider text-amber-800">
+                      <p className="text-[9px] uppercase font-black tracking-wider text-[#F5BA38]">
                         Current Session Leader
                       </p>
-                      <p className="text-base font-black text-slate-900 leading-tight">
+                      <p className="text-base font-black text-[#F3F4EE] uppercase tracking-tight leading-tight">
                         {getPlayer(sortedPlayers[0].id).name}
                       </p>
-                      <p className="text-[11px] text-slate-500 font-medium">
+                      <p className="text-[10px] text-[#8E95A5] font-bold uppercase tracking-wider">
                         Rank #1 on Day Table
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-2xl font-black text-amber-900 tabular-nums">
+                    <span className="text-2xl font-black text-[#F5BA38] tabular-nums">
                       {sortedPlayers[0].pts}
                     </span>
-                    <p className="text-[10px] text-amber-700 font-bold">day pts</p>
+                    <p className="text-[9px] text-[#8E95A5] font-black uppercase tracking-wider">day pts</p>
                   </div>
                 </div>
               )}
@@ -560,7 +559,6 @@ export default function DayPage() {
               {/* Player Standings Accordion Rows */}
               {sortedPlayers.map(({ id, pts, rank }, idx) => {
                 const player = getPlayer(id);
-                const color = PODIUM_COLORS[idx] ?? "#64748B";
                 const isExpanded = expandedPlayerId === id;
                 const history = getPlayerTournamentHistory(id);
 
@@ -568,7 +566,7 @@ export default function DayPage() {
                   <motion.div
                     key={id}
                     layout
-                    className="rounded-[26px] bg-white border border-slate-200/80 shadow-xs overflow-hidden transition-all"
+                    className="rounded-[26px] bg-[#1E2128] border border-white/10 shadow-sm overflow-hidden transition-all"
                   >
                     {/* Row header button */}
                     <button
@@ -577,20 +575,20 @@ export default function DayPage() {
                     >
                       {/* Rank badge */}
                       <span
-                        className={`w-8 h-8 rounded-full text-xs font-black flex items-center justify-center flex-shrink-0 shadow-2xs ${
+                        className={`w-8 h-8 rounded-full text-xs font-black flex items-center justify-center flex-shrink-0 shadow-xs ${
                           idx === 0
-                            ? "bg-amber-100 border border-amber-300 text-amber-900"
+                            ? "bg-[#F5BA38] text-[#14161B]"
                             : idx === 1
-                            ? "bg-slate-100 border border-slate-300 text-slate-800"
+                            ? "bg-[#FF5E48] text-white"
                             : idx === 2
-                            ? "bg-orange-100 border border-orange-300 text-orange-900"
-                            : "bg-slate-50 border border-slate-200 text-slate-600"
+                            ? "bg-[#6C79E0] text-white"
+                            : "bg-white/10 text-[#8E95A5]"
                         }`}
                       >
-                        {RANK_LABELS[idx] ?? `${rank}`}
+                        {idx + 1}
                       </span>
 
-                      <div className="w-10 h-10 rounded-2xl bg-slate-50 border border-slate-200/70 p-1 flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-2xl bg-[#14161B] border border-white/10 p-1 flex items-center justify-center flex-shrink-0">
                         <AvatarSVG
                           type={player.avatar}
                           size={32}
@@ -600,8 +598,8 @@ export default function DayPage() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-slate-900 font-black text-sm truncate">{player.name}</p>
-                        <p className="text-slate-400 text-xs font-medium">
+                        <p className="text-[#F3F4EE] font-black text-sm uppercase tracking-tight truncate">{player.name}</p>
+                        <p className="text-[#8E95A5] text-[10px] font-bold uppercase tracking-wider">
                           {history.length > 0
                             ? `${history.length} tournament${history.length !== 1 ? "s" : ""} played`
                             : "Active today"}
@@ -613,17 +611,17 @@ export default function DayPage() {
                           key={pts}
                           initial={{ scale: 1.2 }}
                           animate={{ scale: 1 }}
-                          className="font-black text-2xl tabular-nums leading-none text-slate-900"
+                          className="font-black text-2xl tabular-nums leading-none text-[#F3F4EE]"
                         >
                           {pts}
                         </motion.p>
-                        <p className="text-slate-400 text-[10px] font-bold mt-0.5">day pts</p>
+                        <p className="text-[#8E95A5] text-[9px] font-black uppercase tracking-wider mt-0.5">day pts</p>
                       </div>
 
                       <motion.span
                         animate={{ rotate: isExpanded ? 180 : 0 }}
                         transition={{ duration: 0.2 }}
-                        className="text-slate-400 text-xs flex-shrink-0"
+                        className="text-[#8E95A5] text-xs flex-shrink-0"
                       >
                         ▾
                       </motion.span>
@@ -637,17 +635,16 @@ export default function DayPage() {
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.2 }}
-                          className="overflow-hidden border-t border-slate-100 bg-slate-50/50"
+                          className="overflow-hidden border-t border-white/5 bg-[#181B22]"
                         >
                           <div className="p-4 space-y-2.5">
                             {history.length === 0 ? (
-                              <p className="text-slate-400 text-xs text-center py-2 font-medium">
+                              <p className="text-[#8E95A5] text-xs text-center py-2 font-medium">
                                 {pts > 0 ? `${pts} points awarded from tournament play` : "No matches recorded yet"}
                               </p>
                             ) : (
                               history.map(({ tournament: t, rank: tRank, points: tPts, dayPts, rowIdx }, hIdx) => {
                                 const tNum = effectiveTournaments.indexOf(t) + 1;
-                                const rankColor = PODIUM_COLORS[rowIdx] ?? "#64748B";
                                 const playerMatches = [
                                   ...t.matches.filter((m) => m.playerA === id || m.playerB === id),
                                   ...(t.final && (t.final.playerA === id || t.final.playerB === id) ? [t.final] : []),
@@ -661,23 +658,23 @@ export default function DayPage() {
                                 }).length;
 
                                 return (
-                                  <div key={t.id || hIdx} className="bg-white rounded-[20px] border border-slate-200/70 p-3 shadow-xs space-y-2">
+                                  <div key={t.id || hIdx} className="bg-[#1E2128] rounded-[20px] border border-white/5 p-3 space-y-2">
                                     {/* Tournament header */}
                                     <div className="flex items-center justify-between">
                                       <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
+                                        <span className="text-[10px] font-black uppercase bg-white/10 text-[#F3F4EE] px-2 py-0.5 rounded-full">
                                           T{tNum}
                                         </span>
-                                        <span className="text-xs font-black" style={{ color: rankColor }}>
-                                          {RANK_MEDAL[rowIdx] ?? `${tRank}th`}
+                                        <span className="text-xs font-black uppercase text-[#F5BA38]">
+                                          Rank #{tRank}
                                         </span>
-                                        <span className="text-slate-700 text-xs font-bold">{tPts} pts</span>
+                                        <span className="text-[#8E95A5] text-xs font-bold">{tPts} pts</span>
                                       </div>
                                       <div className="flex items-center gap-1.5">
-                                        <span className="text-slate-400 text-[11px] font-mono">
+                                        <span className="text-[#8E95A5] text-[11px] font-mono">
                                           {wins}W/{playerMatches.filter((m) => m.played).length - wins}L
                                         </span>
-                                        <span className="text-emerald-800 bg-emerald-50 border border-emerald-200/60 text-xs font-black px-2 py-0.5 rounded-full">
+                                        <span className="text-[#9EC9A8] bg-[#9EC9A8]/15 border border-[#9EC9A8]/30 text-xs font-black px-2 py-0.5 rounded-full">
                                           +{dayPts} day
                                         </span>
                                       </div>
@@ -702,17 +699,17 @@ export default function DayPage() {
                                             key={m.id}
                                             className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs transition-colors ${
                                               !m.played
-                                                ? "bg-slate-50 text-slate-400"
+                                                ? "bg-[#181B22] text-[#8E95A5]"
                                                 : won
-                                                ? "bg-emerald-50/80 border border-emerald-200/50 text-slate-800"
-                                                : "bg-slate-50 border border-slate-200/50 text-slate-700"
+                                                ? "bg-[#9EC9A8]/10 border border-[#9EC9A8]/20 text-[#F3F4EE]"
+                                                : "bg-[#181B22] border border-white/5 text-[#8E95A5]"
                                             }`}
                                           >
                                             <span
-                                              className={`font-black px-1.5 py-0.5 rounded-md text-[10px] flex-shrink-0 ${
+                                              className={`font-black uppercase px-1.5 py-0.5 rounded-md text-[9px] flex-shrink-0 tracking-wider ${
                                                 isFinalMatch
-                                                  ? "bg-amber-100 text-amber-900 border border-amber-300"
-                                                  : "bg-white text-slate-500 border border-slate-200"
+                                                  ? "bg-[#FF5E48] text-white"
+                                                  : "bg-white/10 text-[#8E95A5]"
                                               }`}
                                             >
                                               {isFinalMatch ? "🏆 Final" : `R${m.round + 1}`}
@@ -724,14 +721,14 @@ export default function DayPage() {
                                               color={opponent.avatarColor}
                                               className="flex-shrink-0"
                                             />
-                                            <span className="text-slate-600 font-bold flex-1 truncate">
+                                            <span className="text-[#F3F4EE] font-bold flex-1 truncate">
                                               vs {opponent.name}
                                             </span>
                                             {m.played && myScore !== undefined && oppScore !== undefined ? (
                                               <>
                                                 <span
                                                   className={`font-black tabular-nums text-xs ${
-                                                    won ? "text-emerald-700" : lost ? "text-slate-400" : "text-slate-700"
+                                                    won ? "text-[#9EC9A8]" : lost ? "text-[#8E95A5]" : "text-[#F3F4EE]"
                                                   }`}
                                                 >
                                                   {myScore}–{oppScore}
@@ -740,10 +737,10 @@ export default function DayPage() {
                                                   <span
                                                     className={`font-black text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                                                       myPts > 0
-                                                        ? "bg-emerald-100 text-emerald-800"
+                                                        ? "bg-[#9EC9A8]/15 text-[#9EC9A8]"
                                                         : myPts < 0
-                                                        ? "bg-rose-100 text-rose-800"
-                                                        : "bg-slate-100 text-slate-500"
+                                                        ? "bg-[#FF5E48]/15 text-[#FF5E48]"
+                                                        : "bg-white/10 text-[#8E95A5]"
                                                     }`}
                                                   >
                                                     {myPts > 0 ? "+" : ""}
@@ -752,7 +749,7 @@ export default function DayPage() {
                                                 )}
                                               </>
                                             ) : (
-                                              <span className="text-slate-300 font-mono">—</span>
+                                              <span className="text-[#8E95A5] font-mono">—</span>
                                             )}
                                           </div>
                                         );
@@ -781,8 +778,8 @@ export default function DayPage() {
               className="space-y-3"
             >
               {effectiveTournaments.length === 0 ? (
-                <div className="bg-white rounded-[28px] border border-slate-200/80 p-6 text-center shadow-xs">
-                  <p className="text-slate-400 text-xs font-medium">No tournaments completed today yet.</p>
+                <div className="bg-[#1E2128] rounded-[28px] border border-white/10 p-6 text-center shadow-sm">
+                  <p className="text-[#8E95A5] text-xs font-medium">No tournaments completed today yet.</p>
                 </div>
               ) : (
                 effectiveTournaments.map((t: Tournament, tIdx) => {
@@ -793,19 +790,19 @@ export default function DayPage() {
                   return (
                     <div
                       key={t.id || tIdx}
-                      className="rounded-[26px] bg-white border border-slate-200/80 shadow-xs overflow-hidden transition-all"
+                      className="rounded-[26px] bg-[#1E2128] border border-white/10 shadow-sm overflow-hidden transition-all"
                     >
                       <button
                         onClick={() => setExpandedTournament(isExpanded ? null : t.id)}
                         className="w-full flex items-center justify-between p-4 text-left"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="w-9 h-9 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 font-black text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+                          <span className="w-9 h-9 rounded-2xl bg-white/10 text-[#F3F4EE] font-black text-xs flex items-center justify-center flex-shrink-0">
                             #{tournamentNumber}
                           </span>
                           <div>
-                            <p className="text-slate-900 font-black text-sm">Tournament {tournamentNumber}</p>
-                            <p className="text-slate-400 text-xs font-medium">
+                            <p className="text-[#F3F4EE] font-black text-sm uppercase tracking-tight">Tournament {tournamentNumber}</p>
+                            <p className="text-[#8E95A5] text-[10px] font-bold uppercase tracking-wider">
                               {t.playerIds.length} players · {t.matches.length} matches
                               {t.final?.played ? " + Final" : ""} · First to {t.config?.winScore ?? 5}
                             </p>
@@ -814,7 +811,7 @@ export default function DayPage() {
                         <motion.span
                           animate={{ rotate: isExpanded ? 180 : 0 }}
                           transition={{ duration: 0.2 }}
-                          className="text-slate-400 text-xs flex-shrink-0"
+                          className="text-[#8E95A5] text-xs flex-shrink-0"
                         >
                           ▾
                         </motion.span>
@@ -827,7 +824,7 @@ export default function DayPage() {
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="overflow-hidden border-t border-slate-100 bg-slate-50/40 p-4 space-y-2.5"
+                            className="overflow-hidden border-t border-white/5 bg-[#181B22] p-4 space-y-2.5"
                           >
                             <div className="space-y-1.5">
                               {tTable.map((row, rowIdx) => {
@@ -836,10 +833,10 @@ export default function DayPage() {
                                 return (
                                   <div
                                     key={row.playerId}
-                                    className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white border border-slate-200/60 shadow-xs"
+                                    className="flex items-center gap-3 py-2 px-3 rounded-xl bg-[#1E2128] border border-white/5"
                                   >
-                                    <span className="text-xs font-black w-6 text-center text-slate-500">
-                                      {RANK_MEDAL[rowIdx] ?? `${rowIdx + 1}`}
+                                    <span className="text-xs font-black w-6 text-center text-[#8E95A5]">
+                                      #{rowIdx + 1}
                                     </span>
                                     <AvatarSVG
                                       type={p.avatar}
@@ -847,10 +844,10 @@ export default function DayPage() {
                                       emoji={p.avatarEmoji}
                                       color={p.avatarColor}
                                     />
-                                    <p className="text-slate-900 font-bold text-xs flex-1 truncate">{p.name}</p>
+                                    <p className="text-[#F3F4EE] font-bold text-xs flex-1 truncate">{p.name}</p>
                                     <div className="text-right">
-                                      <p className="text-slate-900 font-black text-xs">{row.points} pts</p>
-                                      <p className="text-emerald-700 text-[10px] font-bold">+{dayPts} day</p>
+                                      <p className="text-[#F3F4EE] font-black text-xs">{row.points} pts</p>
+                                      <p className="text-[#9EC9A8] text-[10px] font-bold">+{dayPts} day</p>
                                     </div>
                                   </div>
                                 );
@@ -859,10 +856,10 @@ export default function DayPage() {
 
                             {/* Final result callout */}
                             {t.final?.played && t.final.scoreA !== undefined && t.final.scoreB !== undefined && (
-                              <div className="mt-2.5 bg-amber-50 border border-amber-200/80 rounded-[18px] p-3 text-center shadow-xs">
-                                <p className="text-amber-900 text-xs font-black flex items-center justify-center gap-1.5">
+                              <div className="mt-2.5 bg-[#1E2128] border border-[#F5BA38]/40 rounded-[18px] p-3 text-center shadow-xs">
+                                <p className="text-[#F5BA38] text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5">
                                   <span>🏆 Final:</span>
-                                  <span>
+                                  <span className="text-[#F3F4EE]">
                                     {getPlayer(t.final.playerA).name} {t.final.scoreA} – {t.final.scoreB}{" "}
                                     {getPlayer(t.final.playerB).name}
                                   </span>

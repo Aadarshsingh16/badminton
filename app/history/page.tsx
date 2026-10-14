@@ -1615,22 +1615,22 @@ export default function HistoryPage() {
     (playerFilter !== "all" ? 1 : 0) +
     (patternFilter !== "all" ? 1 : 0);
   if (!isMounted) {
-    return <div className="min-h-full bg-[#f8fafc]"></div>;
+    return <div className="min-h-full bg-[#14161B] text-[#F3F4EE]"></div>;
   }
 
   return (
-    <div className="min-h-full flex flex-col px-4 pt-4 pb-20">
+    <div className="min-h-full flex flex-col px-4 pt-4 pb-20 bg-[#14161B] text-[#F3F4EE]">
       {/* Spectator Mode Banner */}
       {isViewer && (
-        <div className="bg-indigo-50/90 border border-indigo-200/80 rounded-2xl px-4 py-2.5 mb-3 flex items-center justify-between text-xs text-indigo-950 shadow-xs">
+        <div className="bg-[#1E2128] border border-white/10 rounded-2xl px-4 py-2.5 mb-3 flex items-center justify-between text-xs text-[#F3F4EE] shadow-sm">
           <span className="font-bold flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#9EC9A8] animate-pulse" />
             Spectator Mode · Match History & Logs
           </span>
           {viewerSlug && (
             <Link
               href={`/live/${viewerSlug}`}
-              className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-full font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
+              className="text-white bg-[#FF5E48] hover:bg-[#FA6249] px-3 py-1 rounded-full font-black text-[11px] flex items-center gap-1 shadow-sm transition-all active:scale-95"
             >
               <span>🏸 Live Court</span>
             </Link>
@@ -1640,36 +1640,36 @@ export default function HistoryPage() {
 
       {/* Top Header */}
       <div className="flex items-center justify-between mb-3 px-0.5">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-slate-900 text-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-2xl bg-[#1E2128] border border-white/10 shadow-xs flex items-center justify-center text-[#F5BA38] text-sm">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
               <path
                 d="M12 8v4l3 3"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" />
             </svg>
           </div>
           <div>
-            <h1 className="text-sm font-black text-slate-900 leading-tight">
+            <h1 className="text-sm font-black text-[#F3F4EE] uppercase tracking-wider leading-tight">
               History & Stats
             </h1>
-            <p className="text-[10px] text-slate-400 font-medium">Match logs & day honors</p>
+            <p className="text-[10px] text-white/50 font-medium">Match logs & squad honors</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {/* Smooth Filter Menu Trigger */}
           {activeSubTab === "log" && (
             <button
               onClick={() => setShowFilterMenu(true)}
-              className={`px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer ${
+              className={`px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 transition-all active:scale-95 shadow-sm cursor-pointer ${
                 hasActiveFilter
-                  ? "bg-slate-950 text-white shadow-xs"
-                  : "bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50"
+                  ? "bg-[#FF5E48] text-white shadow-xs"
+                  : "bg-[#1E2128] border border-white/10 text-white/80 hover:bg-[#252932]"
               }`}
             >
               <svg
@@ -1694,7 +1694,7 @@ export default function HistoryPage() {
               </svg>
               <span>Filters</span>
               {hasActiveFilter && (
-                <span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] font-black flex items-center justify-center -mr-0.5">
+                <span className="w-4 h-4 rounded-full bg-white text-[#FF5E48] text-[10px] font-black flex items-center justify-center -mr-0.5">
                   {activeFilterCount}
                 </span>
               )}
@@ -1708,11 +1708,11 @@ export default function HistoryPage() {
               else fetchLeaderboards();
             }}
             disabled={loading}
-            className="w-8 h-8 rounded-full bg-white border border-slate-200/80 shadow-xs hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center text-slate-600 cursor-pointer"
+            className="w-9 h-9 rounded-full bg-[#1E2128] border border-white/10 shadow-xs hover:bg-[#252932] active:scale-95 transition-all flex items-center justify-center text-white/70 hover:text-white cursor-pointer"
             title="Refresh"
           >
             <svg
-              className={`w-3.5 h-3.5 ${loading ? "animate-spin text-slate-950" : ""}`}
+              className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#F5BA38]" : ""}`}
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -1728,13 +1728,13 @@ export default function HistoryPage() {
       </div>
 
       {/* Sub-tab segmented pill control */}
-      <div className="p-1 bg-slate-200/70 rounded-full flex gap-1 mb-3">
+      <div className="p-1 bg-[#1A1D24] border border-white/10 rounded-full flex gap-1 mb-3">
         <button
           onClick={() => setActiveSubTab("log")}
-          className={`py-1.5 px-3 text-xs font-extrabold rounded-full flex-1 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+          className={`py-1.5 px-3 text-xs font-black rounded-full flex-1 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeSubTab === "log"
-              ? "bg-slate-950 text-white shadow-sm"
-              : "text-slate-600 hover:text-slate-950"
+              ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+              : "text-white/60 hover:text-white"
           }`}
         >
           <span>📜</span>
@@ -1742,10 +1742,10 @@ export default function HistoryPage() {
         </button>
         <button
           onClick={() => setActiveSubTab("leaderboards")}
-          className={`py-1.5 px-3 text-xs font-extrabold rounded-full flex-1 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+          className={`py-1.5 px-3 text-xs font-black rounded-full flex-1 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeSubTab === "leaderboards"
-              ? "bg-slate-950 text-white shadow-sm"
-              : "text-slate-600 hover:text-slate-950"
+              ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+              : "text-white/60 hover:text-white"
           }`}
         >
           <span>🏆</span>
@@ -1759,38 +1759,38 @@ export default function HistoryPage() {
           {/* Active Filter Chips (only when filters applied) */}
           {hasActiveFilter && (
             <div className="flex items-center gap-1.5 flex-wrap px-0.5">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Filtered:</span>
+              <span className="text-[10px] font-black text-white/40 uppercase tracking-wider">Filtered:</span>
               {rangeFilter !== "all" && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white text-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#1E2128] text-white/90 px-2.5 py-0.5 rounded-full border border-white/10 shadow-2xs">
                   📅 {currentRangeLabel}
                   <button
                     type="button"
                     onClick={() => setRangeFilter("all")}
-                    className="hover:text-rose-600 cursor-pointer ml-0.5 font-black text-[10px]"
+                    className="hover:text-[#FF5E48] cursor-pointer ml-0.5 font-black text-[10px]"
                   >
                     ✕
                   </button>
                 </span>
               )}
               {playerFilter !== "all" && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white text-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#1E2128] text-white/90 px-2.5 py-0.5 rounded-full border border-white/10 shadow-2xs">
                   👤 {currentPlayerLabel}
                   <button
                     type="button"
                     onClick={() => setPlayerFilter("all")}
-                    className="hover:text-rose-600 cursor-pointer ml-0.5 font-black text-[10px]"
+                    className="hover:text-[#FF5E48] cursor-pointer ml-0.5 font-black text-[10px]"
                   >
                     ✕
                   </button>
                 </span>
               )}
               {patternFilter !== "all" && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-white text-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#1E2128] text-white/90 px-2.5 py-0.5 rounded-full border border-white/10 shadow-2xs">
                   🎯 {currentPatternLabel}
                   <button
                     type="button"
                     onClick={() => setPatternFilter("all")}
-                    className="hover:text-rose-600 cursor-pointer ml-0.5 font-black text-[10px]"
+                    className="hover:text-[#FF5E48] cursor-pointer ml-0.5 font-black text-[10px]"
                   >
                     ✕
                   </button>
@@ -1803,23 +1803,23 @@ export default function HistoryPage() {
                   setPlayerFilter("all");
                   setPatternFilter("all");
                 }}
-                className="text-[11px] font-black text-blue-600 hover:underline cursor-pointer ml-1"
+                className="text-[11px] font-black text-[#FF5E48] hover:underline cursor-pointer ml-1"
               >
                 Clear all
               </button>
             </div>
           )}
 
-          {/* Mini-Leaderboard Hero Banner (Bento Summary) */}
+          {/* Mini-Leaderboard Hero Banner (Matching Reference Image Color Blocks) */}
           {displayedHistory.miniLeaderboard.length > 0 && (
-            <div className="bg-gradient-to-br from-[#9BB8FF] to-[#7EA3FC] text-slate-950 rounded-[28px] p-4 shadow-xs">
+            <div className="bg-[#1E2128] border border-white/10 text-[#F3F4EE] rounded-[28px] p-4 shadow-lg shadow-black/20">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-950 flex items-center gap-1.5">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#F5BA38] flex items-center gap-1.5">
                   <span>⚡</span> Match Summary
                 </span>
-                <div className="text-[11px] font-bold text-slate-900/80 bg-white/50 px-2.5 py-0.5 rounded-full">
+                <div className="text-[11px] font-bold text-white/70 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full">
                   <span>{displayedHistory.totalMatches}</span> matches •{" "}
-                  <span>{displayedHistory.totalPoints}</span> pts
+                  <span className="text-[#9EC9A8]">{displayedHistory.totalPoints} pts</span>
                 </div>
               </div>
 
@@ -1827,14 +1827,20 @@ export default function HistoryPage() {
                 {displayedHistory.miniLeaderboard.slice(0, 3).map((item, idx) => (
                   <div
                     key={item.playerId}
-                    className="bg-white/95 rounded-2xl p-2.5 text-center shadow-xs"
+                    className={`rounded-2xl p-2.5 text-center shadow-xs transition-transform active:scale-95 ${
+                      idx === 0
+                        ? "bg-[#F5BA38] text-[#14161B]"
+                        : idx === 1
+                        ? "bg-[#FF5E48] text-white"
+                        : "bg-[#6C79E0] text-white"
+                    }`}
                   >
-                    <div className="text-[10px] font-black text-slate-900 mb-0.5">
+                    <div className="text-[10px] font-black mb-0.5 uppercase tracking-wider opacity-90">
                       {idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : "🥉 #3"}
                     </div>
-                    <div className="text-xs font-extrabold text-slate-900 truncate">{item.name}</div>
-                    <div className="text-[10px] text-slate-500 font-semibold mt-0.5">
-                      <span className="text-emerald-600 font-bold">{item.points} pts</span> • {item.wins}W
+                    <div className="text-xs font-black truncate">{item.name}</div>
+                    <div className="text-[10px] font-bold mt-0.5 opacity-90">
+                      <span>{item.points} pts</span> • {item.wins}W
                     </div>
                   </div>
                 ))}
@@ -1844,12 +1850,12 @@ export default function HistoryPage() {
 
           {/* Timeline days */}
           {displayedHistory.days.length === 0 ? (
-            <div className="text-center py-12 px-6 bg-white border border-slate-200/80 rounded-[30px] shadow-xs flex flex-col items-center justify-center gap-2">
-              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-3xl mb-1 shadow-xs select-none">
+            <div className="text-center py-12 px-6 bg-[#1E2128] border border-white/10 rounded-[30px] shadow-xs flex flex-col items-center justify-center gap-2">
+              <div className="w-14 h-14 rounded-full bg-[#14161B] border border-white/10 flex items-center justify-center text-3xl mb-1 shadow-xs select-none">
                 🏸
               </div>
-              <div className="text-base font-extrabold text-slate-900">No match records found</div>
-              <p className="text-xs text-slate-400 font-medium max-w-xs">
+              <div className="text-base font-black text-[#F3F4EE]">No match records found</div>
+              <p className="text-xs text-white/50 font-medium max-w-xs">
                 Play matches or adjust your date filter
               </p>
             </div>
@@ -1859,9 +1865,9 @@ export default function HistoryPage() {
                 <div key={dayGroup.date} className="space-y-2.5">
                   {/* Day date header */}
                   <div className="flex items-center gap-2 px-1">
-                    <div className="h-px flex-1 bg-slate-200" />
-                    <div className="flex items-center gap-1.5 bg-slate-200/70 border border-slate-200/80 pl-3.5 pr-2 py-1 rounded-full shadow-2xs">
-                      <span className="text-xs font-extrabold text-slate-700">
+                    <div className="h-px flex-1 bg-white/10" />
+                    <div className="flex items-center gap-1.5 bg-[#1E2128] border border-white/10 pl-3.5 pr-2 py-1 rounded-full shadow-2xs">
+                      <span className="text-xs font-black text-white/90">
                         📅 {formatDateDDMMYY(dayGroup.date)}
                       </span>
                       {!isViewer && (
@@ -1869,13 +1875,13 @@ export default function HistoryPage() {
                           type="button"
                           onClick={() => setDayToDelete(dayGroup.date)}
                           title={`Delete all records for ${formatDateDDMMYY(dayGroup.date)}`}
-                          className="w-5 h-5 rounded-full hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors flex items-center justify-center cursor-pointer text-[10px]"
+                          className="w-5 h-5 rounded-full hover:bg-rose-500/20 text-white/40 hover:text-rose-400 transition-colors flex items-center justify-center cursor-pointer text-[10px]"
                         >
                           🗑️
                         </button>
                       )}
                     </div>
-                    <div className="h-px flex-1 bg-slate-200" />
+                    <div className="h-px flex-1 bg-white/10" />
                   </div>
 
                   {/* Tournaments for that day */}
@@ -1888,27 +1894,27 @@ export default function HistoryPage() {
                     return (
                       <div
                         key={tourney.tournamentId}
-                        className="bg-white border border-slate-200/80 rounded-[26px] overflow-hidden shadow-xs transition-all"
+                        className="bg-[#1E2128] border border-white/10 rounded-[26px] overflow-hidden shadow-sm transition-all"
                       >
                         {/* Tournament header accordion button */}
                         <div
                           onClick={() => toggleTournament(tourney.tournamentId)}
-                          className="w-full flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 cursor-pointer transition-colors"
+                          className="w-full flex items-center justify-between p-3.5 bg-[#1E2128] hover:bg-[#252932] cursor-pointer transition-colors"
                         >
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-800">
+                            <div className="w-7 h-7 rounded-xl bg-[#14161B] border border-white/10 flex items-center justify-center text-xs font-black text-[#F5BA38]">
                               #{tourneyNumber}
                             </div>
                             <div className="text-left">
-                              <div className="text-xs font-extrabold text-slate-900 flex items-center gap-2">
+                              <div className="text-xs font-black text-[#F3F4EE] flex items-center gap-2">
                                 <span>Tournament #{tourneyNumber}</span>
                                 {hasFinal && (
-                                  <span className="text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-700 px-2 py-0.5 rounded-full font-bold">
+                                  <span className="text-[10px] bg-[#F5BA38]/20 border border-[#F5BA38]/40 text-[#F5BA38] px-2 py-0.5 rounded-full font-black">
                                     🏆 Final
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-slate-400 font-medium">
+                              <div className="text-[10px] text-white/50 font-medium">
                                 {tourney.matches.length} played matches
                               </div>
                             </div>
@@ -1920,15 +1926,15 @@ export default function HistoryPage() {
                                 <Link
                                   href={`/live/${tourney.shareSlug}`}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="text-[10px] px-2.5 py-0.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold flex items-center gap-1 border border-rose-200 transition-colors animate-pulse"
+                                  className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FF5E48]/20 hover:bg-[#FF5E48]/30 text-[#FF5E48] font-black flex items-center gap-1 border border-[#FF5E48]/40 transition-colors animate-pulse"
                                   title="Live in progress — View stream"
                                 >
-                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF5E48]" />
                                   <span>Live</span>
                                 </Link>
                               ) : (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 font-bold flex items-center gap-1 border border-rose-200 animate-pulse">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FF5E48]/20 text-[#FF5E48] font-black flex items-center gap-1 border border-[#FF5E48]/40 animate-pulse">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF5E48]" />
                                   <span>Live</span>
                                 </span>
                               )
@@ -1936,13 +1942,13 @@ export default function HistoryPage() {
                               <Link
                                 href={`/live/${tourney.shareSlug}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold flex items-center gap-1 border border-slate-200/80 transition-colors"
+                                className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/5 hover:bg-white/10 text-white/70 font-bold flex items-center gap-1 border border-white/10 transition-colors"
                                 title="Tournament completed — View scorecard"
                               >
                                 <span>✓ Completed</span>
                               </Link>
                             ) : (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold flex items-center gap-1 border border-slate-200/80">
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/50 font-bold flex items-center gap-1 border border-white/10">
                                 <span>✓ Completed</span>
                               </span>
                             )}
@@ -1953,19 +1959,19 @@ export default function HistoryPage() {
                                   setTournamentToDelete(tourney.tournamentId);
                                 }}
                                 title="Delete Tournament"
-                                className="text-xs p-1.5 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                                className="text-xs p-1.5 rounded-full hover:bg-rose-500/20 text-white/40 hover:text-rose-400 transition-colors"
                               >
                                 <span>🗑️</span>
                               </button>
                             )}
                             <svg
-                              className={`w-4 h-4 text-slate-400 transition-transform ${
+                              className={`w-4 h-4 text-white/40 transition-transform ${
                                 isExpanded ? "rotate-180" : ""
                               }`}
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
-                              strokeWidth="2"
+                              strokeWidth="2.5"
                             >
                               <polyline points="6 9 12 15 18 9" />
                             </svg>
@@ -1974,21 +1980,20 @@ export default function HistoryPage() {
 
                         {/* Matches list */}
                         {isExpanded && (
-                          <div className="divide-y divide-slate-100 border-t border-slate-100 p-2 space-y-1.5 bg-slate-50/40">
+                          <div className="divide-y divide-white/5 border-t border-white/10 p-2 space-y-1.5 bg-[#14161B]/60">
                             {tourney.matches.map((m) => {
                               const aWon = m.scoreA > m.scoreB;
                               const bWon = m.scoreB > m.scoreA;
                               const diff = Math.abs(m.scoreA - m.scoreB);
                               const isBlowout = diff >= 4;
 
-
                               return (
                                 <div
                                   key={m.id}
                                   className={`p-2.5 rounded-2xl border flex items-center justify-between gap-3 ${
                                     m.isFinal
-                                      ? "bg-gradient-to-r from-amber-500/10 via-white to-purple-500/10 border-amber-300"
-                                      : "bg-white border-slate-200/70 shadow-2xs"
+                                      ? "bg-gradient-to-r from-[#F5BA38]/15 via-[#1E2128] to-[#6C79E0]/15 border-[#F5BA38]/40 shadow-xs"
+                                      : "bg-[#1E2128] border-white/10 shadow-2xs"
                                   }`}
                                 >
                                   {/* Player A */}
@@ -2002,13 +2007,13 @@ export default function HistoryPage() {
                                     <div className="min-w-0">
                                       <div
                                         className={`text-xs truncate ${
-                                          aWon ? "font-extrabold text-slate-900" : "text-slate-500 font-medium"
+                                          aWon ? "font-black text-[#F3F4EE]" : "text-white/50 font-medium"
                                         }`}
                                       >
                                         {m.playerAName}
                                       </div>
-                                      <div className="text-[10px] text-slate-400 font-medium">
-                                        +{m.pointsA} pts {aWon && isBlowout && "🔥"}
+                                      <div className="text-[10px] text-white/40 font-medium">
+                                        <span className={aWon ? "text-[#9EC9A8] font-bold" : ""}>+{m.pointsA} pts</span> {aWon && isBlowout && "🔥"}
                                       </div>
                                     </div>
                                   </div>
@@ -2016,21 +2021,21 @@ export default function HistoryPage() {
                                   {/* Score pill */}
                                   <div className="flex flex-col items-center">
                                     {m.isFinal && (
-                                      <span className="text-[9px] uppercase tracking-wider font-black text-amber-600 mb-0.5">
+                                      <span className="text-[9px] uppercase tracking-wider font-black text-[#F5BA38] mb-0.5">
                                         Final
                                       </span>
                                     )}
-                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-950 text-white rounded-full font-mono text-xs font-extrabold shadow-xs">
-                                      <span className={aWon ? "text-emerald-400" : "text-white/70"}>
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-[#14161B] border border-white/15 text-[#F3F4EE] rounded-full font-mono text-xs font-black shadow-xs">
+                                      <span className={aWon ? "text-[#9EC9A8]" : "text-white/50"}>
                                         {m.scoreA}
                                       </span>
-                                      <span className="text-white/40">-</span>
-                                      <span className={bWon ? "text-emerald-400" : "text-white/70"}>
+                                      <span className="text-white/30">-</span>
+                                      <span className={bWon ? "text-[#9EC9A8]" : "text-white/50"}>
                                         {m.scoreB}
                                       </span>
                                     </div>
                                     {isBlowout && (
-                                      <span className="text-[9px] text-blue-600 font-bold mt-0.5">
+                                      <span className="text-[9px] text-[#6C79E0] font-black mt-0.5">
                                         +Bonus
                                       </span>
                                     )}
@@ -2041,13 +2046,13 @@ export default function HistoryPage() {
                                     <div className="min-w-0">
                                       <div
                                         className={`text-xs truncate ${
-                                          bWon ? "font-extrabold text-slate-900" : "text-slate-500 font-medium"
+                                          bWon ? "font-black text-[#F3F4EE]" : "text-white/50 font-medium"
                                         }`}
                                       >
                                         {m.playerBName}
                                       </div>
-                                      <div className="text-[10px] text-slate-400 font-medium">
-                                        +{m.pointsB} pts {bWon && isBlowout && "🔥"}
+                                      <div className="text-[10px] text-white/40 font-medium">
+                                        <span className={bWon ? "text-[#9EC9A8] font-bold" : ""}>+{m.pointsB} pts</span> {bWon && isBlowout && "🔥"}
                                       </div>
                                     </div>
                                     <AvatarSVG
@@ -2077,29 +2082,29 @@ export default function HistoryPage() {
                     const isTallyExpanded = !!expandedDayTally[dayGroup.date];
 
                     return (
-                      <div className="bg-white border border-slate-200/80 rounded-[26px] overflow-hidden shadow-xs transition-all">
+                      <div className="bg-[#1E2128] border border-white/10 rounded-[26px] overflow-hidden shadow-xs transition-all">
                         {/* Table Header Button (Clickable accordion header) */}
                         <div
                           onClick={() => toggleDayTally(dayGroup.date)}
-                          className={`p-3.5 flex items-center justify-between cursor-pointer transition-colors hover:bg-slate-50 ${
-                            isTallyExpanded ? "border-b border-slate-100 bg-slate-50/60" : "bg-white"
+                          className={`p-3.5 flex items-center justify-between cursor-pointer transition-colors hover:bg-[#252932] ${
+                            isTallyExpanded ? "border-b border-white/10 bg-[#16181F]" : "bg-[#1E2128]"
                           }`}
                         >
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-sm shadow-2xs select-none">
+                            <div className="w-8 h-8 rounded-xl bg-[#F5BA38]/20 border border-[#F5BA38]/40 flex items-center justify-center text-sm shadow-2xs select-none">
                               🏁
                             </div>
                             <div className="text-left">
                               <div className="flex items-center gap-2">
-                                <h4 className="text-xs font-black text-slate-900 tracking-tight">
+                                <h4 className="text-xs font-black text-[#F3F4EE] tracking-tight">
                                   End of Day Standings
                                 </h4>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#9EC9A8]/20 text-[#9EC9A8] border border-[#9EC9A8]/40 flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#9EC9A8]" />
                                   <span>Concluded</span>
                                 </span>
                               </div>
-                              <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                              <p className="text-[10px] text-white/50 font-medium mt-0.5">
                                 Final points tally for {formatDateDDMMYY(dayGroup.date)} · {totalDayPts} pts awarded
                               </p>
                             </div>
@@ -2107,24 +2112,24 @@ export default function HistoryPage() {
 
                           <div className="flex items-center gap-2 shrink-0">
                             {topItem && (
-                              <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 pl-2.5 pr-2 py-1 rounded-full shadow-2xs">
+                              <div className="flex items-center gap-1.5 bg-[#F5BA38] text-[#14161B] pl-2.5 pr-2 py-1 rounded-full shadow-2xs">
                                 <span className="text-xs">👑</span>
-                                <span className="text-xs font-black text-amber-900 truncate max-w-[100px] sm:max-w-none">
+                                <span className="text-xs font-black truncate max-w-[100px] sm:max-w-none">
                                   {topItem.name}
                                 </span>
-                                <span className="text-[10px] font-mono font-black text-amber-800 bg-amber-100/90 px-1.5 py-0.5 rounded-full">
+                                <span className="text-[10px] font-mono font-black text-[#14161B] bg-white/40 px-1.5 py-0.5 rounded-full">
                                   {topItem.points} pts
                                 </span>
                               </div>
                             )}
                             <svg
-                              className={`w-4 h-4 text-slate-400 transition-transform ${
+                              className={`w-4 h-4 text-white/40 transition-transform ${
                                 isTallyExpanded ? "rotate-180" : ""
                               }`}
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
-                              strokeWidth="2"
+                              strokeWidth="2.5"
                             >
                               <polyline points="6 9 12 15 18 9" />
                             </svg>
@@ -2133,7 +2138,7 @@ export default function HistoryPage() {
 
                         {/* Standings Table Rows (Visible only when expanded) */}
                         {isTallyExpanded && (
-                          <div className="divide-y divide-slate-100">
+                          <div className="divide-y divide-white/5">
                             {tally.map((item, idx) => {
                               const isTop = item.isChampion;
                               const isSpoon = item.isSpoon;
@@ -2143,14 +2148,14 @@ export default function HistoryPage() {
                                   key={item.playerId}
                                   className={`px-3.5 py-2.5 flex items-center justify-between gap-3 transition-colors ${
                                     isTop
-                                      ? "bg-amber-50/40 hover:bg-amber-50/60"
+                                      ? "bg-[#F5BA38]/15 border-l-4 border-l-[#F5BA38]"
                                       : isSpoon
-                                      ? "bg-rose-50/30 hover:bg-rose-50/50"
+                                      ? "bg-rose-500/15 border-l-4 border-l-rose-500"
                                       : idx === 1
-                                      ? "bg-slate-50/40 hover:bg-slate-50/70"
+                                      ? "bg-[#FF5E48]/10 border-l-4 border-l-[#FF5E48]"
                                       : idx === 2
-                                      ? "bg-orange-50/20 hover:bg-orange-50/40"
-                                      : "hover:bg-slate-50/60"
+                                      ? "bg-[#6C79E0]/10 border-l-4 border-l-[#6C79E0]"
+                                      : "hover:bg-white/5"
                                   }`}
                                 >
                                   <div className="flex items-center gap-2.5 min-w-0">
@@ -2158,21 +2163,21 @@ export default function HistoryPage() {
                                     <div
                                       className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
                                         isTop
-                                          ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs"
+                                          ? "bg-[#F5BA38] text-[#14161B] shadow-2xs"
                                           : idx === 1
-                                          ? "bg-slate-100 text-slate-800 border border-slate-300 shadow-2xs"
+                                          ? "bg-[#FF5E48] text-white shadow-2xs"
                                           : idx === 2
-                                          ? "bg-orange-100 text-orange-900 border border-orange-300 shadow-2xs"
+                                          ? "bg-[#6C79E0] text-white shadow-2xs"
                                           : isSpoon
-                                          ? "bg-rose-100 text-rose-900 border border-rose-300 shadow-2xs"
-                                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                                          ? "bg-rose-500 text-white shadow-2xs"
+                                          : "bg-white/10 text-white/70 border border-white/10"
                                       }`}
                                     >
                                       {isTop ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : isSpoon ? "🥄" : `#${idx + 1}`}
                                     </div>
 
                                     {/* Avatar */}
-                                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0 shadow-2xs">
+                                    <div className="w-8 h-8 rounded-xl bg-[#14161B] border border-white/10 p-0.5 flex items-center justify-center shrink-0 shadow-2xs">
                                       <AvatarSVG
                                         type={item.avatar}
                                         size={26}
@@ -2187,26 +2192,26 @@ export default function HistoryPage() {
                                         <span
                                           className={`text-xs truncate ${
                                             isTop
-                                              ? "font-black text-amber-950"
+                                              ? "font-black text-[#F5BA38]"
                                               : isSpoon
-                                              ? "font-black text-rose-950"
-                                              : "font-black text-slate-900"
+                                              ? "font-black text-rose-400"
+                                              : "font-black text-[#F3F4EE]"
                                           }`}
                                         >
                                           {item.name}
                                         </span>
                                         {isTop && (
-                                          <span className="text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200/80 px-1.5 py-0.2 rounded-md">
+                                          <span className="text-[9px] font-black uppercase tracking-wider bg-[#F5BA38]/20 text-[#F5BA38] border border-[#F5BA38]/40 px-1.5 py-0.2 rounded-md">
                                             Champion
                                           </span>
                                         )}
                                         {isSpoon && (
-                                          <span className="text-[9px] font-black uppercase tracking-wider bg-rose-100 text-rose-900 border border-rose-200/80 px-1.5 py-0.2 rounded-md">
+                                          <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/40 px-1.5 py-0.2 rounded-md">
                                             Wooden Spoon
                                           </span>
                                         )}
                                       </div>
-                                      <span className="text-[10px] text-slate-400 font-medium">
+                                      <span className="text-[10px] text-white/40 font-medium">
                                         {isTop
                                           ? "Rank #1 on Day Table"
                                           : isSpoon
@@ -2221,15 +2226,15 @@ export default function HistoryPage() {
                                     <span
                                       className={`text-base font-black font-mono tabular-nums leading-none ${
                                         isTop
-                                          ? "text-amber-900"
+                                          ? "text-[#F5BA38]"
                                           : isSpoon
-                                          ? "text-rose-800"
-                                          : "text-slate-900"
+                                          ? "text-rose-400"
+                                          : "text-[#F3F4EE]"
                                       }`}
                                     >
                                       {item.points}
                                     </span>
-                                    <span className="text-[10px] font-bold text-slate-400 ml-1">pts</span>
+                                    <span className="text-[10px] font-bold text-white/40 ml-1">pts</span>
                                   </div>
                                 </div>
                               );
@@ -2253,15 +2258,15 @@ export default function HistoryPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             {/* Time Filter Pill */}
             <div
-              className={`relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
+              className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
                 rangeFilter !== "all"
-                  ? "bg-slate-950 text-white font-black shadow-xs ring-1 ring-slate-950"
-                  : "bg-white border border-slate-200/80 text-slate-700 font-bold hover:bg-slate-50"
+                  ? "bg-[#FF5E48] text-white font-black shadow-xs"
+                  : "bg-[#1E2128] border border-white/10 text-white/80 font-bold hover:bg-[#252932]"
               }`}
             >
               <span>📅</span>
               <span>{currentRangeLabel}</span>
-              <span className={`text-[9px] ${rangeFilter !== "all" ? "text-white/70" : "text-slate-400"}`}>▾</span>
+              <span className={`text-[9px] ${rangeFilter !== "all" ? "text-white/80" : "text-white/40"}`}>▾</span>
               <select
                 value={rangeFilter}
                 onChange={(e) => setRangeFilter(e.target.value as any)}
@@ -2277,7 +2282,7 @@ export default function HistoryPage() {
             </div>
 
             {/* Category Switcher Pill Row */}
-            <div className="flex bg-slate-200/70 p-1 rounded-full overflow-x-auto hide-scrollbar w-full sm:w-auto">
+            <div className="flex bg-[#1A1D24] border border-white/10 p-1 rounded-full overflow-x-auto hide-scrollbar w-full sm:w-auto">
               {(
                 [
                   { key: "day", label: "Day Points", icon: "🏆" },
@@ -2289,10 +2294,10 @@ export default function HistoryPage() {
                 <button
                   key={cat.key}
                   onClick={() => setLeaderboardCategory(cat.key)}
-                  className={`py-1.5 px-3 flex items-center gap-1.5 text-xs font-extrabold rounded-full transition-all whitespace-nowrap cursor-pointer ${
+                  className={`py-1.5 px-3 flex items-center gap-1.5 text-xs font-black rounded-full transition-all whitespace-nowrap cursor-pointer ${
                     leaderboardCategory === cat.key
-                      ? "bg-white text-slate-950 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-200"
+                      ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                      : "text-white/60 hover:text-white"
                   }`}
                 >
                   <span>{cat.icon}</span>
@@ -2304,8 +2309,8 @@ export default function HistoryPage() {
 
           {leaderboardCategory === "league" && (
             <div className="flex justify-end mb-1">
-              <div className="p-1 bg-slate-200/70 rounded-full flex gap-1 items-center">
-                <span className="text-[10px] font-extrabold text-slate-500 pl-2 pr-0.5 uppercase">Rank:</span>
+              <div className="p-1 bg-[#1A1D24] border border-white/10 rounded-full flex gap-1 items-center">
+                <span className="text-[10px] font-black text-white/40 pl-2 pr-0.5 uppercase">Rank:</span>
                 {(
                   [
                     { key: "points", label: "Points" },
@@ -2316,10 +2321,10 @@ export default function HistoryPage() {
                   <button
                     key={m.key}
                     onClick={() => setSortBy(m.key)}
-                    className={`py-1 px-2.5 text-xs font-extrabold rounded-full transition-all cursor-pointer ${
+                    className={`py-1 px-2.5 text-xs font-black rounded-full transition-all cursor-pointer ${
                       sortBy === m.key
-                        ? "bg-slate-950 text-white shadow-xs"
-                        : "text-slate-600 hover:text-slate-950"
+                        ? "bg-[#FF5E48] text-white shadow-xs"
+                        : "text-white/60 hover:text-white"
                     }`}
                   >
                     {m.label}
@@ -2330,46 +2335,45 @@ export default function HistoryPage() {
           )}
 
           {leaderboardCategory !== "analytics" && (
-            <div className="bg-white border border-slate-200/80 rounded-[28px] overflow-hidden shadow-xs">
-              <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+            <div className="bg-[#1E2128] border border-white/10 rounded-[28px] overflow-hidden shadow-xs">
+              <div className="p-3.5 border-b border-white/10 flex items-center justify-between bg-[#16181F]">
+                <div className="text-xs font-black text-[#F3F4EE] flex items-center gap-1.5 uppercase tracking-wider">
                   {leaderboardCategory === "day" && <span>🏆 Overall Day Leaderboard</span>}
                   {leaderboardCategory === "league" && <span>🏸 League (Round-Robin) Standings</span>}
                   {leaderboardCategory === "finals" && <span>🎯 Championship (Finals) Record</span>}
                 </div>
-                <div className="text-[10px] font-semibold text-slate-400">
+                <div className="text-[10px] font-bold text-white/50">
                   {displayedLeaderboard.length > 0 ? displayedLeaderboard.length : players.length} active
                 </div>
               </div>
 
               {displayedLeaderboard.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-xs">
+                <div className="text-center py-8 text-white/40 text-xs">
                   No ranked matches recorded for this range.
                 </div>
               ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-white/5">
                   {displayedLeaderboard.map((entry, index) => {
                     const isTop1 = index === 0;
                     const isTop2 = index === 1;
                     const isTop3 = index === 2;
-
 
                     return (
                       <div
                         key={entry.playerId}
                         className={`p-3 flex items-center justify-between gap-3 transition-colors ${
                           isTop1
-                            ? "bg-amber-50/50"
+                            ? "bg-[#F5BA38]/15 border-l-4 border-l-[#F5BA38]"
                             : isTop2
-                            ? "bg-slate-50/40"
+                            ? "bg-[#FF5E48]/10 border-l-4 border-l-[#FF5E48]"
                             : isTop3
-                            ? "bg-orange-50/30"
-                            : "hover:bg-slate-50"
+                            ? "bg-[#6C79E0]/10 border-l-4 border-l-[#6C79E0]"
+                            : "hover:bg-white/5"
                         }`}
                       >
                         {/* Rank & Avatar & Name */}
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-6 text-center font-bold text-xs">
+                          <div className="w-6 text-center font-black text-xs">
                             {isTop1 ? "🥇" : isTop2 ? "🥈" : isTop3 ? "🥉" : `#${index + 1}`}
                           </div>
                           <AvatarSVG
@@ -2379,10 +2383,10 @@ export default function HistoryPage() {
                             color={entry.avatarColor}
                           />
                           <div className="min-w-0 flex flex-col justify-center">
-                            <div className="text-xs font-extrabold text-slate-900 truncate leading-tight">
+                            <div className="text-xs font-black text-[#F3F4EE] truncate leading-tight">
                               {entry.name}
                             </div>
-                            <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5 mt-0.5">
+                            <div className="text-[10px] text-white/40 font-semibold flex items-center gap-1.5 mt-0.5">
                               {leaderboardCategory === "day" && (
                                 <span>{entry.finalsWon} finals won • {entry.leagueWins} league wins</span>
                               )}
@@ -2390,7 +2394,7 @@ export default function HistoryPage() {
                                 <>
                                   <span>{entry.leagueWins}W - {entry.leagueMatchesPlayed - entry.leagueWins}L</span>
                                   <span>•</span>
-                                  <span>{entry.leagueWinRate}% win</span>
+                                  <span className="text-[#9EC9A8] font-bold">{entry.leagueWinRate}% win</span>
                                 </>
                               )}
                               {leaderboardCategory === "finals" && (
@@ -2402,7 +2406,7 @@ export default function HistoryPage() {
 
                         {/* Metric Highlights */}
                         <div className="text-right flex flex-col justify-center">
-                          <div className="text-sm font-black text-slate-950 leading-tight">
+                          <div className="text-sm font-black text-[#F3F4EE] leading-tight">
                             {leaderboardCategory === "day" && `${entry.dayPointsTotal} pts`}
                             {leaderboardCategory === "league" && (
                               sortBy === "points" ? `${entry.leaguePoints} pts` :
@@ -2411,12 +2415,12 @@ export default function HistoryPage() {
                             )}
                             {leaderboardCategory === "finals" && `${entry.finalsWon} wins`}
                           </div>
-                          <div className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                          <div className="text-[10px] text-white/40 font-semibold mt-0.5">
                             {leaderboardCategory === "day" && `Total Day Points`}
                             {leaderboardCategory === "league" && (
                               <>
                                 Diff:{" "}
-                                <span className={entry.leaguePointDiff > 0 ? "text-emerald-600 font-bold" : entry.leaguePointDiff < 0 ? "text-rose-500 font-bold" : "text-slate-400"}>
+                                <span className={entry.leaguePointDiff > 0 ? "text-[#9EC9A8] font-black" : entry.leaguePointDiff < 0 ? "text-[#FF5E48] font-black" : "text-white/40"}>
                                   {entry.leaguePointDiff > 0 ? `+${entry.leaguePointDiff}` : entry.leaguePointDiff}
                                 </span>
                               </>
