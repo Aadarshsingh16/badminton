@@ -1568,15 +1568,15 @@ export default function ProfilesPage() {
               className="space-y-3.5"
             >
               {/* Interactive Speech Bubble Card */}
-              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-4">
+              <div className="rounded-[30px] bg-[#1E2128] border border-white/10 p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{activeLore.badgeEmoji}</span>
-                    <span className="text-xs font-black text-slate-900">
+                    <span className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">
                       {activeLore.name} on the record:
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono font-medium">
+                  <span className="text-[10px] text-white/40 font-mono font-medium">
                     {activeMoodTab === "courtMood"
                       ? "🏸 Court Vibe"
                       : activeMoodTab === "dailyRoast"
@@ -1586,33 +1586,33 @@ export default function ProfilesPage() {
                 </div>
 
                 {/* Mood Switcher Pills */}
-                <div className="flex gap-1.5 p-1 bg-slate-100/80 rounded-full">
+                <div className="flex gap-1.5 p-1 bg-[#16181F] border border-white/5 rounded-full">
                   <button
                     onClick={() => setActiveMoodTab("courtMood")}
-                    className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-black transition-all ${
+                    className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-black transition-all cursor-pointer ${
                       activeMoodTab === "courtMood"
-                        ? "bg-slate-950 text-white shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-[#F3F4EE] text-[#14161B] shadow-xs"
+                        : "text-white/50 hover:text-white"
                     }`}
                   >
                     🏸 On Court
                   </button>
                   <button
                     onClick={() => setActiveMoodTab("dailyRoast")}
-                    className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-black transition-all ${
+                    className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-black transition-all cursor-pointer ${
                       activeMoodTab === "dailyRoast"
-                        ? "bg-slate-950 text-white shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-[#F3F4EE] text-[#14161B] shadow-xs"
+                        : "text-white/50 hover:text-white"
                     }`}
                   >
                     🍕 Daily Roast
                   </button>
                   <button
                     onClick={() => setActiveMoodTab("excuse")}
-                    className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-black transition-all ${
+                    className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-black transition-all cursor-pointer ${
                       activeMoodTab === "excuse"
-                        ? "bg-slate-950 text-white shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-[#F3F4EE] text-[#14161B] shadow-xs"
+                        : "text-white/50 hover:text-white"
                     }`}
                   >
                     😤 Excuse
@@ -1620,14 +1620,14 @@ export default function ProfilesPage() {
                 </div>
 
                 {/* The Speech Bubble */}
-                <div className="relative p-5 rounded-[26px] bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border border-indigo-100/90 shadow-inner">
-                  <span className="text-2xl text-indigo-300 font-serif leading-none select-none block -mb-1">
+                <div className="relative p-5 rounded-[26px] bg-[#16181F] border border-white/10 shadow-inner">
+                  <span className="text-2xl text-[#6C79E0]/40 font-serif leading-none select-none block -mb-1">
                     “
                   </span>
-                  <p className="text-slate-800 text-sm font-bold leading-relaxed italic">
+                  <p className="text-[#F3F4EE] text-sm font-bold leading-relaxed italic">
                     {activeLore.vibeQuotes[activeMoodTab]}
                   </p>
-                  <p className="text-right text-[10px] text-slate-400 font-mono mt-2">
+                  <p className="text-right text-[10px] text-white/40 font-mono mt-2">
                     — {activeLore.name},{" "}
                     {activeMoodTab === "courtMood"
                       ? "Courtside"
@@ -1639,22 +1639,22 @@ export default function ProfilesPage() {
               </div>
 
               {/* Certified Scouting Attributes */}
-              <div className="rounded-[28px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3.5">
+              <div className="rounded-[28px] bg-[#1E2128] border border-white/10 p-5 shadow-xs space-y-3.5">
                 <div className="flex items-center justify-between">
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                  <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">
                     Scouting Attributes (100% Certified)
                   </p>
-                  <span className="text-[10px] text-slate-400 font-mono">Radar Spec</span>
+                  <span className="text-[10px] text-white/30 font-mono">Radar Spec</span>
                 </div>
 
                 <div className="space-y-3">
                   {activeLore.funStats.map((stat, idx) => (
                     <div key={idx} className="space-y-1.5">
                       <div className="flex justify-between text-xs font-bold">
-                        <span className="text-slate-800">{stat.label}</span>
-                        <span className="text-slate-500 font-mono text-[11px]">{stat.value}%</span>
+                        <span className="text-[#F3F4EE]">{stat.label}</span>
+                        <span className="text-white/60 font-mono text-[11px]">{stat.value}%</span>
                       </div>
-                      <div className="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                      <div className="h-2.5 w-full rounded-full bg-white/10 overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${stat.value}%` }}
@@ -1679,116 +1679,116 @@ export default function ProfilesPage() {
               className="space-y-3.5"
             >
               {/* Career Performance Grid Card */}
-              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3">
+              <div className="rounded-[30px] bg-[#1E2128] border border-white/10 p-5 shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                    <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">
                       Career Performance Record
                     </p>
-                    <p className="text-slate-900 font-extrabold text-xs mt-0.5">
+                    <p className="text-[#F3F4EE] font-black text-xs uppercase tracking-wider mt-0.5">
                       Tournament &amp; Match Standings
                     </p>
                   </div>
-                  <span className="text-[10px] text-slate-500 font-mono bg-slate-100 px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-white/70 font-mono bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
                     Squad Rank #{currentRank}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   {/* Card 1: 👑 Day Champions */}
-                  <div className="p-3.5 rounded-[22px] bg-gradient-to-br from-amber-100/90 via-amber-50 to-white border border-amber-300 text-center shadow-2xs relative overflow-hidden">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-[#F5BA38]/30 text-center shadow-2xs relative overflow-hidden">
                     <span className="absolute top-1.5 right-1.5 text-xs">👑</span>
-                    <p className="text-amber-950 font-black text-2xl leading-tight font-mono">
+                    <p className="text-[#F5BA38] font-black text-2xl leading-tight font-mono">
                       {activeStats.dayWins}
                     </p>
-                    <p className="text-[10px] text-amber-900 font-black mt-0.5">👑 Day Champ</p>
-                    <p className="text-[9px] text-amber-700/80">Daily 1st Place</p>
+                    <p className="text-[10px] text-[#F5BA38] font-black mt-0.5">👑 Day Champ</p>
+                    <p className="text-[9px] text-[#F5BA38]/70">Daily 1st Place</p>
                   </div>
 
                   {/* Card 2: 🏆 Titles Won */}
-                  <div className="p-3.5 rounded-[22px] bg-amber-50/70 border border-amber-200/60 text-center">
-                    <p className="text-amber-900 font-black text-2xl leading-tight font-mono">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-white/10 text-center">
+                    <p className="text-[#F5BA38] font-black text-2xl leading-tight font-mono">
                       {activeStats.tournamentsWon}
                     </p>
-                    <p className="text-[10px] text-amber-800 font-bold mt-0.5">🏆 Titles Won</p>
-                    <p className="text-[9px] text-amber-700/70">Finals Champion</p>
+                    <p className="text-[10px] text-white/80 font-bold mt-0.5">🏆 Titles Won</p>
+                    <p className="text-[9px] text-white/40">Finals Champion</p>
                   </div>
 
                   {/* Card 3: 🥄 Day Spoons */}
-                  <div className="p-3.5 rounded-[22px] bg-rose-50/70 border border-rose-200/60 text-center">
-                    <p className="text-rose-800 font-black text-2xl leading-tight font-mono">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-[#FF5E48]/30 text-center">
+                    <p className="text-[#FF5E48] font-black text-2xl leading-tight font-mono">
                       {activeStats.woodenSpoons}
                     </p>
-                    <p className="text-[10px] text-rose-800 font-bold mt-0.5">🥄 Day Spoons</p>
-                    <p className="text-[9px] text-rose-600/70">Official Day Last</p>
+                    <p className="text-[10px] text-[#FF5E48] font-bold mt-0.5">🥄 Day Spoons</p>
+                    <p className="text-[9px] text-[#FF5E48]/70">Official Day Last</p>
                   </div>
 
                   {/* Card 4: 📈 Win Rate */}
-                  <div className="p-3.5 rounded-[22px] bg-emerald-50/70 border border-emerald-200/60 text-center">
-                    <p className="text-emerald-800 font-black text-2xl leading-tight font-mono">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-[#9EC9A8]/30 text-center">
+                    <p className="text-[#9EC9A8] font-black text-2xl leading-tight font-mono">
                       {winRate}%
                     </p>
-                    <p className="text-[10px] text-emerald-800 font-bold mt-0.5">📈 Win Rate</p>
-                    <p className="text-[9px] text-emerald-600/70">
+                    <p className="text-[10px] text-[#9EC9A8] font-bold mt-0.5">📈 Win Rate</p>
+                    <p className="text-[9px] text-[#9EC9A8]/70">
                       {activeStats.wins}W - {activeStats.losses}L
                     </p>
                   </div>
 
                   {/* Card 5: ⭐ Day Points */}
-                  <div className="p-3.5 rounded-[22px] bg-indigo-50/70 border border-indigo-200/60 text-center">
-                    <p className="text-indigo-900 font-black text-2xl leading-tight font-mono">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-[#6C79E0]/30 text-center">
+                    <p className="text-[#6C79E0] font-black text-2xl leading-tight font-mono">
                       {activeStats.dayPointsTotal}
                     </p>
-                    <p className="text-[10px] text-indigo-800 font-bold mt-0.5">⭐ Day Points</p>
-                    <p className="text-[9px] text-indigo-600/70">Official Placement Pts</p>
+                    <p className="text-[10px] text-[#6C79E0] font-bold mt-0.5">⭐ Day Points</p>
+                    <p className="text-[9px] text-[#6C79E0]/70">Official Placement Pts</p>
                   </div>
 
                   {/* Card 6: 🎯 Match Points */}
-                  <div className="p-3.5 rounded-[22px] bg-blue-50/70 border border-blue-200/60 text-center">
-                    <p className="text-blue-900 font-black text-2xl leading-tight font-mono">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-white/10 text-center">
+                    <p className="text-[#F3F4EE] font-black text-2xl leading-tight font-mono">
                       {activeStats.leaguePoints}
                     </p>
-                    <p className="text-[10px] text-blue-800 font-bold mt-0.5">🎯 Match Points</p>
-                    <p className="text-[9px] text-blue-600/70">2-3 Pts Game Score</p>
+                    <p className="text-[10px] text-white/70 font-bold mt-0.5">🎯 Match Points</p>
+                    <p className="text-[9px] text-white/40">2-3 Pts Game Score</p>
                   </div>
 
                   {/* Card 7: 🏸 Total Matches */}
-                  <div className="p-3.5 rounded-[22px] bg-slate-50 border border-slate-200/70 text-center">
-                    <p className="text-slate-900 font-black text-2xl leading-tight font-mono">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-white/10 text-center">
+                    <p className="text-[#F3F4EE] font-black text-2xl leading-tight font-mono">
                       {activeStats.matchesPlayed}
                     </p>
-                    <p className="text-[10px] text-slate-700 font-bold mt-0.5">🏸 Total Matches</p>
-                    <p className="text-[9px] text-slate-500">
+                    <p className="text-[10px] text-white/70 font-bold mt-0.5">🏸 Total Matches</p>
+                    <p className="text-[9px] text-white/40">
                       Diff: {activeStats.pointDiff >= 0 ? `+${activeStats.pointDiff}` : activeStats.pointDiff}
                     </p>
                   </div>
 
                   {/* Card 8: ⚡ Shutout Ratio */}
-                  <div className="p-3.5 rounded-[22px] bg-purple-50/70 border border-purple-200/60 text-center">
-                    <p className="text-purple-900 font-black text-2xl leading-tight font-mono">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-white/10 text-center">
+                    <p className="text-[#F3F4EE] font-black text-2xl leading-tight font-mono">
                       {activeStats.shutsDelivered} : {activeStats.shutsReceived}
                     </p>
-                    <p className="text-[10px] text-purple-800 font-bold mt-0.5">⚡ Shutouts</p>
-                    <p className="text-[9px] text-purple-600/70">Delivered : Conceded</p>
+                    <p className="text-[10px] text-white/70 font-bold mt-0.5">⚡ Shutouts</p>
+                    <p className="text-[9px] text-white/40">Delivered : Conceded</p>
                   </div>
                 </div>
               </div>
 
               {/* Historical Session Trend Sparkline Card */}
-              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3.5">
+              <div className="rounded-[30px] bg-[#1E2128] border border-white/10 p-5 shadow-xs space-y-3.5">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-base">📈</span>
-                      <h3 className="text-slate-900 font-black text-xs">Session-by-Session Trajectory</h3>
+                      <h3 className="text-[#F3F4EE] font-black text-xs uppercase tracking-wider">Session-by-Session Trajectory</h3>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                    <p className="text-[10px] text-white/40 font-semibold mt-0.5">
                       Day Points earned across each court meet
                     </p>
                   </div>
                   {playerSessionTrends.length > 0 && (
                     <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold">
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/80">
                         Peak: {Math.max(0, ...playerSessionTrends.map((s) => s.points))} pts
                       </span>
                     </div>
@@ -1801,14 +1801,14 @@ export default function ProfilesPage() {
                       <svg viewBox="0 0 320 90" className="w-full h-full overflow-visible">
                         <defs>
                           <linearGradient id="trend-gradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.25" />
-                            <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+                            <stop offset="0%" stopColor="#6C79E0" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="#6C79E0" stopOpacity="0.0" />
                           </linearGradient>
                         </defs>
 
                         {/* Baseline Guides */}
-                        <line x1="20" y1="70" x2="300" y2="70" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
-                        <line x1="20" y1="20" x2="300" y2="20" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+                        <line x1="20" y1="70" x2="300" y2="70" stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="3 3" />
+                        <line x1="20" y1="20" x2="300" y2="20" stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="3 3" />
 
                         {(() => {
                           const maxPts = Math.max(1, ...playerSessionTrends.map((s) => s.points));
@@ -1831,7 +1831,7 @@ export default function ProfilesPage() {
                               <path
                                 d={pathData}
                                 fill="none"
-                                stroke="#6366f1"
+                                stroke="#6C79E0"
                                 strokeWidth="2.5"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -1844,8 +1844,8 @@ export default function ProfilesPage() {
                                     cx={pt.x}
                                     cy={pt.y}
                                     r={pt.isTop || pt.isSpoon ? "5" : "3.5"}
-                                    fill={pt.isTop ? "#f59e0b" : pt.isSpoon ? "#f43f5e" : "#4f46e5"}
-                                    stroke="#ffffff"
+                                    fill={pt.isTop ? "#F5BA38" : pt.isSpoon ? "#FF5E48" : "#6C79E0"}
+                                    stroke="#1E2128"
                                     strokeWidth="2"
                                   />
                                   {/* Value bubble above */}
@@ -1853,7 +1853,7 @@ export default function ProfilesPage() {
                                     x={pt.x}
                                     y={pt.y - 7}
                                     textAnchor="middle"
-                                    className="fill-slate-700 font-mono"
+                                    className="fill-white/80 font-mono"
                                     style={{ fontSize: "8px", fontWeight: 800 }}
                                   >
                                     {pt.points}
@@ -1863,7 +1863,7 @@ export default function ProfilesPage() {
                                     x={pt.x}
                                     y="84"
                                     textAnchor="middle"
-                                    className="fill-slate-400 font-mono"
+                                    className="fill-white/40 font-mono"
                                     style={{ fontSize: "7px", fontWeight: 700 }}
                                   >
                                     {formatDateDDMMYY(pt.date)}
@@ -1876,21 +1876,21 @@ export default function ProfilesPage() {
                       </svg>
                     </div>
 
-                    <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
-                      <span className="flex items-center gap-1 font-semibold">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> Crown Meet
+                    <div className="flex items-center justify-between text-[10px] text-white/50 pt-2 border-t border-white/5">
+                      <span className="flex items-center gap-1.5 font-semibold text-[#F5BA38]">
+                        <span className="w-2 h-2 rounded-full bg-[#F5BA38] inline-block" /> Crown Meet
                       </span>
-                      <span className="flex items-center gap-1 font-semibold">
-                        <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Spoon Meet
+                      <span className="flex items-center gap-1.5 font-semibold text-[#FF5E48]">
+                        <span className="w-2 h-2 rounded-full bg-[#FF5E48] inline-block" /> Spoon Meet
                       </span>
-                      <span className="font-mono font-bold text-slate-700">
+                      <span className="font-mono font-bold text-white/70">
                         {playerSessionTrends.length} Completed Sessions
                       </span>
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 text-center">
-                    <p className="text-xs font-bold text-slate-600">
+                  <div className="p-4 rounded-2xl bg-[#16181F] border border-white/5 text-center">
+                    <p className="text-xs font-bold text-white/70">
                       {playerSessionTrends.length === 1
                         ? `Session record: ${playerSessionTrends[0].points} Day Points earned`
                         : "Session trajectory will populate as daily tables are completed"}
@@ -1900,43 +1900,43 @@ export default function ProfilesPage() {
               </div>
 
               {/* Finals & Clutch Performance Hub */}
-              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3.5">
+              <div className="rounded-[30px] bg-[#1E2128] border border-white/10 p-5 shadow-xs space-y-3.5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                    <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">
                       Clutch &amp; Finals Intelligence
                     </p>
-                    <p className="text-slate-900 font-extrabold text-xs mt-0.5">
+                    <p className="text-[#F3F4EE] font-black text-xs uppercase tracking-wider mt-0.5">
                       Pressure Index &amp; Momentum
                     </p>
                   </div>
-                  <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] text-[#F5BA38] bg-[#F5BA38]/10 border border-[#F5BA38]/20 px-2.5 py-0.5 rounded-full font-bold">
                     Clutch Factor
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {/* Card 1: Finals Record */}
-                  <div className="p-3.5 rounded-[22px] bg-gradient-to-br from-amber-500/10 via-amber-50/50 to-white border border-amber-200/80 flex flex-col justify-between">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-[#F5BA38]/30 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#F5BA38] bg-[#F5BA38]/10 border border-[#F5BA38]/20 px-2 py-0.5 rounded-full">
                         🏆 Finals Record
                       </span>
-                      <span className="text-xs font-mono font-bold text-amber-800">
+                      <span className="text-xs font-mono font-black text-[#F5BA38]">
                         {activeStats.finalsPlayed > 0
                           ? `${Math.round((activeStats.tournamentsWon / activeStats.finalsPlayed) * 100)}% WR`
                           : "0%"}
                       </span>
                     </div>
                     <div className="my-2">
-                      <p className="text-2xl font-black text-slate-900 font-mono">
+                      <p className="text-2xl font-black text-[#F3F4EE] font-mono">
                         {activeStats.tournamentsWon}W - {activeStats.finalsLost}L
                       </p>
-                      <p className="text-[11px] font-bold text-amber-950 mt-0.5">
+                      <p className="text-[11px] font-bold text-white/80 mt-0.5">
                         {activeStats.finalsPlayed} Championship Finals
                       </p>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-medium">
+                    <p className="text-[10px] text-white/40 font-medium">
                       {activeStats.finalsPlayed === 0
                         ? "Has not reached a final yet"
                         : activeStats.tournamentsWon > 0 && activeStats.finalsLost === 0
@@ -1948,26 +1948,26 @@ export default function ProfilesPage() {
                   </div>
 
                   {/* Card 2: 1-Point Deciders (Cardiac Rating) */}
-                  <div className="p-3.5 rounded-[22px] bg-gradient-to-br from-rose-500/10 via-rose-50/50 to-white border border-rose-200/80 flex flex-col justify-between">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-[#FF5E48]/30 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-rose-900 bg-rose-100/80 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#FF5E48] bg-[#FF5E48]/10 border border-[#FF5E48]/20 px-2 py-0.5 rounded-full">
                         💓 1-Pt Thrillers
                       </span>
-                      <span className="text-xs font-mono font-bold text-rose-800">
+                      <span className="text-xs font-mono font-black text-[#FF5E48]">
                         {activeStats.clutchMatches > 0
                           ? `${Math.round((activeStats.clutchWins / activeStats.clutchMatches) * 100)}% WR`
                           : "0%"}
                       </span>
                     </div>
                     <div className="my-2">
-                      <p className="text-2xl font-black text-slate-900 font-mono">
+                      <p className="text-2xl font-black text-[#F3F4EE] font-mono">
                         {activeStats.clutchWins}W - {activeStats.clutchLosses}L
                       </p>
-                      <p className="text-[11px] font-bold text-rose-950 mt-0.5">
+                      <p className="text-[11px] font-bold text-white/80 mt-0.5">
                         {activeStats.clutchMatches} Matches Decided by 1 Pt
                       </p>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-medium">
+                    <p className="text-[10px] text-white/40 font-medium">
                       {activeStats.clutchMatches === 0
                         ? "No 1-point thriller games played"
                         : activeStats.clutchWins >= activeStats.clutchLosses
@@ -1977,12 +1977,12 @@ export default function ProfilesPage() {
                   </div>
 
                   {/* Card 3: Form & Momentum Pulse */}
-                  <div className="p-3.5 rounded-[22px] bg-gradient-to-br from-emerald-500/10 via-emerald-50/50 to-white border border-emerald-200/80 flex flex-col justify-between">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-[#9EC9A8]/30 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-900 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#9EC9A8] bg-[#9EC9A8]/10 border border-[#9EC9A8]/20 px-2 py-0.5 rounded-full">
                         🔥 Momentum Pulse
                       </span>
-                      <span className="text-xs font-mono font-bold text-emerald-800">
+                      <span className="text-xs font-mono font-black text-[#9EC9A8]">
                         {activeStats.currentStreak?.count > 0
                           ? activeStats.currentStreak.type === "W"
                             ? `🔥 ${activeStats.currentStreak.count}W Streak`
@@ -1998,22 +1998,22 @@ export default function ProfilesPage() {
                               key={i}
                               className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shadow-2xs ${
                                 res === "W"
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-rose-500 text-white"
+                                  ? "bg-[#9EC9A8] text-[#14161B]"
+                                  : "bg-[#FF5E48] text-[#14161B]"
                               }`}
                             >
                               {res}
                             </span>
                           ))
                         ) : (
-                          <span className="text-xs text-slate-400 italic">No recent matches</span>
+                          <span className="text-xs text-white/40 italic">No recent matches</span>
                         )}
                       </div>
-                      <p className="text-[11px] font-bold text-emerald-950 mt-1">
+                      <p className="text-[11px] font-bold text-white/80 mt-1">
                         Last 5 Matches (Recent → Older)
                       </p>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-medium">
+                    <p className="text-[10px] text-white/40 font-medium">
                       🚀 Career-Best: {activeStats.longestWinStreak} Consecutive Wins
                     </p>
                   </div>
@@ -2021,18 +2021,18 @@ export default function ProfilesPage() {
               </div>
 
               {/* Tale of the Tape: Head-to-Head Split-Screen Comparison Card */}
-              <div id="tale-of-the-tape" className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-4">
+              <div id="tale-of-the-tape" className="rounded-[30px] bg-[#1E2128] border border-white/10 p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-base">🥊</span>
-                      <h3 className="text-slate-900 font-black text-xs">Tale of the Tape</h3>
+                      <h3 className="text-[#F3F4EE] font-black text-xs uppercase tracking-wider">Tale of the Tape</h3>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                    <p className="text-[10px] text-white/40 font-semibold mt-0.5">
                       Direct head-to-head split-screen comparison
                     </p>
                   </div>
-                  <span className="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-2.5 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] text-[#6C79E0] bg-[#6C79E0]/10 border border-[#6C79E0]/20 px-2.5 py-0.5 rounded-full font-bold">
                     Select Opponent
                   </span>
                 </div>
@@ -2046,8 +2046,8 @@ export default function ProfilesPage() {
                       onClick={() => setCompareOpponentId(opp.id)}
                       className={`px-3 py-1.5 rounded-full text-xs font-black transition-all flex items-center gap-1.5 shrink-0 ${
                         compareOpponentId === opp.id
-                          ? "bg-slate-950 text-white shadow-xs"
-                          : "bg-slate-100 hover:bg-slate-200/80 text-slate-600"
+                          ? "bg-[#F3F4EE] text-[#14161B] shadow-xs"
+                          : "bg-[#16181F] hover:bg-white/10 text-white/70 border border-white/5"
                       }`}
                     >
                       <AvatarSVG type={opp.avatar} size={14} />
@@ -2057,35 +2057,35 @@ export default function ProfilesPage() {
                 </div>
 
                 {/* Split-Screen Face-off Header */}
-                <div className="p-4 rounded-[26px] bg-gradient-to-r from-indigo-50 via-purple-50/40 to-pink-50/50 border border-indigo-100/90 flex items-center justify-between gap-3 relative overflow-hidden">
+                <div className="p-4 rounded-[26px] bg-[#16181F] border border-white/10 flex items-center justify-between gap-3 relative overflow-hidden">
                   {/* Player 1 (Active) */}
                   <div className="flex-1 min-w-0 flex items-center gap-2.5">
-                    <div className="w-12 h-12 rounded-2xl bg-white border border-indigo-200 flex items-center justify-center shrink-0 shadow-xs relative">
+                    <div className="w-12 h-12 rounded-2xl bg-[#1E2128] border border-[#F5BA38]/30 flex items-center justify-center shrink-0 shadow-xs relative">
                       <AvatarSVG type={activeLore.avatar} size={36} />
-                      <span className="absolute -bottom-1 -left-1 px-1.5 py-0.2 rounded-full bg-slate-900 text-white text-[8px] font-black">
+                      <span className="absolute -bottom-1 -left-1 px-1.5 py-0.2 rounded-full bg-[#F5BA38] text-[#14161B] text-[8px] font-black">
                         #{currentRank}
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-black text-slate-900 truncate">{activeLore.name}</p>
-                      <p className="text-[10px] text-indigo-600 font-extrabold truncate">{activeLore.origin}</p>
+                      <p className="text-xs font-black text-[#F3F4EE] truncate">{activeLore.name}</p>
+                      <p className="text-[10px] text-[#F5BA38] font-black uppercase tracking-wider truncate">{activeLore.origin}</p>
                     </div>
                   </div>
 
                   {/* VS Badge in Center */}
-                  <div className="w-9 h-9 rounded-full bg-slate-950 text-white flex items-center justify-center font-black text-[11px] shadow-sm shrink-0 font-mono tracking-tighter">
+                  <div className="w-9 h-9 rounded-full bg-[#F5BA38] text-[#14161B] flex items-center justify-center font-black text-[11px] shadow-sm shrink-0 font-mono tracking-tighter">
                     VS
                   </div>
 
                   {/* Player 2 (Compare Opponent) */}
                   <div className="flex-1 min-w-0 flex items-center justify-end gap-2.5 text-right">
                     <div className="min-w-0">
-                      <p className="text-xs font-black text-slate-900 truncate">{compareOpponent.oppLore.name}</p>
-                      <p className="text-[10px] text-purple-600 font-extrabold truncate">{compareOpponent.oppLore.origin}</p>
+                      <p className="text-xs font-black text-[#F3F4EE] truncate">{compareOpponent.oppLore.name}</p>
+                      <p className="text-[10px] text-[#6C79E0] font-black uppercase tracking-wider truncate">{compareOpponent.oppLore.origin}</p>
                     </div>
-                    <div className="w-12 h-12 rounded-2xl bg-white border border-purple-200 flex items-center justify-center shrink-0 shadow-xs relative">
+                    <div className="w-12 h-12 rounded-2xl bg-[#1E2128] border border-[#6C79E0]/30 flex items-center justify-center shrink-0 shadow-xs relative">
                       <AvatarSVG type={compareOpponent.oppLore.avatar} size={36} />
-                      <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-full bg-slate-900 text-white text-[8px] font-black">
+                      <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-full bg-[#6C79E0] text-[#14161B] text-[8px] font-black">
                         #{compareOpponent.oppRank}
                       </span>
                     </div>
@@ -2095,15 +2095,15 @@ export default function ProfilesPage() {
                 {/* Tug-of-War H2H Wins Bar */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-mono font-black">
-                    <span className="text-indigo-700">{compareOpponent.h2hRecord.won} Wins</span>
-                    <span className="text-[10px] text-slate-400 font-sans font-bold">
+                    <span className="text-[#F5BA38]">{compareOpponent.h2hRecord.won} Wins</span>
+                    <span className="text-[10px] text-white/40 font-sans font-bold">
                       {compareOpponent.h2hRecord.played} Total Encounters
                     </span>
-                    <span className="text-purple-700">{compareOpponent.h2hRecord.lost} Wins</span>
+                    <span className="text-[#6C79E0]">{compareOpponent.h2hRecord.lost} Wins</span>
                   </div>
-                  <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden flex p-0.5 gap-0.5">
+                  <div className="h-3 w-full rounded-full bg-white/5 border border-white/10 overflow-hidden flex p-0.5 gap-0.5">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-500"
+                      className="h-full rounded-full bg-[#F5BA38] transition-all duration-500"
                       style={{
                         width:
                           compareOpponent.h2hRecord.played > 0
@@ -2112,7 +2112,7 @@ export default function ProfilesPage() {
                       }}
                     />
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-600 transition-all duration-500"
+                      className="h-full rounded-full bg-[#6C79E0] transition-all duration-500"
                       style={{
                         width:
                           compareOpponent.h2hRecord.played > 0
@@ -2126,74 +2126,74 @@ export default function ProfilesPage() {
                 {/* Tale of the Tape Comparative Matrix Rows */}
                 <div className="space-y-2 text-xs">
                   {/* Row: Finals Head to Head */}
-                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
-                    <span className="font-mono font-black text-indigo-700 w-16">
+                  <div className="p-2.5 rounded-2xl bg-[#16181F] border border-white/5 flex items-center justify-between">
+                    <span className="font-mono font-black text-[#F5BA38] w-16">
                       {compareOpponent.h2hRecord.finalsWon}W
                     </span>
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                    <span className="text-[10px] font-black uppercase text-white/40 tracking-wider">
                       🏆 Finals Face-Offs
                     </span>
-                    <span className="font-mono font-black text-purple-700 w-16 text-right">
+                    <span className="font-mono font-black text-[#6C79E0] w-16 text-right">
                       {compareOpponent.h2hRecord.finalsLost}W
                     </span>
                   </div>
 
                   {/* Row: Blowouts Handed (Shutouts) */}
-                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
-                    <span className="font-mono font-black text-indigo-700 w-16">
+                  <div className="p-2.5 rounded-2xl bg-[#16181F] border border-white/5 flex items-center justify-between">
+                    <span className="font-mono font-black text-[#F5BA38] w-16">
                       ⚡ {compareOpponent.h2hRecord.shutsDelivered}
                     </span>
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                    <span className="text-[10px] font-black uppercase text-white/40 tracking-wider">
                       Blowouts Handed
                     </span>
-                    <span className="font-mono font-black text-purple-700 w-16 text-right">
+                    <span className="font-mono font-black text-[#6C79E0] w-16 text-right">
                       ⚡ {compareOpponent.h2hRecord.shutsReceived}
                     </span>
                   </div>
 
                   {/* Row: Total Match Points Aggregate */}
-                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
-                    <span className="font-mono font-black text-indigo-700 w-16">
+                  <div className="p-2.5 rounded-2xl bg-[#16181F] border border-white/5 flex items-center justify-between">
+                    <span className="font-mono font-black text-[#F5BA38] w-16">
                       {compareOpponent.h2hRecord.pointsFor}
                     </span>
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                    <span className="text-[10px] font-black uppercase text-white/40 tracking-wider">
                       H2H Points Scored
                     </span>
-                    <span className="font-mono font-black text-purple-700 w-16 text-right">
+                    <span className="font-mono font-black text-[#6C79E0] w-16 text-right">
                       {compareOpponent.h2hRecord.pointsAgainst}
                     </span>
                   </div>
 
                   {/* Row: Career Win Rate */}
-                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
-                    <span className="font-mono font-black text-indigo-700 w-16">
+                  <div className="p-2.5 rounded-2xl bg-[#16181F] border border-white/5 flex items-center justify-between">
+                    <span className="font-mono font-black text-[#F5BA38] w-16">
                       {winRate}%
                     </span>
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                    <span className="text-[10px] font-black uppercase text-white/40 tracking-wider">
                       Career Win Rate
                     </span>
-                    <span className="font-mono font-black text-purple-700 w-16 text-right">
+                    <span className="font-mono font-black text-[#6C79E0] w-16 text-right">
                       {compareOpponent.oppWinRate}%
                     </span>
                   </div>
 
                   {/* Row: Career Day Points */}
-                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
-                    <span className="font-mono font-black text-indigo-700 w-16">
+                  <div className="p-2.5 rounded-2xl bg-[#16181F] border border-white/5 flex items-center justify-between">
+                    <span className="font-mono font-black text-[#F5BA38] w-16">
                       ⭐ {activeStats.dayPointsTotal}
                     </span>
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                    <span className="text-[10px] font-black uppercase text-white/40 tracking-wider">
                       Career Day Points
                     </span>
-                    <span className="font-mono font-black text-purple-700 w-16 text-right">
+                    <span className="font-mono font-black text-[#6C79E0] w-16 text-right">
                       ⭐ {compareOpponent.oppStats.dayPointsTotal}
                     </span>
                   </div>
                 </div>
 
                 {/* Head-to-Head Verdict Badge */}
-                <div className="p-3 rounded-2xl bg-gradient-to-r from-indigo-50/60 to-purple-50/60 border border-indigo-100 flex items-center justify-center text-center">
-                  <p className="text-xs font-black text-slate-800">
+                <div className="p-3 rounded-2xl bg-[#16181F] border border-white/10 flex items-center justify-center text-center">
+                  <p className="text-xs font-bold text-[#F3F4EE]">
                     {compareOpponent.h2hRecord.played === 0 ? (
                       "⚔️ Maiden Clash: No direct encounters recorded yet"
                     ) : compareOpponent.h2hRecord.won > compareOpponent.h2hRecord.lost ? (
@@ -2208,26 +2208,26 @@ export default function ProfilesPage() {
               </div>
 
               {/* Rivalry & Head-to-Head Matrix Hub */}
-              <div className="rounded-[30px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-4">
+              <div className="rounded-[30px] bg-[#1E2128] border border-white/10 p-5 shadow-xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                    <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">
                       Rivalry Matrix &amp; Final Face-Offs
                     </p>
-                    <p className="text-slate-900 font-extrabold text-sm mt-0.5">
+                    <p className="text-[#F3F4EE] font-black text-xs uppercase tracking-wider mt-0.5">
                       Head-to-Head Squad Breakdown
                     </p>
                   </div>
 
                   {/* View Switcher: Cards vs Table */}
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200/60">
+                  <div className="flex items-center gap-1 bg-[#16181F] p-1 rounded-xl self-start sm:self-auto border border-white/10">
                     <button
                       type="button"
                       onClick={() => setH2hDisplayMode("cards")}
                       className={`px-3 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
                         h2hDisplayMode === "cards"
-                          ? "bg-white text-indigo-700 shadow-xs"
-                          : "text-slate-500 hover:text-slate-900"
+                          ? "bg-[#F3F4EE] text-[#14161B] shadow-xs"
+                          : "text-white/50 hover:text-white"
                       }`}
                     >
                       <span>🎴</span>
@@ -2238,8 +2238,8 @@ export default function ProfilesPage() {
                       onClick={() => setH2hDisplayMode("table")}
                       className={`px-3 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
                         h2hDisplayMode === "table"
-                          ? "bg-white text-indigo-700 shadow-xs"
-                          : "text-slate-500 hover:text-slate-900"
+                          ? "bg-[#F3F4EE] text-[#14161B] shadow-xs"
+                          : "text-white/50 hover:text-white"
                       }`}
                     >
                       <span>📊</span>
@@ -2250,37 +2250,37 @@ export default function ProfilesPage() {
 
                 {/* Bunny & Nemesis Highlights */}
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="p-3.5 rounded-[22px] bg-emerald-50/70 border border-emerald-200/70">
-                    <p className="text-[9px] uppercase font-black text-emerald-800 tracking-wider">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-[#9EC9A8]/30">
+                    <p className="text-[9px] uppercase font-black text-[#9EC9A8] tracking-wider">
                       🐰 Favorite Bunny
                     </p>
                     {bunny ? (
                       <div className="mt-1">
-                        <p className="text-slate-900 font-black text-xs">{bunny.name}</p>
-                        <p className="text-[10px] text-emerald-700 font-bold font-mono mt-0.5">
+                        <p className="text-[#F3F4EE] font-black text-xs">{bunny.name}</p>
+                        <p className="text-[10px] text-[#9EC9A8] font-bold font-mono mt-0.5">
                           {bunny.won} wins ({bunny.played} played)
                         </p>
                       </div>
                     ) : (
-                      <p className="text-slate-400 text-[10px] mt-1 italic font-medium">
+                      <p className="text-white/40 text-[10px] mt-1 italic font-medium">
                         No victims recorded
                       </p>
                     )}
                   </div>
 
-                  <div className="p-3.5 rounded-[22px] bg-rose-50/70 border border-rose-200/70">
-                    <p className="text-[9px] uppercase font-black text-rose-800 tracking-wider">
+                  <div className="p-3.5 rounded-[22px] bg-[#16181F] border border-[#FF5E48]/30">
+                    <p className="text-[9px] uppercase font-black text-[#FF5E48] tracking-wider">
                       😈 Greatest Nemesis
                     </p>
                     {nemesis ? (
                       <div className="mt-1">
-                        <p className="text-slate-900 font-black text-xs">{nemesis.name}</p>
-                        <p className="text-[10px] text-rose-700 font-bold font-mono mt-0.5">
+                        <p className="text-[#F3F4EE] font-black text-xs">{nemesis.name}</p>
+                        <p className="text-[10px] text-[#FF5E48] font-bold font-mono mt-0.5">
                           {nemesis.lost} losses ({nemesis.played} played)
                         </p>
                       </div>
                     ) : (
-                      <p className="text-slate-400 text-[10px] mt-1 italic font-medium">
+                      <p className="text-white/40 text-[10px] mt-1 italic font-medium">
                         Undefeated against all
                       </p>
                     )}
@@ -2316,44 +2316,44 @@ export default function ProfilesPage() {
                           key={opp.id}
                           className={`p-3.5 rounded-2xl border transition-all ${
                             isExpanded
-                              ? "bg-indigo-50/40 border-indigo-300 ring-2 ring-indigo-200/50 shadow-xs"
-                              : "bg-white border-slate-200/80 hover:border-slate-300 shadow-2xs"
+                              ? "bg-[#16181F] border-[#6C79E0] ring-1 ring-[#6C79E0]/50 shadow-xs"
+                              : "bg-[#16181F] border-white/10 hover:border-white/20 shadow-2xs"
                           }`}
                         >
                           {/* Card Header: Opponent Info & Overall Record */}
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center shadow-xs shrink-0">
+                              <span className="w-9 h-9 rounded-xl bg-[#1E2128] border border-white/10 flex items-center justify-center shadow-xs shrink-0">
                                 <AvatarSVG type={opp.avatar} size={24} emoji={opp.avatarEmoji} color={opp.avatarColor} />
                               </span>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-extrabold text-xs text-slate-900 truncate">
+                                  <span className="font-extrabold text-xs text-[#F3F4EE] truncate">
                                     {opp.name}
                                   </span>
                                   {isBunny ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black shrink-0">
+                                    <span className="px-2 py-0.5 rounded-full bg-[#9EC9A8]/10 text-[#9EC9A8] border border-[#9EC9A8]/20 text-[10px] font-black shrink-0">
                                       🐰 Bunny (+{rec.won - rec.lost})
                                     </span>
                                   ) : isNemesis ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-black shrink-0">
+                                    <span className="px-2 py-0.5 rounded-full bg-[#FF5E48]/10 text-[#FF5E48] border border-[#FF5E48]/20 text-[10px] font-black shrink-0">
                                       😈 Nemesis (-{rec.lost - rec.won})
                                     </span>
                                   ) : isDeadlock ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black shrink-0">
+                                    <span className="px-2 py-0.5 rounded-full bg-[#F5BA38]/10 text-[#F5BA38] border border-[#F5BA38]/20 text-[10px] font-black shrink-0">
                                       ⚖️ Deadlocked
                                     </span>
                                   ) : rec.played > 0 ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold shrink-0">
+                                    <span className="px-2 py-0.5 rounded-full bg-[#6C79E0]/10 text-[#6C79E0] border border-[#6C79E0]/20 text-[10px] font-bold shrink-0">
                                       ⚔️ Rival (+{rec.won - rec.lost})
                                     </span>
                                   ) : (
-                                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-400 text-[10px] font-medium shrink-0">
+                                    <span className="px-2 py-0.5 rounded-full bg-white/5 text-white/40 border border-white/5 text-[10px] font-medium shrink-0">
                                       Unplayed
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-[10px] text-slate-400 font-medium">
+                                <p className="text-[10px] text-white/40 font-medium">
                                   {rec.played > 0 ? `${rec.played} Total Encounters` : "No direct matches yet"}
                                 </p>
                               </div>
@@ -2364,22 +2364,22 @@ export default function ProfilesPage() {
                               {rec.played > 0 ? (
                                 <div className="flex flex-col items-end">
                                   <div className="flex items-baseline gap-1 font-mono">
-                                    <span className="font-black text-sm text-emerald-700">{rec.won}W</span>
-                                    <span className="text-slate-300 font-bold">-</span>
-                                    <span className="font-black text-sm text-rose-600">{rec.lost}L</span>
+                                    <span className="font-black text-sm text-[#9EC9A8]">{rec.won}W</span>
+                                    <span className="text-white/20 font-bold">-</span>
+                                    <span className="font-black text-sm text-[#FF5E48]">{rec.lost}L</span>
                                   </div>
                                   <span
                                     className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${
                                       oppWr >= 50
-                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
-                                        : "bg-rose-50 text-rose-700 border border-rose-200/60"
+                                        ? "bg-[#9EC9A8]/10 text-[#9EC9A8] border border-[#9EC9A8]/20"
+                                        : "bg-[#FF5E48]/10 text-[#FF5E48] border border-[#FF5E48]/20"
                                     }`}
                                   >
                                     {oppWr}% Win Rate
                                   </span>
                                 </div>
                               ) : (
-                                <span className="text-slate-300 text-xs font-mono font-bold">0 - 0</span>
+                                <span className="text-white/30 text-xs font-mono font-bold">0 - 0</span>
                               )}
                             </div>
                           </div>
@@ -2387,15 +2387,15 @@ export default function ProfilesPage() {
                           {/* Visual Momentum / Dominance Bar */}
                           {rec.played > 0 && (
                             <div className="mt-2.5">
-                              <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden flex shadow-inner">
+                              <div className="h-1.5 w-full rounded-full bg-white/5 border border-white/5 overflow-hidden flex shadow-inner">
                                 <div
                                   style={{ width: `${oppWr}%` }}
-                                  className="bg-emerald-500 h-full transition-all duration-500"
+                                  className="bg-[#9EC9A8] h-full transition-all duration-500"
                                   title={`${activeLore.name}: ${rec.won} wins (${oppWr}%)`}
                                 />
                                 <div
                                   style={{ width: `${100 - oppWr}%` }}
-                                  className="bg-rose-500 h-full transition-all duration-500"
+                                  className="bg-[#FF5E48] h-full transition-all duration-500"
                                   title={`${opp.name}: ${rec.lost} wins (${100 - oppWr}%)`}
                                 />
                               </div>
@@ -2403,13 +2403,13 @@ export default function ProfilesPage() {
                           )}
 
                           {/* Key Metrics: 3 Clearly Spaced Badges */}
-                          <div className="grid grid-cols-3 gap-2 mt-2.5 pt-2 border-t border-slate-100 text-center">
+                          <div className="grid grid-cols-3 gap-2 mt-2.5 pt-2 border-t border-white/5 text-center">
                             {/* 1. Finals Face-Offs */}
                             <div
                               className={`p-1.5 rounded-xl flex flex-col justify-center items-center ${
                                 rec.finalsPlayed > 0
-                                  ? "bg-amber-50 border border-amber-200 text-amber-950"
-                                  : "bg-slate-50 border border-slate-100 text-slate-400"
+                                  ? "bg-[#F5BA38]/10 border border-[#F5BA38]/20 text-[#F5BA38]"
+                                  : "bg-white/5 border border-white/5 text-white/40"
                               }`}
                             >
                               <span className="text-[8px] font-black uppercase tracking-wider block">
@@ -2424,8 +2424,8 @@ export default function ProfilesPage() {
                             <div
                               className={`p-1.5 rounded-xl flex flex-col justify-center items-center ${
                                 rec.shutsDelivered > 0 || rec.shutsReceived > 0
-                                  ? "bg-purple-50 border border-purple-200 text-purple-950"
-                                  : "bg-slate-50 border border-slate-100 text-slate-400"
+                                  ? "bg-[#6C79E0]/10 border border-[#6C79E0]/20 text-[#6C79E0]"
+                                  : "bg-white/5 border border-white/5 text-white/40"
                               }`}
                             >
                               <span className="text-[8px] font-black uppercase tracking-wider block">
@@ -2442,10 +2442,10 @@ export default function ProfilesPage() {
                             <div
                               className={`p-1.5 rounded-xl flex flex-col justify-center items-center ${
                                 netMargin > 0
-                                  ? "bg-emerald-50 border border-emerald-200 text-emerald-950"
+                                  ? "bg-[#9EC9A8]/10 border border-[#9EC9A8]/20 text-[#9EC9A8]"
                                   : netMargin < 0
-                                  ? "bg-rose-50 border border-rose-200 text-rose-950"
-                                  : "bg-slate-50 border border-slate-100 text-slate-400"
+                                  ? "bg-[#FF5E48]/10 border border-[#FF5E48]/20 text-[#FF5E48]"
+                                  : "bg-white/5 border border-white/5 text-white/40"
                               }`}
                             >
                               <span className="text-[8px] font-black uppercase tracking-wider block">
@@ -2462,7 +2462,7 @@ export default function ProfilesPage() {
                             <button
                               type="button"
                               onClick={() => setSelectedOpponentH2H(isExpanded ? null : opp.id)}
-                              className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                              className="text-[10px] font-bold text-[#6C79E0] hover:text-[#8E9AF5] flex items-center gap-1"
                             >
                               <span>{isExpanded ? "Hide Breakdown" : "View Breakdown"}</span>
                               <span>{isExpanded ? "▲" : "▼"}</span>
@@ -2474,7 +2474,7 @@ export default function ProfilesPage() {
                                 const el = document.getElementById("tale-of-the-tape");
                                 if (el) el.scrollIntoView({ behavior: "smooth" });
                               }}
-                              className="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-md transition-colors flex items-center gap-1"
+                              className="text-[10px] font-bold text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-2 py-0.5 rounded-md transition-colors flex items-center gap-1"
                             >
                               <span>🥊 Tale of Tape</span>
                             </button>
@@ -2482,20 +2482,20 @@ export default function ProfilesPage() {
 
                           {/* Expanded Drill-Down */}
                           {isExpanded && (
-                            <div className="mt-2.5 p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-100/80 grid grid-cols-2 gap-2 text-center text-[10px]">
-                              <div className="p-2 rounded-lg bg-white border border-indigo-100 shadow-2xs">
-                                <span className="text-[8px] uppercase font-bold text-slate-400 block">
+                            <div className="mt-2.5 p-2.5 rounded-xl bg-[#1E2128] border border-white/10 grid grid-cols-2 gap-2 text-center text-[10px]">
+                              <div className="p-2 rounded-lg bg-[#16181F] border border-white/5 shadow-2xs">
+                                <span className="text-[8px] uppercase font-bold text-white/40 block">
                                   Points Aggregate
                                 </span>
-                                <span className="font-black text-slate-800 font-mono text-[11px]">
+                                <span className="font-black text-[#F3F4EE] font-mono text-[11px]">
                                   {rec.pointsFor} - {rec.pointsAgainst} ({netMargin > 0 ? `+${netMargin}` : netMargin})
                                 </span>
                               </div>
-                              <div className="p-2 rounded-lg bg-white border border-indigo-100 shadow-2xs">
-                                <span className="text-[8px] uppercase font-bold text-slate-400 block">
+                              <div className="p-2 rounded-lg bg-[#16181F] border border-white/5 shadow-2xs">
+                                <span className="text-[8px] uppercase font-bold text-white/40 block">
                                   Championship Finals
                                 </span>
-                                <span className="font-black text-amber-700 font-mono text-[11px]">
+                                <span className="font-black text-[#F5BA38] font-mono text-[11px]">
                                   {rec.finalsPlayed > 0
                                     ? `${rec.finalsWon}W - ${rec.finalsLost}L in Finals`
                                     : "Never Met in Finals"}
@@ -2509,10 +2509,10 @@ export default function ProfilesPage() {
                   </div>
                 ) : (
                   /* Mode 2: Clean Matrix Table View */
-                  <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-200/80">
+                  <div className="overflow-x-auto no-scrollbar rounded-2xl border border-white/10 bg-[#16181F]">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
-                        <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                        <tr className="bg-[#1E2128] border-b border-white/10 text-[10px] font-black uppercase tracking-wider text-white/40">
                           <th className="py-2.5 pl-3 pr-2">Opponent</th>
                           <th className="py-2.5 px-2 text-center">Record</th>
                           <th className="py-2.5 px-2 text-center">🏆 Finals</th>
@@ -2521,7 +2521,7 @@ export default function ProfilesPage() {
                           <th className="py-2.5 pr-3 pl-2 text-right">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-white/5">
                         {FIXED_PLAYERS.filter((p) => p.id !== selectedPlayerId).map((opp) => {
                           const rec = activeStats.h2h?.[opp.id] || {
                             played: 0,
@@ -2547,15 +2547,15 @@ export default function ProfilesPage() {
                               <tr
                                 onClick={() => setSelectedOpponentH2H(isExpanded ? null : opp.id)}
                                 className={`cursor-pointer transition-colors ${
-                                  isExpanded ? "bg-indigo-50/70" : "hover:bg-slate-50/80"
+                                  isExpanded ? "bg-[#1E2128]" : "hover:bg-white/5"
                                 }`}
                               >
                                 <td className="py-2.5 pl-3 pr-2">
                                   <div className="flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shadow-xs shrink-0">
+                                    <span className="w-6 h-6 rounded-lg bg-[#1E2128] border border-white/10 flex items-center justify-center shadow-xs shrink-0">
                                       <AvatarSVG type={opp.avatar} size={18} emoji={opp.avatarEmoji} color={opp.avatarColor} />
                                     </span>
-                                    <span className="font-extrabold text-xs text-slate-900 truncate">
+                                    <span className="font-extrabold text-xs text-[#F3F4EE] truncate">
                                       {opp.name}
                                     </span>
                                   </div>
@@ -2564,24 +2564,24 @@ export default function ProfilesPage() {
                                 <td className="py-2.5 px-2 text-center font-mono">
                                   {rec.played > 0 ? (
                                     <div>
-                                      <span className="font-black text-emerald-700">{rec.won}W</span>
-                                      <span className="text-slate-300 mx-0.5">-</span>
-                                      <span className="font-black text-rose-600">{rec.lost}L</span>
-                                      <span className="text-[10px] text-slate-400 block">{oppWr}%</span>
+                                      <span className="font-black text-[#9EC9A8]">{rec.won}W</span>
+                                      <span className="text-white/20 mx-0.5">-</span>
+                                      <span className="font-black text-[#FF5E48]">{rec.lost}L</span>
+                                      <span className="text-[10px] text-white/40 block">{oppWr}%</span>
                                     </div>
                                   ) : (
-                                    <span className="text-slate-400 font-medium">0 - 0</span>
+                                    <span className="text-white/30 font-medium">0 - 0</span>
                                   )}
                                 </td>
 
                                 <td className="py-2.5 px-2 text-center">
                                   {rec.finalsPlayed > 0 ? (
-                                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-900 border border-amber-300/80 text-[10px] font-black shadow-2xs font-mono">
+                                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#F5BA38]/10 text-[#F5BA38] border border-[#F5BA38]/20 text-[10px] font-black shadow-2xs font-mono">
                                       <span>🏆</span>
                                       <span>{rec.finalsWon}W - {rec.finalsLost}L</span>
                                     </span>
                                   ) : (
-                                    <span className="text-slate-300 font-mono text-[11px]">—</span>
+                                    <span className="text-white/20 font-mono text-[11px]">—</span>
                                   )}
                                 </td>
 
@@ -2591,7 +2591,7 @@ export default function ProfilesPage() {
                                       {rec.shutsDelivered > 0 && (
                                         <span
                                           title={`${rec.shutsDelivered} blowouts delivered`}
-                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 font-bold"
+                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-[#F5BA38]/10 text-[#F5BA38] border border-[#F5BA38]/20 font-bold"
                                         >
                                           <span>⚡</span>
                                           <span>{rec.shutsDelivered}</span>
@@ -2600,7 +2600,7 @@ export default function ProfilesPage() {
                                       {rec.shutsReceived > 0 && (
                                         <span
                                           title={`${rec.shutsReceived} blowouts conceded`}
-                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-900 border border-rose-200 font-bold"
+                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-[#FF5E48]/10 text-[#FF5E48] border border-[#FF5E48]/20 font-bold"
                                         >
                                           <span>🛡️</span>
                                           <span>{rec.shutsReceived}</span>
@@ -2608,72 +2608,72 @@ export default function ProfilesPage() {
                                       )}
                                     </div>
                                   ) : (
-                                    <span className="text-slate-300 text-[11px]">—</span>
+                                    <span className="text-white/20 text-[11px]">—</span>
                                   )}
                                 </td>
 
                                 <td className="py-2.5 px-2 text-center font-mono font-bold text-[11px]">
                                   {rec.played > 0 ? (
-                                    <span className={netMargin > 0 ? "text-emerald-700" : netMargin < 0 ? "text-rose-600" : "text-slate-400"}>
+                                    <span className={netMargin > 0 ? "text-[#9EC9A8]" : netMargin < 0 ? "text-[#FF5E48]" : "text-white/40"}>
                                       {netMargin > 0 ? `+${netMargin}` : netMargin}
                                     </span>
                                   ) : (
-                                    <span className="text-slate-300">0</span>
+                                    <span className="text-white/20">0</span>
                                   )}
                                 </td>
 
                                 <td className="py-2.5 pr-3 pl-2 text-right">
                                   {isBunny ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-emerald-100/80 text-emerald-800 text-[9px] font-black">
+                                    <span className="px-2 py-0.5 rounded-full bg-[#9EC9A8]/10 text-[#9EC9A8] border border-[#9EC9A8]/20 text-[9px] font-black">
                                       🐰 Bunny
                                     </span>
                                   ) : isNemesis ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-rose-100/80 text-rose-800 text-[9px] font-black">
+                                    <span className="px-2 py-0.5 rounded-full bg-[#FF5E48]/10 text-[#FF5E48] border border-[#FF5E48]/20 text-[9px] font-black">
                                       😈 Nemesis
                                     </span>
                                   ) : rec.played > 0 ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[9px] font-bold">
+                                    <span className="px-2 py-0.5 rounded-full bg-[#6C79E0]/10 text-[#6C79E0] border border-[#6C79E0]/20 text-[9px] font-bold">
                                       ⚔️ Rival
                                     </span>
                                   ) : (
-                                    <span className="text-slate-400 text-[10px]">Unplayed</span>
+                                    <span className="text-white/40 text-[10px]">Unplayed</span>
                                   )}
                                 </td>
                               </tr>
 
                               {isExpanded && (
-                                <tr className="bg-indigo-50/40">
+                                <tr className="bg-[#1E2128]/80">
                                   <td colSpan={6} className="p-3">
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11px]">
-                                      <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
-                                        <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                      <div className="p-2 rounded-xl bg-[#16181F] border border-white/10 shadow-2xs">
+                                        <span className="text-[9px] uppercase font-bold text-white/40 block">
                                           Total Head-to-Head
                                         </span>
-                                        <span className="font-black text-slate-800 font-mono">
+                                        <span className="font-black text-[#F3F4EE] font-mono">
                                           {rec.played} Matches ({oppWr}% Win)
                                         </span>
                                       </div>
-                                      <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
-                                        <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                      <div className="p-2 rounded-xl bg-[#16181F] border border-white/10 shadow-2xs">
+                                        <span className="text-[9px] uppercase font-bold text-white/40 block">
                                           Championship Finals
                                         </span>
-                                        <span className="font-black text-amber-700 font-mono">
+                                        <span className="font-black text-[#F5BA38] font-mono">
                                           {rec.finalsPlayed > 0 ? `${rec.finalsWon}W - ${rec.finalsLost}L in Finals` : "Never met in Finals"}
                                         </span>
                                       </div>
-                                      <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
-                                        <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                      <div className="p-2 rounded-xl bg-[#16181F] border border-white/10 shadow-2xs">
+                                        <span className="text-[9px] uppercase font-bold text-white/40 block">
                                           Points Aggregate
                                         </span>
-                                        <span className="font-black text-slate-800 font-mono">
+                                        <span className="font-black text-[#F3F4EE] font-mono">
                                           {rec.pointsFor} - {rec.pointsAgainst}
                                         </span>
                                       </div>
-                                      <div className="p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
-                                        <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                                      <div className="p-2 rounded-xl bg-[#16181F] border border-white/10 shadow-2xs">
+                                        <span className="text-[9px] uppercase font-bold text-white/40 block">
                                           Blowout Margin
                                         </span>
-                                        <span className="font-black text-indigo-700 font-mono">
+                                        <span className="font-black text-[#6C79E0] font-mono">
                                           {rec.shutsDelivered} delivered / {rec.shutsReceived} conceded
                                         </span>
                                       </div>
