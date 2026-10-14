@@ -297,12 +297,6 @@ export default function HistoryPage() {
       if (res.ok) {
         const data = await res.json();
         setHistoryData(data);
-        if (data.days?.[0]?.tournaments?.[0]) {
-          setExpandedTournaments((prev) => ({
-            ...prev,
-            [data.days[0].tournaments[0].tournamentId]: true,
-          }));
-        }
       }
     } catch (err) {
       console.warn("Failed to fetch /history from backend, fallback to local store:", err);
