@@ -154,6 +154,7 @@ export default function HistoryPage() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [dayHonors, setDayHonors] = useState<DayHonors | null>(null);
   const [expandedTournaments, setExpandedTournaments] = useState<{ [tId: string]: boolean }>({});
+  const [expandedDayTally, setExpandedDayTally] = useState<{ [date: string]: boolean }>({});
   const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(null);
   const [dayToDelete, setDayToDelete] = useState<string | null>(null);
   
@@ -1552,6 +1553,13 @@ export default function HistoryPage() {
     }));
   };
 
+  const toggleDayTally = (date: string) => {
+    setExpandedDayTally((prev) => ({
+      ...prev,
+      [date]: !prev[date],
+    }));
+  };
+
   const rangeOptions = [
     { value: "all", label: "All Time" },
     { value: "month", label: "30 Days" },
@@ -2066,16 +2074,22 @@ export default function HistoryPage() {
                     if (tally.length === 0) return null;
                     const topItem = tally[0];
                     const totalDayPts = tally.reduce((sum, p) => sum + p.points, 0);
+                    const isTallyExpanded = !!expandedDayTally[dayGroup.date];
 
                     return (
                       <div className="bg-white border border-slate-200/80 rounded-[26px] overflow-hidden shadow-xs transition-all">
-                        {/* Table Header */}
-                        <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                        {/* Table Header Button (Clickable accordion header) */}
+                        <div
+                          onClick={() => toggleDayTally(dayGroup.date)}
+                          className={`p-3.5 flex items-center justify-between cursor-pointer transition-colors hover:bg-slate-50 ${
+                            isTallyExpanded ? "border-b border-slate-100 bg-slate-50/60" : "bg-white"
+                          }`}
+                        >
                           <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-sm shadow-2xs select-none">
                               🏁
                             </div>
-                            <div>
+                            <div className="text-left">
                               <div className="flex items-center gap-2">
                                 <h4 className="text-xs font-black text-slate-900 tracking-tight">
                                   End of Day Standings
@@ -2091,122 +2105,137 @@ export default function HistoryPage() {
                             </div>
                           </div>
 
-                          {topItem && (
-                            <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 pl-2.5 pr-2 py-1 rounded-full shadow-2xs shrink-0">
-                              <span className="text-xs">👑</span>
-                              <span className="text-xs font-black text-amber-900 truncate max-w-[100px] sm:max-w-none">
-                                {topItem.name}
-                              </span>
-                              <span className="text-[10px] font-mono font-black text-amber-800 bg-amber-100/90 px-1.5 py-0.5 rounded-full">
-                                {topItem.points} pts
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Standings Table Rows */}
-                        <div className="divide-y divide-slate-100">
-                          {tally.map((item, idx) => {
-                            const isTop = item.isChampion;
-                            const isSpoon = item.isSpoon;
-
-                            return (
-                              <div
-                                key={item.playerId}
-                                className={`px-3.5 py-2.5 flex items-center justify-between gap-3 transition-colors ${
-                                  isTop
-                                    ? "bg-amber-50/40 hover:bg-amber-50/60"
-                                    : isSpoon
-                                    ? "bg-rose-50/30 hover:bg-rose-50/50"
-                                    : idx === 1
-                                    ? "bg-slate-50/40 hover:bg-slate-50/70"
-                                    : idx === 2
-                                    ? "bg-orange-50/20 hover:bg-orange-50/40"
-                                    : "hover:bg-slate-50/60"
-                                }`}
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  {/* Rank Medal */}
-                                  <div
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                                      isTop
-                                        ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs"
-                                        : idx === 1
-                                        ? "bg-slate-100 text-slate-800 border border-slate-300 shadow-2xs"
-                                        : idx === 2
-                                        ? "bg-orange-100 text-orange-900 border border-orange-300 shadow-2xs"
-                                        : isSpoon
-                                        ? "bg-rose-100 text-rose-900 border border-rose-300 shadow-2xs"
-                                        : "bg-slate-100 text-slate-600 border border-slate-200"
-                                    }`}
-                                  >
-                                    {isTop ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : isSpoon ? "🥄" : `#${idx + 1}`}
-                                  </div>
-
-                                  {/* Avatar */}
-                                  <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0 shadow-2xs">
-                                    <AvatarSVG
-                                      type={item.avatar}
-                                      size={26}
-                                      emoji={item.avatarEmoji}
-                                      color={item.avatarColor}
-                                    />
-                                  </div>
-
-                                  {/* Name & Subtitle */}
-                                  <div className="min-w-0 flex flex-col justify-center">
-                                    <div className="flex items-center gap-1.5 min-w-0">
-                                      <span
-                                        className={`text-xs truncate ${
-                                          isTop
-                                            ? "font-black text-amber-950"
-                                            : isSpoon
-                                            ? "font-black text-rose-950"
-                                            : "font-black text-slate-900"
-                                        }`}
-                                      >
-                                        {item.name}
-                                      </span>
-                                      {isTop && (
-                                        <span className="text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200/80 px-1.5 py-0.2 rounded-md">
-                                          Champion
-                                        </span>
-                                      )}
-                                      {isSpoon && (
-                                        <span className="text-[9px] font-black uppercase tracking-wider bg-rose-100 text-rose-900 border border-rose-200/80 px-1.5 py-0.2 rounded-md">
-                                          Wooden Spoon
-                                        </span>
-                                      )}
-                                    </div>
-                                    <span className="text-[10px] text-slate-400 font-medium">
-                                      {isTop
-                                        ? "Rank #1 on Day Table"
-                                        : isSpoon
-                                        ? "Ranked last place"
-                                        : `Rank #${idx + 1}`}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* Points badge */}
-                                <div className="text-right shrink-0">
-                                  <span
-                                    className={`text-base font-black font-mono tabular-nums leading-none ${
-                                      isTop
-                                        ? "text-amber-900"
-                                        : isSpoon
-                                        ? "text-rose-800"
-                                        : "text-slate-900"
-                                    }`}
-                                  >
-                                    {item.points}
-                                  </span>
-                                  <span className="text-[10px] font-bold text-slate-400 ml-1">pts</span>
-                                </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {topItem && (
+                              <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 pl-2.5 pr-2 py-1 rounded-full shadow-2xs">
+                                <span className="text-xs">👑</span>
+                                <span className="text-xs font-black text-amber-900 truncate max-w-[100px] sm:max-w-none">
+                                  {topItem.name}
+                                </span>
+                                <span className="text-[10px] font-mono font-black text-amber-800 bg-amber-100/90 px-1.5 py-0.5 rounded-full">
+                                  {topItem.points} pts
+                                </span>
                               </div>
-                            );
-                          })}
+                            )}
+                            <svg
+                              className={`w-4 h-4 text-slate-400 transition-transform ${
+                                isTallyExpanded ? "rotate-180" : ""
+                              }`}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                          </div>
                         </div>
+
+                        {/* Standings Table Rows (Visible only when expanded) */}
+                        {isTallyExpanded && (
+                          <div className="divide-y divide-slate-100">
+                            {tally.map((item, idx) => {
+                              const isTop = item.isChampion;
+                              const isSpoon = item.isSpoon;
+
+                              return (
+                                <div
+                                  key={item.playerId}
+                                  className={`px-3.5 py-2.5 flex items-center justify-between gap-3 transition-colors ${
+                                    isTop
+                                      ? "bg-amber-50/40 hover:bg-amber-50/60"
+                                      : isSpoon
+                                      ? "bg-rose-50/30 hover:bg-rose-50/50"
+                                      : idx === 1
+                                      ? "bg-slate-50/40 hover:bg-slate-50/70"
+                                      : idx === 2
+                                      ? "bg-orange-50/20 hover:bg-orange-50/40"
+                                      : "hover:bg-slate-50/60"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    {/* Rank Medal */}
+                                    <div
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                                        isTop
+                                          ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs"
+                                          : idx === 1
+                                          ? "bg-slate-100 text-slate-800 border border-slate-300 shadow-2xs"
+                                          : idx === 2
+                                          ? "bg-orange-100 text-orange-900 border border-orange-300 shadow-2xs"
+                                          : isSpoon
+                                          ? "bg-rose-100 text-rose-900 border border-rose-300 shadow-2xs"
+                                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                                      }`}
+                                    >
+                                      {isTop ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : isSpoon ? "🥄" : `#${idx + 1}`}
+                                    </div>
+
+                                    {/* Avatar */}
+                                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0 shadow-2xs">
+                                      <AvatarSVG
+                                        type={item.avatar}
+                                        size={26}
+                                        emoji={item.avatarEmoji}
+                                        color={item.avatarColor}
+                                      />
+                                    </div>
+
+                                    {/* Name & Subtitle */}
+                                    <div className="min-w-0 flex flex-col justify-center">
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <span
+                                          className={`text-xs truncate ${
+                                            isTop
+                                              ? "font-black text-amber-950"
+                                              : isSpoon
+                                              ? "font-black text-rose-950"
+                                              : "font-black text-slate-900"
+                                          }`}
+                                        >
+                                          {item.name}
+                                        </span>
+                                        {isTop && (
+                                          <span className="text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200/80 px-1.5 py-0.2 rounded-md">
+                                            Champion
+                                          </span>
+                                        )}
+                                        {isSpoon && (
+                                          <span className="text-[9px] font-black uppercase tracking-wider bg-rose-100 text-rose-900 border border-rose-200/80 px-1.5 py-0.2 rounded-md">
+                                            Wooden Spoon
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="text-[10px] text-slate-400 font-medium">
+                                        {isTop
+                                          ? "Rank #1 on Day Table"
+                                          : isSpoon
+                                          ? "Ranked last place"
+                                          : `Rank #${idx + 1}`}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Points badge */}
+                                  <div className="text-right shrink-0">
+                                    <span
+                                      className={`text-base font-black font-mono tabular-nums leading-none ${
+                                        isTop
+                                          ? "text-amber-900"
+                                          : isSpoon
+                                          ? "text-rose-800"
+                                          : "text-slate-900"
+                                      }`}
+                                    >
+                                      {item.points}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-400 ml-1">pts</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
