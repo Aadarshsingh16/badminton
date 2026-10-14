@@ -215,7 +215,7 @@ export function ScoreInput({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/60 z-40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/75 z-40 backdrop-blur-sm"
             onClick={onMinimize ? handleMinimize : handleClose}
           />
 
@@ -225,18 +225,18 @@ export function ScoreInput({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 350 }}
-            className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200/80 rounded-t-[36px] shadow-2xl pb-8 pt-4 px-4 sm:px-5 max-w-md mx-auto"
+            className="fixed bottom-0 inset-x-0 z-50 bg-[#1A1D24] border-t border-white/10 rounded-t-[36px] shadow-2xl pb-8 pt-4 px-4 sm:px-5 max-w-md mx-auto text-[#F3F4EE]"
           >
             {/* Header with drag handle and Minimize button */}
             <div className="flex items-center justify-between px-1 mb-3">
               <div className="w-16" />
-              <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
+              <div className="w-12 h-1.5 bg-white/20 rounded-full" />
               <div className="w-16 flex justify-end">
                 {onMinimize && (
                   <button
                     type="button"
                     onClick={handleMinimize}
-                    className="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 transition-colors flex items-center gap-1 active:scale-95 shadow-2xs cursor-pointer"
+                    className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 text-[11px] font-bold text-[#F3F4EE] transition-colors flex items-center gap-1 active:scale-95 shadow-2xs cursor-pointer"
                   >
                     <span>⌄</span>
                     <span>Hide</span>
@@ -246,29 +246,29 @@ export function ScoreInput({
             </div>
 
             {/* Match label */}
-            <p className="text-center text-slate-400 text-xs uppercase tracking-wider font-extrabold mb-1">
+            <p className="text-center text-[#8E95A5] text-xs uppercase tracking-wider font-black mb-1">
               {isFinal
                 ? `🏆 Grand Final — First to ${maxScore}`
                 : `Round ${match.round + 1} — First to ${maxScore}`}
             </p>
             {isEditing && (
-              <p className="text-center text-amber-600 font-bold text-xs mb-3">✏️ Editing confirmed score</p>
+              <p className="text-center text-[#F5BA38] font-bold text-xs mb-3">✏️ Editing confirmed score</p>
             )}
 
             {/* Court side indicator */}
             <div className="flex items-center justify-center gap-2 mb-4">
-              <div className={`text-xs px-3 py-1 rounded-full font-bold border ${sideA === 1 ? "bg-indigo-50 text-indigo-700 border-indigo-200/70" : "bg-orange-50 text-orange-700 border-orange-200/70"}`}>
+              <div className={`text-xs px-3 py-1 rounded-full font-bold border ${sideA === 1 ? "bg-white/10 text-[#F3F4EE] border-white/10" : "bg-white/5 text-[#8E95A5] border-white/5"}`}>
                 {playerA.name}: Side {sideA}
               </div>
               {onToggleCourtSide && (
                 <button
                   onClick={onToggleCourtSide}
-                  className="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 font-bold border border-slate-200 transition-colors cursor-pointer"
+                  className="text-xs px-2.5 py-1 bg-white/10 hover:bg-white/20 text-[#F3F4EE] rounded-full font-bold border border-white/10 transition-colors cursor-pointer"
                 >
                   ⇄ Swap
                 </button>
               )}
-              <div className={`text-xs px-3 py-1 rounded-full font-bold border ${sideB === 1 ? "bg-indigo-50 text-indigo-700 border-indigo-200/70" : "bg-orange-50 text-orange-700 border-orange-200/70"}`}>
+              <div className={`text-xs px-3 py-1 rounded-full font-bold border ${sideB === 1 ? "bg-white/10 text-[#F3F4EE] border-white/10" : "bg-white/5 text-[#8E95A5] border-white/5"}`}>
                 {playerB.name}: Side {sideB}
               </div>
             </div>
@@ -278,7 +278,7 @@ export function ScoreInput({
               {/* Player A */}
               <div className="flex flex-col items-center gap-2 min-w-0">
                 <AvatarSVG type={playerA.avatar} size={52} emoji={playerA.avatarEmoji} color={playerA.avatarColor} />
-                <p className="text-slate-900 font-black text-sm text-center truncate w-full px-1">{playerA.name}</p>
+                <p className="text-[#F3F4EE] font-black text-sm text-center truncate w-full px-1">{playerA.name}</p>
                 <ScoreCounter
                   value={scoreA}
                   onChange={updateScoreA}
@@ -290,9 +290,9 @@ export function ScoreInput({
 
               {/* VS divider */}
               <div className="flex flex-col items-center gap-1 pt-12 sm:pt-14 px-1">
-                <span className="text-slate-300 font-black text-lg sm:text-xl">VS</span>
+                <span className="text-[#8E95A5] font-black text-lg sm:text-xl">VS</span>
                 {canConfirm && (
-                  <span className="text-[11px] font-bold text-indigo-600 whitespace-nowrap">
+                  <span className="text-[11px] font-bold text-[#F5BA38] whitespace-nowrap">
                     {winnerIsA ? `🏆 ${playerA.name}` : `🏆 ${playerB.name}`}
                   </span>
                 )}
@@ -301,7 +301,7 @@ export function ScoreInput({
               {/* Player B */}
               <div className="flex flex-col items-center gap-2 min-w-0">
                 <AvatarSVG type={playerB.avatar} size={52} emoji={playerB.avatarEmoji} color={playerB.avatarColor} />
-                <p className="text-slate-900 font-black text-sm text-center truncate w-full px-1">{playerB.name}</p>
+                <p className="text-[#F3F4EE] font-black text-sm text-center truncate w-full px-1">{playerB.name}</p>
                 <ScoreCounter
                   value={scoreB}
                   onChange={updateScoreB}
@@ -317,7 +317,7 @@ export function ScoreInput({
               <motion.div
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex justify-center gap-3 mb-4 flex-wrap"
+                className="flex justify-center gap-2 mb-4 flex-wrap"
               >
                 {[
                   { player: playerA, score: scoreA, won: aWins },
@@ -334,10 +334,10 @@ export function ScoreInput({
                         key={player.id}
                         className={`text-xs px-3 py-1 rounded-full font-black border ${
                           won
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            ? "bg-[#F5BA38]/20 text-[#F5BA38] border-[#F5BA38]/30"
                             : hasPenalty
-                            ? "bg-amber-50 text-amber-800 border-amber-300"
-                            : "bg-slate-100 text-slate-700 border-slate-200"
+                            ? "bg-[#FF5E48]/20 text-[#FF8E7E] border-[#FF5E48]/30"
+                            : "bg-white/10 text-[#F3F4EE] border-white/10"
                         }`}
                       >
                         {player.name}: {dayPts} Day Pts ({label})
@@ -354,8 +354,8 @@ export function ScoreInput({
                       key={player.id}
                       className={`text-xs px-3 py-1 rounded-full font-black border ${
                         pts > 0
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-slate-100 text-slate-500 border-slate-200"
+                          ? "bg-[#9EC9A8]/20 text-[#A8DAB3] border-[#9EC9A8]/30"
+                          : "bg-white/10 text-[#8E95A5] border-white/10"
                       }`}
                     >
                       {player.name}: {pts > 0 ? "+" : ""}{pts} pts
@@ -370,17 +370,19 @@ export function ScoreInput({
               onClick={handleConfirm}
               disabled={!canConfirm}
               whileTap={canConfirm ? { scale: 0.97 } : undefined}
-              className={`w-full py-4 rounded-2xl font-black text-base transition-all ${
+              className={`w-full py-4 rounded-full font-black text-sm uppercase tracking-wider transition-all ${
                 canConfirm
                   ? isEditing
-                    ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-98 cursor-pointer"
-                    : "bg-slate-950 hover:bg-slate-800 text-white shadow-xl shadow-slate-950/20 active:scale-98 cursor-pointer"
-                  : "bg-slate-100 text-slate-400 border border-slate-200/60 cursor-not-allowed font-bold"
+                    ? "bg-[#F5BA38] hover:bg-[#E0A82E] text-[#14161B] shadow-xl shadow-[#F5BA38]/20 cursor-pointer flex items-center justify-center gap-2"
+                    : "bg-[#FF5E48] hover:bg-[#E84A35] text-white shadow-xl shadow-[#FF5E48]/30 cursor-pointer flex items-center justify-center gap-2"
+                  : "bg-white/5 text-[#8E95A5] border border-white/5 cursor-not-allowed"
               }`}
             >
-              {canConfirm
-                ? isEditing ? "Update Score ✏️" : "Confirm Score ✓"
-                : `Set a winner (first to ${maxScore})`}
+              <span>
+                {canConfirm
+                  ? isEditing ? "Update Score ↗" : "Confirm Score ↗"
+                  : `Set a winner (first to ${maxScore})`}
+              </span>
             </motion.button>
           </motion.div>
         </>

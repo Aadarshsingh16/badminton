@@ -45,7 +45,7 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
     <div className="px-4 pb-4">
       {showFinalLabel && (
         <div className="text-center mb-3">
-          <span className="text-xs bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 rounded-full font-bold">
+          <span className="text-[10px] bg-[#F5BA38] text-[#14161B] px-3 py-1 rounded-full font-black uppercase tracking-wider">
             ⭐ Final results included
           </span>
         </div>
@@ -53,33 +53,32 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
 
       {/* View Switcher: Standings Table vs All Matches Editor */}
       {tournament && onSelectMatch && (
-        <div className="flex items-center justify-between gap-2 mb-3 bg-slate-100/90 border border-slate-200/80 rounded-2xl p-1">
-          <div className="flex gap-1 flex-1">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-black transition-all ${
-                viewMode === "table"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              📊 Standings Table
-            </button>
-            <button
-              onClick={() => setViewMode("matches")}
-              className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
-                viewMode === "matches"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              <span>✏️</span>
-              <span>All Matches</span>
-              <span className="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded-full border border-slate-200">
-                {allTournamentMatches.length}
-              </span>
-            </button>
-          </div>
+        <div className="flex items-center justify-between gap-1 mb-3.5 bg-[#181B22] border border-white/10 rounded-full p-1">
+          <button
+            onClick={() => setViewMode("table")}
+            className={`flex-1 py-1.5 px-3 rounded-full text-xs font-black uppercase tracking-wide transition-all ${
+              viewMode === "table"
+                ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                : "text-[#8E95A5] hover:text-[#F3F4EE]"
+            }`}
+          >
+            📊 Standings
+          </button>
+          <button
+            onClick={() => setViewMode("matches")}
+            className={`flex-1 py-1.5 px-3 rounded-full text-xs font-black uppercase tracking-wide transition-all flex items-center justify-center gap-1.5 ${
+              viewMode === "matches"
+                ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                : "text-[#8E95A5] hover:text-[#F3F4EE]"
+            }`}
+          >
+            <span>All Matches</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+              viewMode === "matches" ? "bg-[#14161B] text-[#F3F4EE]" : "bg-white/10 text-[#8E95A5]"
+            }`}>
+              {allTournamentMatches.length}
+            </span>
+          </button>
         </div>
       )}
 
@@ -97,21 +96,21 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
               <button
                 key={m.id}
                 onClick={() => onSelectMatch?.(m)}
-                className="w-full bg-white hover:bg-slate-50 border border-slate-200/80 hover:border-slate-300 rounded-[20px] p-3 flex items-center justify-between gap-3 text-left transition-all active:scale-[0.99] shadow-2xs group"
+                className="w-full bg-[#1E2128] hover:bg-[#252932] border border-white/10 hover:border-white/20 rounded-[22px] p-3 flex items-center justify-between gap-3 text-left transition-all active:scale-[0.99] group shadow-sm"
               >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ${
-                    isFinalMatch ? "bg-amber-100 text-amber-900 border border-amber-300" : "bg-slate-100 text-slate-600 border border-slate-200"
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md flex-shrink-0 tracking-wider ${
+                    isFinalMatch ? "bg-[#FF5E48] text-white" : "bg-white/10 text-[#8E95A5]"
                   }`}>
                     {isFinalMatch ? "🏆 Final" : `M${idx + 1}`}
                   </span>
 
                   <div className="flex items-center gap-1.5 truncate">
-                    <span className={`text-xs font-bold truncate ${aWon ? "text-slate-900 font-black" : "text-slate-600"}`}>
+                    <span className={`text-xs font-black truncate ${aWon ? "text-[#F3F4EE]" : "text-[#8E95A5]"}`}>
                       {pA?.name ?? m.playerA}
                     </span>
-                    <span className="text-slate-300 text-xs font-normal">vs</span>
-                    <span className={`text-xs font-bold truncate ${bWon ? "text-slate-900 font-black" : "text-slate-600"}`}>
+                    <span className="text-[#8E95A5]/60 text-xs font-bold">vs</span>
+                    <span className={`text-xs font-black truncate ${bWon ? "text-[#F3F4EE]" : "text-[#8E95A5]"}`}>
                       {pB?.name ?? m.playerB}
                     </span>
                   </div>
@@ -119,15 +118,15 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
 
                 <div className="flex items-center gap-2.5 flex-shrink-0">
                   {m.played && m.scoreA !== undefined && m.scoreB !== undefined ? (
-                    <span className="text-sm font-black tabular-nums text-slate-900">
+                    <span className="text-sm font-black tabular-nums text-[#F3F4EE]">
                       {m.scoreA}–{m.scoreB}
                     </span>
                   ) : (
-                    <span className="text-slate-400 text-xs font-medium">pending</span>
+                    <span className="text-[#8E95A5] text-[11px] font-bold uppercase tracking-wider">pending</span>
                   )}
 
-                  <span className="text-[11px] font-bold bg-slate-100 border border-slate-200 text-slate-700 group-hover:bg-slate-200 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-                    ✏️ Edit
+                  <span className="w-7 h-7 rounded-full bg-white/10 group-hover:bg-[#FF5E48] group-hover:text-white text-[#F3F4EE] flex items-center justify-center text-xs font-black transition-colors">
+                    ↗
                   </span>
                 </div>
               </button>
@@ -138,12 +137,12 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
         /* Standings Table */
         <>
           <div className="flex items-center px-3 py-2 mb-1">
-            <span className="text-slate-400 text-xs font-extrabold w-7 text-center">#</span>
-            <span className="text-slate-400 text-xs font-extrabold flex-1 pl-2">Player</span>
-            <span className="text-slate-400 text-xs font-extrabold w-8 text-center">MP</span>
-            <span className="text-slate-400 text-xs font-extrabold w-8 text-center">W</span>
-            <span className="text-slate-400 text-xs font-extrabold w-10 text-center">+/-</span>
-            <span className="text-slate-400 text-xs font-extrabold w-10 text-center font-black">
+            <span className="text-[#8E95A5] text-[10px] font-black uppercase tracking-wider w-7 text-center">#</span>
+            <span className="text-[#8E95A5] text-[10px] font-black uppercase tracking-wider flex-1 pl-2">Player</span>
+            <span className="text-[#8E95A5] text-[10px] font-black uppercase tracking-wider w-8 text-center">MP</span>
+            <span className="text-[#8E95A5] text-[10px] font-black uppercase tracking-wider w-8 text-center">W</span>
+            <span className="text-[#8E95A5] text-[10px] font-black uppercase tracking-wider w-10 text-center">+/-</span>
+            <span className="text-[#8E95A5] text-[10px] font-black uppercase tracking-wider w-10 text-center">
               {showFinalLabel ? "DAY" : "PTS"}
             </span>
           </div>
@@ -165,10 +164,10 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
               initial={{ opacity: 0, x: -15 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25, delay: idx * 0.03 }}
-              className={`mb-2.5 rounded-[22px] border overflow-hidden transition-all shadow-2xs ${
+              className={`mb-2 rounded-[22px] border overflow-hidden transition-all shadow-sm ${
                 isFinalist
-                  ? "bg-gradient-to-r from-amber-50/60 via-amber-50/20 to-white border-amber-300"
-                  : "bg-white border-slate-200/80 hover:border-slate-300"
+                  ? "bg-[#1E2128] border-[#F5BA38]/40 ring-1 ring-[#F5BA38]/20"
+                  : "bg-[#1E2128] border-white/5 hover:border-white/15"
               }`}
             >
               {/* Row header */}
@@ -178,16 +177,16 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
               >
                 {/* Rank */}
                 <div className="w-7 text-center flex-shrink-0">
-                  <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-black ${
+                  <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-[11px] font-black ${
                     idx === 0
-                      ? "bg-amber-100 text-amber-900 border border-amber-300"
+                      ? "bg-[#F5BA38] text-[#14161B]"
                       : idx === 1
-                      ? "bg-slate-100 text-slate-800 border border-slate-300"
+                      ? "bg-[#FF5E48] text-white"
                       : idx === 2
-                      ? "bg-orange-100 text-orange-900 border border-orange-300"
-                      : "text-slate-500 font-bold"
+                      ? "bg-[#6C79E0] text-white"
+                      : "bg-white/10 text-[#8E95A5]"
                   }`}>
-                    {RANK_LABELS[idx] ?? `${idx + 1}`}
+                    {idx + 1}
                   </span>
                 </div>
 
@@ -200,18 +199,18 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                     color={player.avatarColor}
                   />
                   <div className="min-w-0 text-left">
-                    <p className="text-slate-900 font-extrabold text-xs truncate">{player.name}</p>
+                    <p className="text-[#F3F4EE] font-black text-xs truncate tracking-tight">{player.name}</p>
                     {isFinalist && (
-                      <p className="text-amber-700 text-[10px] font-bold">Finalist ⭐</p>
+                      <p className="text-[#F5BA38] text-[9px] font-black uppercase tracking-wider">Finalist ⭐</p>
                     )}
                   </div>
                 </div>
 
                 {/* Stats */}
-                <span className="text-slate-500 text-xs font-semibold w-8 text-center">{row.matchesPlayed}</span>
-                <span className="text-slate-500 text-xs font-semibold w-8 text-center">{row.wins}</span>
-                <span className={`text-xs w-10 text-center font-bold ${
-                  row.pointDiff > 0 ? "text-emerald-600" : row.pointDiff < 0 ? "text-rose-600" : "text-slate-400"
+                <span className="text-[#8E95A5] text-xs font-bold w-8 text-center tabular-nums">{row.matchesPlayed}</span>
+                <span className="text-[#8E95A5] text-xs font-bold w-8 text-center tabular-nums">{row.wins}</span>
+                <span className={`text-xs w-10 text-center font-black tabular-nums ${
+                  row.pointDiff > 0 ? "text-[#9EC9A8]" : row.pointDiff < 0 ? "text-[#FF5E48]" : "text-[#8E95A5]"
                 }`}>
                   {row.pointDiff > 0 ? `+${row.pointDiff}` : row.pointDiff}
                 </span>
@@ -220,7 +219,7 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                   initial={{ scale: 1.2 }}
                   animate={{ scale: 1 }}
                   transition={{ duration: 0.25 }}
-                  className="text-base font-black w-10 text-center tabular-nums text-slate-900"
+                  className="text-base font-black w-10 text-center tabular-nums text-[#F3F4EE]"
                 >
                   {showFinalLabel ? (row.dayPoints ?? Math.max(1, rows.length - idx)) : row.points}
                 </motion.span>
@@ -229,7 +228,7 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                   <motion.span
                     animate={{ rotate: isExpanded ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
-                    className="text-slate-400 text-xs ml-1 flex-shrink-0"
+                    className="text-[#8E95A5] text-xs ml-1 flex-shrink-0"
                   >
                     ▾
                   </motion.span>
@@ -244,11 +243,11 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="overflow-hidden border-t border-slate-100 bg-slate-50/60"
+                    className="overflow-hidden border-t border-white/5 bg-[#181B22]"
                   >
                     <div className="px-3 py-2.5 space-y-1.5">
                       {playerMatches.length === 0 ? (
-                        <p className="text-slate-400 text-xs text-center py-2 font-medium">No matches yet</p>
+                        <p className="text-[#8E95A5] text-xs text-center py-2 font-medium">No matches yet</p>
                       ) : (
                         playerMatches.map((m) => {
                           const isFinalMatch = m.round === -1;
@@ -268,17 +267,17 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                                 if (onSelectMatch) onSelectMatch(m);
                               }}
                               disabled={!onSelectMatch}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-all text-left bg-white border border-slate-200/70 shadow-2xs ${
+                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-all text-left bg-[#1E2128] border border-white/5 ${
                                 onSelectMatch
-                                  ? "cursor-pointer active:scale-[0.99] hover:border-slate-300"
+                                  ? "cursor-pointer active:scale-[0.99] hover:border-white/20"
                                   : "cursor-default"
                               }`}
                             >
                               {/* Match type tag */}
-                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 border ${
+                              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded flex-shrink-0 tracking-wider ${
                                 isFinalMatch
-                                  ? "bg-amber-100 text-amber-900 border-amber-300"
-                                  : "bg-slate-100 text-slate-600 border-slate-200"
+                                  ? "bg-[#FF5E48] text-white"
+                                  : "bg-white/10 text-[#8E95A5]"
                               }`}>
                                 {isFinalMatch ? "🏆 Final" : `M${m.round + 1}`}
                               </span>
@@ -293,37 +292,37 @@ export function TournamentTable({ rows, players, finalistIds, showFinalLabel, to
                                   className="flex-shrink-0"
                                 />
                               )}
-                              <span className="text-slate-700 text-xs flex-1 truncate font-semibold">
+                              <span className="text-[#F3F4EE] text-xs flex-1 truncate font-bold">
                                 vs {opponent?.name ?? "?"}
                               </span>
 
                               {/* Score & Points */}
                               {m.played && myScore !== undefined && oppScore !== undefined ? (
                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                  <span className={`text-xs font-black tabular-nums ${won ? "text-slate-900 font-black" : lost ? "text-slate-400" : "text-slate-600"}`}>
+                                  <span className={`text-xs font-black tabular-nums ${won ? "text-[#9EC9A8]" : lost ? "text-[#8E95A5]" : "text-[#F3F4EE]"}`}>
                                     {myScore}–{oppScore}
                                   </span>
                                   {myPts !== null && (
-                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${
-                                      myPts > 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                      : myPts < 0 ? "bg-rose-50 text-rose-700 border-rose-200"
-                                      : "bg-slate-100 text-slate-600 border-slate-200"
+                                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md flex-shrink-0 ${
+                                      myPts > 0 ? "bg-[#9EC9A8]/15 text-[#9EC9A8]"
+                                      : myPts < 0 ? "bg-[#FF5E48]/15 text-[#FF5E48]"
+                                      : "bg-white/10 text-[#8E95A5]"
                                     }`}>
                                       {myPts > 0 ? "+" : ""}{myPts}
                                     </span>
                                   )}
                                   {onSelectMatch && (
-                                    <span className="text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-                                      ✏️ Edit
+                                    <span className="text-[10px] font-black bg-white/10 text-[#F3F4EE] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                      Edit ↗
                                     </span>
                                   )}
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                  <span className="text-slate-400 text-xs font-medium">pending</span>
+                                  <span className="text-[#8E95A5] text-[10px] font-bold uppercase tracking-wider">pending</span>
                                   {onSelectMatch && (
-                                    <span className="text-[10px] font-bold bg-slate-950 text-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-                                      ▶ Score
+                                    <span className="text-[10px] font-black bg-[#FF5E48] text-white px-2 py-0.5 rounded-full flex items-center gap-1">
+                                      Score ↗
                                     </span>
                                   )}
                                 </div>
