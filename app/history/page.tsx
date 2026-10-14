@@ -2792,7 +2792,7 @@ export default function HistoryPage() {
               <div className="divide-y divide-slate-100">
                 {dayHonors.history.map((h) => (
                   <div key={h.id} className="py-2.5 flex items-center justify-between text-xs">
-                    <span className="font-mono text-slate-400 text-xs font-bold">{h.date}</span>
+                    <span className="font-mono text-slate-400 text-xs font-bold">{formatDateDDMMYY(h.date)}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-amber-700 font-bold flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full">
                         👑 {h.topPlayerName}
