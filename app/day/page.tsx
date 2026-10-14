@@ -22,7 +22,15 @@ const PODIUM_COLORS = ["#D97706", "#475569", "#C2410C", "#64748B"];
 const RANK_MEDAL = ["🥇", "🥈", "🥉", "4th", "5th", "6th", "7th"];
 
 export default function DayPage() {
-  const { players, dayTable, currentTournament, pastTournaments, startNewDay, resetDayTable } = useStore();
+  const { players, dayTable, currentTournament, pastTournaments, startNewDay, resetDayTable, appRole } = useStore();
+  const [isViewer, setIsViewer] = useState(false);
+  const [viewerSlug, setViewerSlugState] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsViewer(appRole === "viewer" || (isViewerMode() && !currentTournament));
+    setViewerSlugState(getViewerSlug());
+  }, [appRole, currentTournament]);
+
   const [activeDayTab, setActiveDayTab] = useState<"standings" | "tournaments">("standings");
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
   const [expandedTournament, setExpandedTournament] = useState<string | null>(null);
@@ -243,6 +251,24 @@ export default function DayPage() {
     <div className="min-h-screen bg-[#F7F9FD] text-slate-900 pb-32">
       <ConfettiBurst active={showConfetti} onComplete={() => setShowConfetti(false)} />
 
+      {/* Spectator Mode Banner */}
+      {isViewer && (
+        <div className="bg-indigo-50/90 border border-indigo-200/80 rounded-2xl px-4 py-2.5 mx-4 mt-3 flex items-center justify-between text-xs text-indigo-950 shadow-xs">
+          <span className="font-bold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Spectator Mode · Day Table Standings
+          </span>
+          {viewerSlug && (
+            <Link
+              href={`/live/${viewerSlug}`}
+              className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-full font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
+            >
+              <span>🏸 Live Court</span>
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="px-5 pt-6 pb-3 border-b border-slate-200/60 bg-[#F7F9FD]/90 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center justify-between">
@@ -265,7 +291,7 @@ export default function DayPage() {
             >
               <span className="text-xs">📡</span>
             </button>
-            {hasData && (
+            {!isViewer && hasData && (
               <button
                 onClick={() => setShowFinishDayModal(true)}
                 className="text-xs bg-slate-950 hover:bg-slate-800 text-white font-black px-3.5 py-1.5 rounded-full shadow-sm active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
@@ -274,13 +300,15 @@ export default function DayPage() {
                 <span>Finish Day</span>
               </button>
             )}
-            <button
-              onClick={() => setShowConfirmReset(true)}
-              title="Reset Day"
-              className="w-8 h-8 rounded-full bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/80 hover:border-rose-200 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
-            >
-              <span className="text-xs">🗑️</span>
-            </button>
+            {!isViewer && (
+              <button
+                onClick={() => setShowConfirmReset(true)}
+                title="Reset Day"
+                className="w-8 h-8 rounded-full bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/80 hover:border-rose-200 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+              >
+                <span className="text-xs">🗑️</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

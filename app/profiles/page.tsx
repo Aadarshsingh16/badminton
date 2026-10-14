@@ -248,7 +248,7 @@ const KNOWN_TOURNEY_ORDER = [
 
 
 export default function ProfilesPage() {
-  const { players, pastTournaments, currentTournament, completedDays, dayTable } = useStore();
+  const { players, pastTournaments, currentTournament, completedDays, dayTable, appRole } = useStore();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(FIXED_PLAYERS[0]?.id || "adarsh");
   const [activeProfileTab, setActiveProfileTab] = useState<"dossier" | "vibes" | "stats">("dossier");
   const [activeMoodTab, setActiveMoodTab] = useState<"courtMood" | "dailyRoast" | "excuse">("courtMood");
@@ -275,7 +275,7 @@ export default function ProfilesPage() {
   }, [selectedPlayerId, compareOpponentId]);
 
   useEffect(() => {
-    const viewer = isViewerMode() && !currentTournament;
+    const viewer = appRole === "viewer" || (isViewerMode() && !currentTournament);
     setIsViewer(viewer);
     setViewerSlugState(getViewerSlug());
 
@@ -1141,15 +1141,15 @@ export default function ProfilesPage() {
     <div className="min-h-screen bg-[#F7F9FD] text-slate-900 pb-32">
       {/* Spectator Mode Banner */}
       {isViewer && (
-        <div className="bg-purple-100/90 border-b border-purple-200/80 px-4 py-2 flex items-center justify-between text-xs sticky top-0 z-30 backdrop-blur-md">
-          <span className="text-purple-900 font-bold flex items-center gap-1.5">
+        <div className="bg-indigo-50/90 border-b border-indigo-200/80 px-4 py-2.5 flex items-center justify-between text-xs text-indigo-950 sticky top-0 z-30 backdrop-blur-md">
+          <span className="font-bold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Spectator Mode · Squad Scouting
           </span>
           {viewerSlug && (
             <Link
               href={`/live/${viewerSlug}`}
-              className="text-purple-900 bg-white border border-purple-200 px-3 py-1 rounded-full font-bold flex items-center gap-1 transition-all shadow-xs hover:bg-purple-50"
+              className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-full font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
             >
               <span>🏸 Live Court</span>
             </Link>

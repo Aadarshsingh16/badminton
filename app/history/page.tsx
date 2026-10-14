@@ -142,7 +142,7 @@ interface DayHonors {
 }
 
 export default function HistoryPage() {
-  const { players, dayTable, currentTournament, pastTournaments, completedDays } = useStore();
+  const { players, dayTable, currentTournament, pastTournaments, completedDays, appRole } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<"log" | "leaderboards">("log");
   const [rangeFilter, setRangeFilter] = useState<"day" | "week" | "month" | "all">("all");
   const [playerFilter, setPlayerFilter] = useState<string>("all");
@@ -173,9 +173,9 @@ export default function HistoryPage() {
   useEffect(() => {
     setIsMounted(true);
 
-    setIsViewer(isViewerMode() && !currentTournament);
+    setIsViewer(appRole === "viewer" || (isViewerMode() && !currentTournament));
     setViewerSlugState(getViewerSlug());
-  }, [currentTournament]);
+  }, [appRole, currentTournament]);
 
   const backendUrl = getBackendUrl();
 
@@ -1622,7 +1622,7 @@ export default function HistoryPage() {
     <div className="min-h-full flex flex-col px-4 pt-4 pb-20">
       {/* Spectator Mode Banner */}
       {isViewer && (
-        <div className="bg-purple-50 border border-purple-200/80 rounded-2xl px-3.5 py-2 mb-3 flex items-center justify-between text-xs text-purple-900 shadow-xs">
+        <div className="bg-indigo-50/90 border border-indigo-200/80 rounded-2xl px-4 py-2.5 mb-3 flex items-center justify-between text-xs text-indigo-950 shadow-xs">
           <span className="font-bold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Spectator Mode · Match History & Logs
@@ -1630,7 +1630,7 @@ export default function HistoryPage() {
           {viewerSlug && (
             <Link
               href={`/live/${viewerSlug}`}
-              className="text-white bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-full font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
+              className="text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-full font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
             >
               <span>🏸 Live Court</span>
             </Link>
