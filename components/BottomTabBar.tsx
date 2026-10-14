@@ -53,14 +53,14 @@ export function BottomTabBar() {
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" className="transition-colors">
           <path
             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1.5a8.5 8.5 0 110 17 8.5 8.5 0 010-17z"
-            fill={active ? "#FFFFFF" : "#94A3B8"}
+            fill={active ? "#14161B" : "#8E95A5"}
           />
           <ellipse
             cx="12"
             cy="12"
             rx="3.5"
             ry="5"
-            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            stroke={active ? "#14161B" : "#8E95A5"}
             strokeWidth="1.6"
             fill="none"
             transform="rotate(-30 12 12)"
@@ -70,7 +70,7 @@ export function BottomTabBar() {
             y1="17"
             x2="18"
             y2="7"
-            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            stroke={active ? "#14161B" : "#8E95A5"}
             strokeWidth="1.6"
             strokeLinecap="round"
           />
@@ -81,7 +81,7 @@ export function BottomTabBar() {
       href: "/day",
       label: "Day Table",
       badge: dayBadge ? (
-        <span className="absolute -top-1 -right-2 px-1 min-w-[15px] h-[15px] bg-slate-900 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-2xs">
+        <span className="absolute -top-1 -right-2 px-1 min-w-[15px] h-[15px] bg-[#FF5E48] text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-xs">
           {dayBadge}
         </span>
       ) : null,
@@ -93,21 +93,21 @@ export function BottomTabBar() {
             width="18"
             height="18"
             rx="3"
-            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            stroke={active ? "#14161B" : "#8E95A5"}
             strokeWidth="1.7"
             fill="none"
           />
           <path
             d="M7 15l3-3 3 3 4-5"
-            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            stroke={active ? "#14161B" : "#8E95A5"}
             strokeWidth="1.7"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <circle cx="7" cy="15" r="1.1" fill={active ? "#FFFFFF" : "#94A3B8"} />
-          <circle cx="10" cy="12" r="1.1" fill={active ? "#FFFFFF" : "#94A3B8"} />
-          <circle cx="13" cy="15" r="1.1" fill={active ? "#FFFFFF" : "#94A3B8"} />
-          <circle cx="17" cy="10" r="1.1" fill={active ? "#FFFFFF" : "#94A3B8"} />
+          <circle cx="7" cy="15" r="1.1" fill={active ? "#14161B" : "#8E95A5"} />
+          <circle cx="10" cy="12" r="1.1" fill={active ? "#14161B" : "#8E95A5"} />
+          <circle cx="13" cy="15" r="1.1" fill={active ? "#14161B" : "#8E95A5"} />
+          <circle cx="17" cy="10" r="1.1" fill={active ? "#14161B" : "#8E95A5"} />
         </svg>
       ),
     },
@@ -121,12 +121,12 @@ export function BottomTabBar() {
             cx="12"
             cy="12"
             r="9"
-            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            stroke={active ? "#14161B" : "#8E95A5"}
             strokeWidth="1.7"
           />
           <path
             d="M12 7v5l3.5 2"
-            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            stroke={active ? "#14161B" : "#8E95A5"}
             strokeWidth="1.7"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -142,7 +142,7 @@ export function BottomTabBar() {
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" className="transition-colors">
           <path
             d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
-            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            stroke={active ? "#14161B" : "#8E95A5"}
             strokeWidth="1.7"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -151,19 +151,19 @@ export function BottomTabBar() {
             cx="9"
             cy="7"
             r="3.8"
-            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            stroke={active ? "#14161B" : "#8E95A5"}
             strokeWidth="1.7"
             strokeLinecap="round"
           />
           <path
             d="M21 21v-2a3.8 3.8 0 0 0-2.5-3.6"
-            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            stroke={active ? "#14161B" : "#8E95A5"}
             strokeWidth="1.7"
             strokeLinecap="round"
           />
           <path
             d="M15.5 3.3a3.8 3.8 0 0 1 0 7.4"
-            stroke={active ? "#FFFFFF" : "#94A3B8"}
+            stroke={active ? "#14161B" : "#8E95A5"}
             strokeWidth="1.7"
             strokeLinecap="round"
           />
@@ -188,10 +188,10 @@ export function BottomTabBar() {
       }}
       className={`fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] inset-x-0 z-30 max-w-[390px] mx-auto px-4 pointer-events-none select-none`}
     >
-      {/* Floating Capsule Dock */}
+      {/* Inky Tactile Capsule Dock */}
       <nav
         aria-label="Bottom Navigation"
-        className="w-full pointer-events-auto bg-white/88 backdrop-blur-2xl border border-white/80 shadow-[0_12px_32px_-6px_rgba(15,23,42,0.12),0_0_0_1px_rgba(15,23,42,0.05)] rounded-full p-1.5 flex items-center justify-between gap-1"
+        className="w-full pointer-events-auto bg-[#1C1F26] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-full p-1.5 flex items-center justify-between gap-1"
       >
         {tabs.filter(t => !(t.adminOnly && appRole === 'viewer')).map((tab, idx) => {
           const isFirstTab = tab.href === "/";
@@ -203,8 +203,8 @@ export function BottomTabBar() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`relative flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-full transition-all active:scale-95 group ${
-                isActive ? "text-white" : "text-slate-400 hover:text-slate-600"
+              className={`relative flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-full transition-all active:scale-95 group ${
+                isActive ? "text-[#14161B]" : "text-[#8E95A5] hover:text-white"
               }`}
             >
               {/* Active animated pill capsule */}
@@ -212,7 +212,7 @@ export function BottomTabBar() {
                 <motion.div
                   layoutId="bottom-nav-active-pill"
                   transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                  className="absolute inset-0 bg-slate-950 rounded-full shadow-sm -z-10"
+                  className="absolute inset-0 bg-[#F3F4EE] rounded-full shadow-md -z-10"
                 />
               )}
 
@@ -222,8 +222,8 @@ export function BottomTabBar() {
               </div>
 
               <span
-                className={`text-[10px] sm:text-[10.5px] leading-tight font-extrabold tracking-tight transition-colors ${
-                  isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700"
+                className={`text-[10px] leading-tight font-black uppercase tracking-tight transition-colors ${
+                  isActive ? "text-[#14161B]" : "text-[#8E95A5] group-hover:text-white"
                 }`}
               >
                 {tab.label}

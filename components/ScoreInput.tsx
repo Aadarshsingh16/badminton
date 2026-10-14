@@ -62,7 +62,7 @@ function ScoreCounter({
           type="button"
           onClick={() => onChange(Math.max(0, value - 1))}
           disabled={value <= 0}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xl font-black transition-all active:scale-95 flex items-center justify-center disabled:opacity-25 flex-shrink-0"
+          className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/15 text-[#F3F4EE] text-2xl font-black transition-all active:scale-95 flex items-center justify-center disabled:opacity-25 flex-shrink-0 cursor-pointer"
         >
           −
         </button>
@@ -80,19 +80,19 @@ function ScoreCounter({
               if (e.key === "Enter") commitRaw();
               if (e.key === "Escape") { setRaw(String(value)); setInputMode(false); }
             }}
-            className={`w-11 sm:w-13 text-center text-3xl sm:text-4xl font-black bg-slate-50 border-2 rounded-2xl outline-none tabular-nums
-              ${highlight ? "border-emerald-500 text-emerald-700 bg-emerald-50" : "border-slate-300 text-slate-900"}`}
+            className={`w-14 text-center text-4xl sm:text-5xl font-black bg-[#14161B] border-2 rounded-2xl outline-none tabular-nums
+              ${highlight ? "border-[#FF5E48] text-[#FF5E48]" : "border-white/20 text-[#F3F4EE]"}`}
             style={{ MozAppearance: "textfield" } as React.CSSProperties}
           />
         ) : (
           <motion.button
             key={value}
             type="button"
-            initial={{ scale: 1.25, opacity: 0.7 }}
+            initial={{ scale: 1.2, opacity: 0.8 }}
             animate={{ scale: 1, opacity: 1 }}
             onClick={() => { setRaw(String(value)); setInputMode(true); setTimeout(() => inputRef.current?.select(), 30); }}
-            className={`text-3xl sm:text-4xl font-black w-11 sm:w-13 text-center tabular-nums rounded-2xl py-0.5 hover:bg-slate-50 transition-colors flex-shrink-0 ${
-              highlight ? "text-emerald-700 font-black" : "text-slate-900"
+            className={`text-4xl sm:text-5xl font-black w-14 text-center tabular-nums rounded-2xl py-0.5 hover:bg-white/5 transition-colors flex-shrink-0 cursor-pointer ${
+              highlight ? "text-[#FF5E48]" : "text-[#F3F4EE]"
             }`}
           >
             {value}
@@ -103,12 +103,12 @@ function ScoreCounter({
           type="button"
           onClick={() => onChange(Math.min(maxScore, value + 1))}
           disabled={value >= maxScore}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-950 hover:bg-slate-800 text-white text-xl font-black transition-all active:scale-95 disabled:opacity-25 shadow-xs flex items-center justify-center flex-shrink-0"
+          className="w-10 h-10 rounded-full bg-[#FF5E48] hover:bg-[#FF725E] text-white text-2xl font-black transition-all active:scale-95 disabled:opacity-25 shadow-md shadow-[#FF5E48]/30 flex items-center justify-center flex-shrink-0 cursor-pointer"
         >
           +
         </button>
       </div>
-      <p className="text-slate-400 text-[10px] font-medium">tap score to type</p>
+      <p className="text-[#8E95A5] text-[10px] font-bold">tap number to type</p>
     </div>
   );
 }
