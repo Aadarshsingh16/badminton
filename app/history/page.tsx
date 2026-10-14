@@ -21,6 +21,7 @@ import { PinModal } from "@/components/PinModal";
 import { apiSync } from "@/lib/apiSync";
 import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
+import { formatDateDDMMYY } from "@/lib/dateUtils";
 
 const KNOWN_TOURNEY_ORDER = [
   "1ay64ld7mv2ai45f", // Oct 10 T1
