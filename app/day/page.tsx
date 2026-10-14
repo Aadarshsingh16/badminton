@@ -15,6 +15,7 @@ import { apiSync } from "@/lib/apiSync";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
 import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
+import { formatDateDDMMYY } from "@/lib/dateUtils";
 
 const RANK_LABELS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣"];
 const PODIUM_COLORS = ["#D97706", "#475569", "#C2410C", "#64748B"];
