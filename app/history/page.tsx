@@ -31,6 +31,11 @@ const KNOWN_TOURNEY_ORDER = [
   "5h4w6113mv3sa2qu", // Oct 11 T3
 ];
 
+const KNOWN_DAY_TOTALS: Record<string, Record<string, number>> = {
+  "2026-10-11": { akshat: 12, harsh: 10, adarsh: 9, gautam: 9, sajal: 5 },
+  "2026-10-10": { akshat: 11, gautam: 11, harsh: 11, sajal: 8, adarsh: 7, anirudh: 6, udbhaw: 2 },
+};
+
 interface MiniLeaderboardEntry {
   playerId: string;
   name: string;
@@ -72,6 +77,8 @@ interface TournamentGroup {
 
 interface DayGroup {
   date: string;
+  closed?: boolean;
+  totals?: { [playerId: string]: number } | null;
   tournaments: TournamentGroup[];
 }
 
@@ -492,15 +499,20 @@ export default function HistoryPage() {
 
     const days: DayGroup[] = Object.entries(daysMap)
       .sort(([a], [b]) => b.localeCompare(a))
-      .map(([date, tournaments]) => ({
-        date,
-        tournaments: [...tournaments].sort((t1, t2) => {
-          const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
-          const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
-          if (idx1 !== -1 && idx2 !== -1) return idx2 - idx1;
-          return 0;
-        }),
-      }));
+      .map(([date, tournaments]) => {
+        const cd = (completedDays || []).find((d) => d.date === date);
+        return {
+          date,
+          closed: !!cd,
+          totals: cd?.totals ?? KNOWN_DAY_TOTALS[date] ?? null,
+          tournaments: [...tournaments].sort((t1, t2) => {
+            const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
+            const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
+            if (idx1 !== -1 && idx2 !== -1) return idx2 - idx1;
+            return 0;
+          }),
+        };
+      });
 
     const miniLeaderboard = players
       .map((p) => {
@@ -801,17 +813,22 @@ export default function HistoryPage() {
     if (!source || !source.days) return source;
 
     const filteredDays = source.days
-      .map((day) => ({
-        ...day,
-        tournaments: day.tournaments
-          .filter((t) => !deletedIds.has(t.tournamentId))
-          .sort((t1, t2) => {
-            const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
-            const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
-            if (idx1 !== -1 && idx2 !== -1) return idx2 - idx1;
-            return 0;
-          }),
-      }))
+      .map((day) => {
+        const cd = (completedDays || []).find((d) => d.date === day.date);
+        return {
+          ...day,
+          closed: day.closed ?? !!cd,
+          totals: day.totals ?? cd?.totals ?? KNOWN_DAY_TOTALS[day.date] ?? null,
+          tournaments: day.tournaments
+            .filter((t) => !deletedIds.has(t.tournamentId))
+            .sort((t1, t2) => {
+              const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
+              const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
+              if (idx1 !== -1 && idx2 !== -1) return idx2 - idx1;
+              return 0;
+            }),
+        };
+      })
       .filter((day) => day.tournaments.length > 0);
 
     const filteredMatches = filteredDays.flatMap((d) => d.tournaments.flatMap((t) => t.matches));
@@ -822,7 +839,7 @@ export default function HistoryPage() {
       totalMatches: filteredMatches.length,
       totalPoints: filteredMatches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
     };
-  }, [historyData, localHistoryFallback]);
+  }, [historyData, localHistoryFallback, completedDays]);
 
   const baseLeaderboard =
     leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;
@@ -1408,6 +1425,126 @@ export default function HistoryPage() {
     };
   }, [displayedHistory, displayedLeaderboard, players, completedDays, dayTable, displayedDayHonors]);
 
+  const isDayEnded = (dayGroup: DayGroup): boolean => {
+    // If any tournament in this day is currently active/live, day has not ended
+    const hasLiveTourney = dayGroup.tournaments.some(
+      (t) => currentTournament && currentTournament.id === t.tournamentId && !currentTournament.closed
+    );
+    if (hasLiveTourney) return false;
+
+    if (dayGroup.closed) return true;
+    if ((completedDays || []).some((cd) => cd.date === dayGroup.date)) return true;
+    if (dayGroup.date in KNOWN_DAY_TOTALS) return true;
+    if (dayTable?.date && dayGroup.date < dayTable.date) return true;
+
+    return false;
+  };
+
+  const getDayTally = (dayGroup: DayGroup) => {
+    let rawTotals: Record<string, number> = {};
+
+    if (dayGroup.totals && Object.keys(dayGroup.totals).length > 0) {
+      rawTotals = { ...dayGroup.totals };
+    } else {
+      const cd = (completedDays || []).find((d) => d.date === dayGroup.date);
+      if (cd?.totals && Object.keys(cd.totals).length > 0) {
+        rawTotals = { ...cd.totals };
+      } else if (KNOWN_DAY_TOTALS[dayGroup.date]) {
+        rawTotals = { ...KNOWN_DAY_TOTALS[dayGroup.date] };
+      } else {
+        let allTourneys = [...pastTournaments];
+        if (allTourneys.length === 0) allTourneys = recoverTournamentsFromSyncQueue();
+        if (currentTournament) allTourneys.push(currentTournament);
+
+        dayGroup.tournaments.forEach((gt) => {
+          const tObj = allTourneys.find((t) => t.id === gt.tournamentId);
+          if (tObj) {
+            const ptsMap =
+              tObj.dayPointsAwarded && Object.keys(tObj.dayPointsAwarded).length > 0
+                ? tObj.dayPointsAwarded
+                : computeDayPoints(tObj);
+            if (ptsMap) {
+              for (const [pid, pts] of Object.entries(ptsMap)) {
+                rawTotals[pid] = (rawTotals[pid] || 0) + (pts as number);
+              }
+            }
+          }
+        });
+      }
+    }
+
+    const normalizedTotals: Record<string, number> = {};
+    for (const [pid, pts] of Object.entries(rawTotals)) {
+      const targetId = normalizePlayerId(pid);
+      normalizedTotals[targetId] = (normalizedTotals[targetId] || 0) + Number(pts);
+    }
+
+    if (Object.keys(normalizedTotals).length === 0) return [];
+
+    let topId: string | undefined;
+    let spoonId: string | undefined;
+    if (dayGroup.date === "2026-10-10") {
+      topId = "akshat";
+      spoonId = "udbhaw";
+    } else if (dayGroup.date === "2026-10-11") {
+      topId = "akshat";
+      spoonId = "sajal";
+    } else {
+      const cd = (completedDays || []).find((d) => d.date === dayGroup.date);
+      if (cd) {
+        topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
+        spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
+      }
+    }
+
+    const entries = Object.entries(normalizedTotals)
+      .map(([pid, pts]) => {
+        const normId = normalizePlayerId(pid);
+        const p =
+          players.find((pl) => pl.id === normId || pl.id === pid) ||
+          FIXED_PLAYERS.find((pl) => pl.id === normId || pl.id === pid);
+        return {
+          playerId: normId,
+          name: p?.name || normId.charAt(0).toUpperCase() + normId.slice(1),
+          avatar: p?.avatar || ("custom" as AvatarType),
+          avatarEmoji: p?.avatarEmoji,
+          avatarColor: p?.avatarColor,
+          points: pts,
+        };
+      })
+      .filter((p) => p.points > 0);
+
+    entries.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (topId) {
+        if (a.playerId === topId) return -1;
+        if (b.playerId === topId) return 1;
+      }
+      if (spoonId) {
+        if (a.playerId === spoonId) return 1;
+        if (b.playerId === spoonId) return -1;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    return entries.map((e, idx) => {
+      const isChampion = idx === 0;
+      const isSpoon = idx === entries.length - 1 && entries.length > 2;
+      let medal = `#${idx + 1}`;
+      if (idx === 0) medal = "🥇";
+      else if (idx === 1) medal = "🥈";
+      else if (idx === 2) medal = "🥉";
+      else if (isSpoon) medal = "🥄";
+
+      return {
+        ...e,
+        medal,
+        isChampion,
+        isSpoon,
+      };
+    });
+  };
+
   const toggleTournament = (id: string) => {
     setExpandedTournaments((prev) => ({
       ...prev,
@@ -1920,6 +2057,107 @@ export default function HistoryPage() {
                       </div>
                     );
                   })}
+
+                  {/* End of Day Standings / Points Tally (Appears only when the day has ended) */}
+                  {(() => {
+                    const isEnded = isDayEnded(dayGroup);
+                    if (!isEnded) return null;
+                    const tally = getDayTally(dayGroup);
+                    if (tally.length === 0) return null;
+                    const topItem = tally[0];
+                    const totalDayPts = tally.reduce((sum, p) => sum + p.points, 0);
+
+                    return (
+                      <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-800/90 rounded-[24px] p-3.5 shadow-sm text-white">
+                        {/* Tally Header */}
+                        <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-xs select-none">
+                              🏁
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-black tracking-tight text-white">
+                                  End of Day Points Tally
+                                </span>
+                                <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                  <span>Concluded</span>
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 font-medium">
+                                Final standings for {formatDateDDMMYY(dayGroup.date)} · {totalDayPts} pts awarded
+                              </p>
+                            </div>
+                          </div>
+
+                          {topItem && (
+                            <div className="flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/25 pl-2 pr-2.5 py-1 rounded-full shrink-0">
+                              <span className="text-xs">👑</span>
+                              <span className="text-[11px] font-black text-amber-300 truncate max-w-[100px] sm:max-w-none">
+                                {topItem.name}
+                              </span>
+                              <span className="text-[10px] font-mono font-extrabold text-amber-200/80">
+                                {topItem.points} pts
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Standings Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 pt-2.5">
+                          {tally.map((item, idx) => {
+                            const isOddLast = idx === tally.length - 1 && tally.length % 2 === 1;
+                            return (
+                              <div
+                                key={item.playerId}
+                                className={`flex items-center justify-between px-2.5 py-2 rounded-xl border transition-all ${
+                                  isOddLast ? "col-span-2 sm:col-span-1" : ""
+                                } ${
+                                  item.isChampion
+                                    ? "bg-amber-400/15 border-amber-400/35 text-amber-100 shadow-2xs"
+                                    : item.isSpoon
+                                    ? "bg-rose-500/10 border-rose-500/20 text-rose-100"
+                                    : "bg-white/5 border-white/10 hover:bg-white/10 text-slate-200"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-xs shrink-0 select-none">
+                                    {item.medal}
+                                  </span>
+                                  <AvatarSVG
+                                    type={item.avatar}
+                                    size={22}
+                                    emoji={item.avatarEmoji}
+                                    color={item.avatarColor}
+                                  />
+                                  <span
+                                    className={`text-xs truncate ${
+                                      item.isChampion
+                                        ? "font-extrabold text-amber-200"
+                                        : "font-bold text-white"
+                                    }`}
+                                  >
+                                    {item.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-baseline gap-0.5 shrink-0 ml-1.5 font-mono">
+                                  <span
+                                    className={`text-xs font-black ${
+                                      item.isChampion ? "text-amber-300" : "text-white"
+                                    }`}
+                                  >
+                                    {item.points}
+                                  </span>
+                                  <span className="text-[9px] text-white/50 font-medium">pts</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
             </div>

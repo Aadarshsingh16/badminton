@@ -77,7 +77,9 @@ historyRouter.get("/", async (req, res) => {
         m.played,
         m.played_at AS "playedAt",
         t.share_slug AS "shareSlug",
-        d.date AS "date"
+        d.date AS "date",
+        d.closed AS "dayClosed",
+        d.totals AS "dayTotals"
       FROM matches m
       JOIN tournaments t ON m.tournament_id = t.id
       JOIN day_tables d ON t.day_id = d.id
@@ -91,7 +93,14 @@ historyRouter.get("/", async (req, res) => {
     const rows = result.rows;
 
     // Group results by day -> tournament
-    const daysMap: { [date: string]: { date: string; tournaments: { [tId: string]: { tournamentId: string; shareSlug: string; matches: any[] } } } } = {};
+    const daysMap: {
+      [date: string]: {
+        date: string;
+        closed: boolean;
+        totals: { [playerId: string]: number } | null;
+        tournaments: { [tId: string]: { tournamentId: string; shareSlug: string; matches: any[] } };
+      };
+    } = {};
 
     let totalPoints = 0;
     const playerStats: { [id: string]: { name: string; points: number; matches: number; wins: number } } = {};
@@ -99,7 +108,12 @@ historyRouter.get("/", async (req, res) => {
     for (const r of rows) {
       const dateStr = typeof r.date === "string" ? r.date : r.date.toISOString().split("T")[0];
       if (!daysMap[dateStr]) {
-        daysMap[dateStr] = { date: dateStr, tournaments: {} };
+        daysMap[dateStr] = {
+          date: dateStr,
+          closed: r.dayClosed ?? false,
+          totals: r.dayTotals ?? null,
+          tournaments: {},
+        };
       }
 
       if (!daysMap[dateStr].tournaments[r.tournamentId]) {
@@ -133,6 +147,8 @@ historyRouter.get("/", async (req, res) => {
 
     const groupedDays = Object.values(daysMap).map((d) => ({
       date: d.date,
+      closed: d.closed ?? false,
+      totals: d.totals ?? null,
       tournaments: Object.values(d.tournaments),
     }));
 
