@@ -1717,13 +1717,13 @@ export default function HistoryPage() {
                     <div className="h-px flex-1 bg-slate-200" />
                     <div className="flex items-center gap-1.5 bg-slate-200/70 border border-slate-200/80 pl-3.5 pr-2 py-1 rounded-full shadow-2xs">
                       <span className="text-xs font-extrabold text-slate-700">
-                        📅 {dayGroup.date}
+                        📅 {formatDateDDMMYY(dayGroup.date)}
                       </span>
                       {!isViewer && (
                         <button
                           type="button"
                           onClick={() => setDayToDelete(dayGroup.date)}
-                          title={`Delete all records for ${dayGroup.date}`}
+                          title={`Delete all records for ${formatDateDDMMYY(dayGroup.date)}`}
                           className="w-5 h-5 rounded-full hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors flex items-center justify-center cursor-pointer text-[10px]"
                         >
                           🗑️
@@ -1735,9 +1735,10 @@ export default function HistoryPage() {
 
                   {/* Tournaments for that day */}
                   {dayGroup.tournaments.map((tourney, tIdx) => {
-                    const isExpanded = expandedTournaments[tourney.tournamentId] ?? true;
+                    const tourneyNumber = dayGroup.tournaments.length - tIdx;
+                    const isExpanded = !!expandedTournaments[tourney.tournamentId];
                     const hasFinal = tourney.matches.some((m) => m.isFinal);
-
+                    const isActive = !!(currentTournament && currentTournament.id === tourney.tournamentId && !currentTournament.closed);
 
                     return (
                       <div
@@ -1751,11 +1752,11 @@ export default function HistoryPage() {
                         >
                           <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-800">
-                              #{tIdx + 1}
+                              #{tourneyNumber}
                             </div>
                             <div className="text-left">
                               <div className="text-xs font-extrabold text-slate-900 flex items-center gap-2">
-                                <span>Tournament #{tIdx + 1}</span>
+                                <span>Tournament #{tourneyNumber}</span>
                                 {hasFinal && (
                                   <span className="text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-700 px-2 py-0.5 rounded-full font-bold">
                                     🏆 Final
@@ -1769,14 +1770,36 @@ export default function HistoryPage() {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            {tourney.shareSlug && (
+                            {isActive ? (
+                              tourney.shareSlug ? (
+                                <Link
+                                  href={`/live/${tourney.shareSlug}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-[10px] px-2.5 py-0.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold flex items-center gap-1 border border-rose-200 transition-colors animate-pulse"
+                                  title="Live in progress — View stream"
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  <span>Live</span>
+                                </Link>
+                              ) : (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 font-bold flex items-center gap-1 border border-rose-200 animate-pulse">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  <span>Live</span>
+                                </span>
+                              )
+                            ) : tourney.shareSlug ? (
                               <Link
                                 href={`/live/${tourney.shareSlug}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-[11px] px-2.5 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold flex items-center gap-1 transition-colors"
+                                className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold flex items-center gap-1 border border-slate-200/80 transition-colors"
+                                title="Tournament completed — View scorecard"
                               >
-                                <span>👁️ Live</span>
+                                <span>✓ Completed</span>
                               </Link>
+                            ) : (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold flex items-center gap-1 border border-slate-200/80">
+                                <span>✓ Completed</span>
+                              </span>
                             )}
                             {!isViewer && (
                               <button
