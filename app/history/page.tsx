@@ -803,7 +803,14 @@ export default function HistoryPage() {
     const filteredDays = source.days
       .map((day) => ({
         ...day,
-        tournaments: day.tournaments.filter((t) => !deletedIds.has(t.tournamentId)),
+        tournaments: day.tournaments
+          .filter((t) => !deletedIds.has(t.tournamentId))
+          .sort((t1, t2) => {
+            const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
+            const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
+            if (idx1 !== -1 && idx2 !== -1) return idx2 - idx1;
+            return 0;
+          }),
       }))
       .filter((day) => day.tournaments.length > 0);
 
