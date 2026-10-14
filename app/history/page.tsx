@@ -2442,20 +2442,20 @@ export default function HistoryPage() {
               {/* Row 1: Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Win Rates Chart */}
-                <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs flex flex-col">
-                  <h3 className="text-xs font-extrabold text-slate-900 mb-1">Win Rates</h3>
-                  <p className="text-[10px] text-slate-400 font-medium mb-4">League vs Finals Performance</p>
+                <div className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-xs flex flex-col">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE] mb-1">Win Rates</h3>
+                  <p className="text-[10px] text-white/40 font-medium mb-4">League vs Finals Performance</p>
                   <div className="overflow-x-auto overflow-y-hidden no-scrollbar w-full h-48">
                     <div style={{ minWidth: `${Math.max(100, advancedInsights.winRateChartData.length * 20)}%`, height: '100%' }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={advancedInsights.winRateChartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} interval={0} padding={{ left: 10, right: 10 }} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} interval={0} padding={{ left: 10, right: 10 }} tick={{ fontSize: 10, fontWeight: 700, fill: 'rgba(255,255,255,0.5)' }} />
                           <YAxis hide domain={[0, 100]} />
-                          <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 700 }} />
-                          <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 600 }} />
-                          <Bar dataKey="League WR %" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={16} />
-                          <Bar dataKey="Finals WR %" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={16} />
+                          <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} contentStyle={{ backgroundColor: '#16181F', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)', color: '#F3F4EE', fontSize: '12px', fontWeight: 700 }} />
+                          <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.6)' }} />
+                          <Bar dataKey="League WR %" fill="#6C79E0" radius={[4, 4, 0, 0]} barSize={16} />
+                          <Bar dataKey="Finals WR %" fill="#F5BA38" radius={[4, 4, 0, 0]} barSize={16} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -2463,21 +2463,21 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Dominance Index Chart */}
-                <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs flex flex-col">
-                  <h3 className="text-xs font-extrabold text-slate-900 mb-1">Dominance Index</h3>
-                  <p className="text-[10px] text-slate-400 font-medium mb-4">Average point differential per match</p>
+                <div className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-xs flex flex-col">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE] mb-1">Dominance Index</h3>
+                  <p className="text-[10px] text-white/40 font-medium mb-4">Average point differential per match</p>
                   <div className="overflow-x-auto overflow-y-hidden no-scrollbar w-full h-48">
                     <div style={{ minWidth: `${Math.max(100, advancedInsights.dominanceData.length * 20)}%`, height: '100%' }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={advancedInsights.dominanceData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} interval={0} padding={{ left: 10, right: 10 }} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} interval={0} padding={{ left: 10, right: 10 }} tick={{ fontSize: 10, fontWeight: 700, fill: 'rgba(255,255,255,0.5)' }} />
                           <YAxis hide />
-                          <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 700 }} />
+                          <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} contentStyle={{ backgroundColor: '#16181F', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)', color: '#F3F4EE', fontSize: '12px', fontWeight: 700 }} />
                           <Bar dataKey="Avg Diff" radius={[4, 4, 0, 0]} barSize={24}>
                             {
                               advancedInsights.dominanceData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry["Avg Diff"] > 0 ? '#10b981' : '#f43f5e'} />
+                                <Cell key={`cell-${index}`} fill={entry["Avg Diff"] > 0 ? '#9EC9A8' : '#FF5E48'} />
                               ))
                             }
                           </Bar>
@@ -2491,24 +2491,24 @@ export default function HistoryPage() {
               {/* Row 2: Advanced Insights Bento Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Form Guide */}
-                <div className="bg-[#FFFBEB] border border-amber-200/80 rounded-[26px] p-4 shadow-xs flex flex-col max-h-64">
-                  <div className="flex items-center gap-2 mb-3 shrink-0">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-sm shadow-2xs">🔥</div>
+                <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-4 shadow-xs flex flex-col max-h-64">
+                  <div className="flex items-center gap-2.5 mb-3 shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-[#F5BA38]/15 border border-[#F5BA38]/25 flex items-center justify-center text-sm shadow-2xs">🔥</div>
                     <div>
-                      <h3 className="text-xs font-extrabold text-amber-900">Current Form Guide</h3>
-                      <p className="text-[10px] text-amber-700 font-semibold">Last 5 matches (Newest first)</p>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">Current Form Guide</h3>
+                      <p className="text-[10px] text-white/40 font-semibold">Last 5 matches (Newest first)</p>
                     </div>
                   </div>
                   <div className="space-y-2 overflow-y-auto no-scrollbar flex-1 pr-1 pb-1">
                     {players.map(p => advancedInsights.formMap[p.id] && advancedInsights.formMap[p.id].length > 0 ? (
-                      <div key={p.id} className="flex items-center justify-between p-2 rounded-xl bg-white border border-amber-200/50 shadow-2xs">
+                      <div key={p.id} className="flex items-center justify-between p-2.5 rounded-xl bg-[#16181F] border border-white/5">
                         <div className="flex items-center gap-2">
                           <AvatarSVG type={p.avatar} size={28} emoji={p.avatarEmoji} color={p.avatarColor} />
-                          <span className="text-xs font-extrabold text-slate-900">{p.name}</span>
+                          <span className="text-xs font-extrabold text-[#F3F4EE]">{p.name}</span>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1.5">
                           {advancedInsights.formMap[p.id].map((res, i) => (
-                            <span key={i} className={`w-5 h-5 flex items-center justify-center rounded-full text-[9px] font-black ${res === "W" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>{res}</span>
+                            <span key={i} className={`w-5 h-5 flex items-center justify-center rounded-md text-[9px] font-black ${res === "W" ? "bg-[#9EC9A8]/15 text-[#9EC9A8] border border-[#9EC9A8]/30" : "bg-[#FF5E48]/15 text-[#FF5E48] border border-[#FF5E48]/30"}`}>{res}</span>
                           ))}
                         </div>
                       </div>
@@ -2517,179 +2517,179 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Stat Leaders Grid */}
-                <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-[26px] p-4 shadow-xs flex flex-col max-h-80">
-                  <div className="flex items-center gap-2 mb-3 shrink-0">
-                    <div className="w-8 h-8 rounded-xl bg-slate-200/80 flex items-center justify-center text-sm shadow-2xs">🏅</div>
+                <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-4 shadow-xs flex flex-col max-h-80">
+                  <div className="flex items-center gap-2.5 mb-3 shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-[#6C79E0]/15 border border-[#6C79E0]/25 flex items-center justify-center text-sm shadow-2xs">🏅</div>
                     <div>
-                      <h3 className="text-xs font-extrabold text-slate-900">Tournament Honors & Records</h3>
-                      <p className="text-[10px] text-slate-500 font-semibold">Leaders across performance categories</p>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">Tournament Honors & Records</h3>
+                      <p className="text-[10px] text-white/40 font-semibold">Leaders across performance categories</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 h-full overflow-y-auto no-scrollbar pb-1">
                     {/* Finals Clutch */}
                     {(advancedInsights.statLeaders.finalsSpecialist?.finalsWon ?? 0) > 0 && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Finals Clutch</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Finals Clutch</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsSpecialist?.name}</span>
-                             <span className="text-[10px] font-bold text-amber-500">{advancedInsights.statLeaders.finalsSpecialist?.finalsWon} titles</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.finalsSpecialist?.name}</span>
+                             <span className="text-[10px] font-bold text-[#F5BA38]">{advancedInsights.statLeaders.finalsSpecialist?.finalsWon} titles</span>
                            </div>
-                           <span className="text-lg opacity-80">🏆</span>
+                           <span className="text-lg opacity-90">🏆</span>
                         </div>
                       </div>
                     )}
 
                     {/* Finals Veteran (Most Finals Played) */}
                     {(advancedInsights.statLeaders.finalsPlayedLeader?.finalsPlayed ?? 0) > 0 && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Finals Veteran</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Finals Veteran</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsPlayedLeader?.name}</span>
-                             <span className="text-[10px] font-bold text-purple-600">{advancedInsights.statLeaders.finalsPlayedLeader?.finalsPlayed} finals played</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.finalsPlayedLeader?.name}</span>
+                             <span className="text-[10px] font-bold text-[#6C79E0]">{advancedInsights.statLeaders.finalsPlayedLeader?.finalsPlayed} finals played</span>
                            </div>
-                           <span className="text-lg opacity-80">🏟️</span>
+                           <span className="text-lg opacity-90">🏟️</span>
                         </div>
                       </div>
                     )}
 
                     {/* Finals Heartbreak (Most Finals Lost) */}
                     {advancedInsights.statLeaders.finalsLostLeader && (advancedInsights.statLeaders.finalsLostLeader.lostCount ?? (advancedInsights.statLeaders.finalsLostLeader.finalsPlayed - advancedInsights.statLeaders.finalsLostLeader.finalsWon)) > 0 && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Finals Heartbreak</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Finals Heartbreak</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.finalsLostLeader?.name}</span>
-                             <span className="text-[10px] font-bold text-rose-500">{advancedInsights.statLeaders.finalsLostLeader.lostCount ?? (advancedInsights.statLeaders.finalsLostLeader.finalsPlayed - advancedInsights.statLeaders.finalsLostLeader.finalsWon)} runner-up</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.finalsLostLeader?.name}</span>
+                             <span className="text-[10px] font-bold text-[#FF5E48]">{advancedInsights.statLeaders.finalsLostLeader.lostCount ?? (advancedInsights.statLeaders.finalsLostLeader.finalsPlayed - advancedInsights.statLeaders.finalsLostLeader.finalsWon)} runner-up</span>
                            </div>
-                           <span className="text-lg opacity-80">💔</span>
+                           <span className="text-lg opacity-90">💔</span>
                         </div>
                       </div>
                     )}
 
                     {/* Shutout King */}
                     {(advancedInsights.statLeaders.shutoutKing?.shutoutWins ?? 0) > 0 && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Shutout King</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Shutout King</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.shutoutKing?.name}</span>
-                             <span className="text-[10px] font-bold text-blue-500">{advancedInsights.statLeaders.shutoutKing?.shutoutWins} shutouts</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.shutoutKing?.name}</span>
+                             <span className="text-[10px] font-bold text-[#9EC9A8]">{advancedInsights.statLeaders.shutoutKing?.shutoutWins} shutouts</span>
                            </div>
-                           <span className="text-lg opacity-80">⚡</span>
+                           <span className="text-lg opacity-90">⚡</span>
                         </div>
                       </div>
                     )}
 
                     {/* Shutout Magnet (Most Shutouts Conceded) */}
                     {(advancedInsights.statLeaders.shutoutLossesLeader?.shutoutLosses ?? 0) > 0 && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Shutout Magnet</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Shutout Magnet</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.shutoutLossesLeader?.name}</span>
-                             <span className="text-[10px] font-bold text-orange-600">{advancedInsights.statLeaders.shutoutLossesLeader?.shutoutLosses} shutted</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.shutoutLossesLeader?.name}</span>
+                             <span className="text-[10px] font-bold text-[#FF5E48]">{advancedInsights.statLeaders.shutoutLossesLeader?.shutoutLosses} shutted</span>
                            </div>
-                           <span className="text-lg opacity-80">🛡️</span>
+                           <span className="text-lg opacity-90">🛡️</span>
                         </div>
                       </div>
                     )}
                     
                     {/* Best Win Streak (Replaced Biggest Win) */}
                     {advancedInsights.statLeaders.bestWinStreakLeader && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Best Win Streak</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Best Win Streak</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.bestWinStreakLeader.name}</span>
-                             <span className="text-[10px] font-bold text-emerald-600">{advancedInsights.statLeaders.bestWinStreakLeader.streak} wins streak</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.bestWinStreakLeader.name}</span>
+                             <span className="text-[10px] font-bold text-[#9EC9A8]">{advancedInsights.statLeaders.bestWinStreakLeader.streak} wins streak</span>
                            </div>
-                           <span className="text-lg opacity-80">🔥</span>
+                           <span className="text-lg opacity-90">🔥</span>
                         </div>
                       </div>
                     )}
 
                     {/* Toughest Slump (Biggest Losing Streak) */}
                     {advancedInsights.statLeaders.worstLossStreakLeader && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Toughest Slump</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Toughest Slump</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.worstLossStreakLeader.name}</span>
-                             <span className="text-[10px] font-bold text-rose-500">{advancedInsights.statLeaders.worstLossStreakLeader.streak} losses streak</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.worstLossStreakLeader.name}</span>
+                             <span className="text-[10px] font-bold text-[#FF5E48]">{advancedInsights.statLeaders.worstLossStreakLeader.streak} losses streak</span>
                            </div>
-                           <span className="text-lg opacity-80">🥶</span>
+                           <span className="text-lg opacity-90">🥶</span>
                         </div>
                       </div>
                     )}
 
                     {/* Win Rate Leader */}
                     {advancedInsights.statLeaders.winRateLeader && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Win Rate Leader</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Win Rate Leader</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.winRateLeader.name}</span>
-                             <span className="text-[10px] font-bold text-blue-600">{advancedInsights.statLeaders.winRateLeader.leagueWinRate}% win rate</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.winRateLeader.name}</span>
+                             <span className="text-[10px] font-bold text-[#6C79E0]">{advancedInsights.statLeaders.winRateLeader.leagueWinRate}% win rate</span>
                            </div>
-                           <span className="text-lg opacity-80">📈</span>
+                           <span className="text-lg opacity-90">📈</span>
                         </div>
                       </div>
                     )}
 
                     {/* Daily Crown Record (Most Day 1st Places) */}
                     {advancedInsights.statLeaders.dayChampLeader && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Daily Crown</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Daily Crown</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.dayChampLeader.name}</span>
-                             <span className="text-[10px] font-bold text-amber-600">{advancedInsights.statLeaders.dayChampLeader.count} Day 1st Places</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.dayChampLeader.name}</span>
+                             <span className="text-[10px] font-bold text-[#F5BA38]">{advancedInsights.statLeaders.dayChampLeader.count} Day 1st Places</span>
                            </div>
-                           <span className="text-lg opacity-80">🥇</span>
+                           <span className="text-lg opacity-90">🥇</span>
                         </div>
                       </div>
                     )}
 
                     {/* Single-Day High Record */}
                     {advancedInsights.statLeaders.peakDayScoreLeader && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Day Point Record</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Day Point Record</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.peakDayScoreLeader.name}</span>
-                             <span className="text-[10px] font-bold text-indigo-600">{advancedInsights.statLeaders.peakDayScoreLeader.maxPts} pts (1 day)</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.peakDayScoreLeader.name}</span>
+                             <span className="text-[10px] font-bold text-[#6C79E0]">{advancedInsights.statLeaders.peakDayScoreLeader.maxPts} pts (1 day)</span>
                            </div>
-                           <span className="text-lg opacity-80">👑</span>
+                           <span className="text-lg opacity-90">👑</span>
                         </div>
                       </div>
                     )}
 
                     {/* Iron Man */}
                     {advancedInsights.statLeaders.ironMan && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Iron Man</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Iron Man</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.ironMan?.name}</span>
-                             <span className="text-[10px] font-bold text-indigo-500">{(advancedInsights.statLeaders.ironMan?.matchesPlayed ?? ((advancedInsights.statLeaders.ironMan?.leagueMatchesPlayed ?? 0) + (advancedInsights.statLeaders.ironMan?.finalsPlayed ?? 0)))} played</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.ironMan?.name}</span>
+                             <span className="text-[10px] font-bold text-white/70">{(advancedInsights.statLeaders.ironMan?.matchesPlayed ?? ((advancedInsights.statLeaders.ironMan?.leagueMatchesPlayed ?? 0) + (advancedInsights.statLeaders.ironMan?.finalsPlayed ?? 0)))} played</span>
                            </div>
-                           <span className="text-lg opacity-80">🔋</span>
+                           <span className="text-lg opacity-90">🔋</span>
                         </div>
                       </div>
                     )}
 
                     {/* Cardiac King (1-Point Thriller Wins) */}
                     {advancedInsights.statLeaders.cardiacKing && (
-                      <div className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Cardiac King</span>
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Cardiac King</span>
                         <div className="flex items-center justify-between mt-1">
                            <div className="flex flex-col">
-                             <span className="text-[11px] font-black text-slate-800">{advancedInsights.statLeaders.cardiacKing.name}</span>
-                             <span className="text-[10px] font-bold text-rose-500">{advancedInsights.statLeaders.cardiacKing.wins} clutch wins (1-pt)</span>
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.cardiacKing.name}</span>
+                             <span className="text-[10px] font-bold text-[#FF5E48]">{advancedInsights.statLeaders.cardiacKing.wins} clutch wins (1-pt)</span>
                            </div>
-                           <span className="text-lg opacity-80">💓</span>
+                           <span className="text-lg opacity-90">💓</span>
                         </div>
                       </div>
                     )}
@@ -2698,30 +2698,30 @@ export default function HistoryPage() {
               </div>
 
               {/* Row 3: Championship Finals Leaderboard Table */}
-              <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-3">
+              <div className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-sm shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-8 h-8 rounded-xl bg-[#F5BA38]/15 border border-[#F5BA38]/25 flex items-center justify-center text-sm shadow-2xs">
                       🏆
                     </span>
                     <div>
-                      <h3 className="text-xs font-extrabold text-slate-900">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">
                         Championship Finals Leaderboard
                       </h3>
-                      <p className="text-[10px] text-slate-400 font-medium">
+                      <p className="text-[10px] text-white/40 font-medium">
                         Career finals played, won, lost &amp; clutch win rate
                       </p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60">
+                  <span className="text-[10px] font-mono font-bold text-[#F5BA38] bg-[#F5BA38]/10 px-2.5 py-0.5 rounded-full border border-[#F5BA38]/20">
                     All-Time Finals
                   </span>
                 </div>
 
-                <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-200/80">
+                <div className="overflow-x-auto no-scrollbar rounded-2xl border border-white/10">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      <tr className="bg-[#16181F] border-b border-white/10 text-[10px] font-black uppercase tracking-wider text-white/40">
                         <th className="py-2.5 pl-3 pr-2">Rank &amp; Player</th>
                         <th className="py-2.5 px-2 text-center">Finals Played</th>
                         <th className="py-2.5 px-2 text-center">🏆 Titles Won</th>
@@ -2729,15 +2729,15 @@ export default function HistoryPage() {
                         <th className="py-2.5 pr-3 pl-2 text-right">Finals WR%</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-white/5">
                       {advancedInsights.finalsLeaderboard.map((player, idx) => (
                         <tr
                           key={player.playerId}
-                          className="hover:bg-slate-50/80 transition-colors"
+                          className="hover:bg-white/[0.02] transition-colors"
                         >
                           <td className="py-2.5 pl-3 pr-2">
                             <div className="flex items-center gap-2">
-                              <span className="w-5 text-center font-mono font-black text-slate-400 text-xs">
+                              <span className="w-5 text-center font-mono font-black text-white/40 text-xs">
                                 #{idx + 1}
                               </span>
                               <AvatarSVG
@@ -2746,36 +2746,36 @@ export default function HistoryPage() {
                                 emoji={player.avatarEmoji}
                                 color={player.avatarColor}
                               />
-                              <span className="font-extrabold text-xs text-slate-900 truncate">
+                              <span className="font-extrabold text-xs text-[#F3F4EE] truncate">
                                 {player.name}
                               </span>
                             </div>
                           </td>
-                          <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-700">
+                          <td className="py-2.5 px-2 text-center font-mono font-bold text-white/70">
                             {player.finalsPlayed}
                           </td>
                           <td className="py-2.5 px-2 text-center font-mono">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 font-black text-[11px]">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F5BA38]/15 border border-[#F5BA38]/25 text-[#F5BA38] font-black text-[11px]">
                               🏆 {player.finalsWon}
                             </span>
                           </td>
                           <td className="py-2.5 px-2 text-center font-mono">
                             {player.finalsLost > 0 ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-800 font-bold text-[11px]">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FF5E48]/15 border border-[#FF5E48]/25 text-[#FF5E48] font-bold text-[11px]">
                                 💔 {player.finalsLost}
                               </span>
                             ) : (
-                              <span className="text-slate-400 text-[11px]">0</span>
+                              <span className="text-white/30 text-[11px]">0</span>
                             )}
                           </td>
                           <td className="py-2.5 pr-3 pl-2 text-right font-mono font-black">
                             <span
                               className={
                                 player.winRate >= 60
-                                  ? "text-emerald-700"
+                                  ? "text-[#9EC9A8]"
                                   : player.winRate >= 40
-                                  ? "text-amber-700"
-                                  : "text-slate-500"
+                                  ? "text-[#F5BA38]"
+                                  : "text-white/40"
                               }
                             >
                               {player.finalsPlayed > 0 ? `${player.winRate}%` : "—"}
@@ -2790,61 +2790,61 @@ export default function HistoryPage() {
 
               {/* Row 4: Match Intensity & Scoring Spectrum Hub */}
               {advancedInsights.scoringSpectrum && advancedInsights.scoringSpectrum.totalMatchesCount > 0 && (
-                <div className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-5">
+                <div className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-xs space-y-5">
                   {/* Header */}
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center text-sm shadow-2xs">
+                      <span className="w-8 h-8 rounded-xl bg-[#F5BA38]/15 border border-[#F5BA38]/25 flex items-center justify-center text-sm shadow-2xs">
                         ⚡
                       </span>
                       <div>
-                        <h3 className="text-xs font-extrabold text-slate-900 tracking-tight">
+                        <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">
                           Match Intensity &amp; Scoring Spectrum
                         </h3>
-                        <p className="text-[10px] text-slate-400 font-medium">
+                        <p className="text-[10px] text-white/40 font-medium">
                           Margin distribution across {advancedInsights.scoringSpectrum.totalMatchesCount} matches, clutch finishes &amp; blowouts
                         </p>
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200/80">
-                        Avg Win Margin: <strong className="text-slate-900">{advancedInsights.scoringSpectrum.avgWinMargin} pts</strong>
+                      <span className="text-[10px] font-mono font-bold text-white/70 bg-[#16181F] px-2.5 py-1 rounded-full border border-white/10">
+                        Avg Win Margin: <strong className="text-[#F3F4EE]">{advancedInsights.scoringSpectrum.avgWinMargin} pts</strong>
                       </span>
-                      <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200/60">
-                        Avg Match Pts: <strong className="text-indigo-900">{advancedInsights.scoringSpectrum.avgMatchPoints}</strong>
+                      <span className="text-[10px] font-mono font-bold text-[#6C79E0] bg-[#6C79E0]/15 px-2.5 py-1 rounded-full border border-[#6C79E0]/25">
+                        Avg Match Pts: <strong className="text-[#F3F4EE]">{advancedInsights.scoringSpectrum.avgMatchPoints}</strong>
                       </span>
                     </div>
                   </div>
 
                   {/* Segmented Intensity Spectrum Bar */}
                   <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-center justify-between text-[11px] font-semibold text-slate-500 px-0.5 gap-y-1">
-                      <span className="flex items-center gap-1.5 text-rose-700">
-                        <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                        Wire Thrillers (1 pt): <strong className="font-mono text-rose-900">{advancedInsights.scoringSpectrum.thrillersCount} ({advancedInsights.scoringSpectrum.thrillerPct}%)</strong>
+                    <div className="flex flex-wrap items-center justify-between text-[11px] font-semibold text-white/50 px-0.5 gap-y-1">
+                      <span className="flex items-center gap-1.5 text-[#FF5E48]">
+                        <span className="w-2 h-2 rounded-full bg-[#FF5E48]"></span>
+                        Wire Thrillers (1 pt): <strong className="font-mono text-[#F3F4EE]">{advancedInsights.scoringSpectrum.thrillersCount} ({advancedInsights.scoringSpectrum.thrillerPct}%)</strong>
                       </span>
-                      <span className="flex items-center gap-1.5 text-indigo-700">
-                        <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
-                        Decisive (2-3 pts): <strong className="font-mono text-indigo-900">{advancedInsights.scoringSpectrum.competitiveCount} ({advancedInsights.scoringSpectrum.competitivePct}%)</strong>
+                      <span className="flex items-center gap-1.5 text-[#6C79E0]">
+                        <span className="w-2 h-2 rounded-full bg-[#6C79E0]"></span>
+                        Decisive (2-3 pts): <strong className="font-mono text-[#F3F4EE]">{advancedInsights.scoringSpectrum.competitiveCount} ({advancedInsights.scoringSpectrum.competitivePct}%)</strong>
                       </span>
-                      <span className="flex items-center gap-1.5 text-emerald-700">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        Blowouts (≥4 pts): <strong className="font-mono text-emerald-900">{advancedInsights.scoringSpectrum.blowoutsCount} ({advancedInsights.scoringSpectrum.blowoutsPct}%)</strong>
+                      <span className="flex items-center gap-1.5 text-[#9EC9A8]">
+                        <span className="w-2 h-2 rounded-full bg-[#9EC9A8]"></span>
+                        Blowouts (≥4 pts): <strong className="font-mono text-[#F3F4EE]">{advancedInsights.scoringSpectrum.blowoutsCount} ({advancedInsights.scoringSpectrum.blowoutsPct}%)</strong>
                       </span>
                     </div>
-                    <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden flex p-0.5 border border-slate-200/70 shadow-inner">
+                    <div className="w-full h-3 rounded-full bg-[#16181F] overflow-hidden flex p-0.5 border border-white/10 shadow-inner">
                       <div
-                        className="h-full rounded-l-full bg-gradient-to-r from-rose-500 to-rose-400 transition-all duration-500"
+                        className="h-full rounded-l-full bg-gradient-to-r from-[#FF5E48] to-[#FF8066] transition-all duration-500"
                         style={{ width: `${advancedInsights.scoringSpectrum.thrillerPct}%` }}
                         title={`Thrillers: ${advancedInsights.scoringSpectrum.thrillersCount} matches (${advancedInsights.scoringSpectrum.thrillerPct}%)`}
                       />
                       <div
-                        className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-[#6C79E0] to-[#8C98F0] transition-all duration-500"
                         style={{ width: `${advancedInsights.scoringSpectrum.competitivePct}%` }}
                         title={`Decisive: ${advancedInsights.scoringSpectrum.competitiveCount} matches (${advancedInsights.scoringSpectrum.competitivePct}%)`}
                       />
                       <div
-                        className="h-full rounded-r-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
+                        className="h-full rounded-r-full bg-gradient-to-r from-[#9EC9A8] to-[#BEE0C4] transition-all duration-500"
                         style={{ width: `${advancedInsights.scoringSpectrum.blowoutsPct}%` }}
                         title={`Blowouts: ${advancedInsights.scoringSpectrum.blowoutsCount} matches (${advancedInsights.scoringSpectrum.blowoutsPct}%)`}
                       />
@@ -2854,36 +2854,36 @@ export default function HistoryPage() {
                   {/* Intensity Tiers & Key Archetypes */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* Tier 1: Wire Thrillers */}
-                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-rose-50/70 via-rose-50/30 to-white border border-rose-200/70 flex flex-col justify-between space-y-3 shadow-2xs">
+                    <div className="p-3.5 rounded-2xl bg-[#16181F] border border-[#FF5E48]/20 flex flex-col justify-between space-y-3 shadow-2xs">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between gap-1.5">
-                          <span className="text-[11px] font-black uppercase tracking-wider text-rose-800 flex items-center gap-1.5">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-[#FF5E48] flex items-center gap-1.5">
                             🔥 1-Point Thrillers
                           </span>
-                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 shrink-0">
+                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-[#FF5E48]/15 text-[#FF5E48] border border-[#FF5E48]/30 shrink-0">
                             {advancedInsights.scoringSpectrum.thrillerPct}%
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                        <p className="text-[10px] text-white/40 font-medium leading-relaxed">
                           Nail-biting sudden death matches decided at 5-4 or finals deuce 6-5.
                         </p>
                       </div>
 
                       {advancedInsights.scoringSpectrum.thrillerLeader && (
-                        <div className="pt-2 border-t border-rose-100 flex items-center justify-between gap-2">
+                        <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <div className="text-[9px] uppercase font-bold text-rose-600/80 tracking-wider truncate">
+                            <div className="text-[9px] uppercase font-bold text-[#FF5E48]/80 tracking-wider truncate">
                               Top Clutch Finisher
                             </div>
-                            <div className="text-xs font-black text-slate-900 truncate">
+                            <div className="text-xs font-black text-[#F3F4EE] truncate">
                               {advancedInsights.scoringSpectrum.thrillerLeader.name}
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <div className="text-xs font-mono font-black text-rose-700">
+                            <div className="text-xs font-mono font-black text-[#FF5E48]">
                               {advancedInsights.scoringSpectrum.thrillerLeader.thrillerWins}W - {advancedInsights.scoringSpectrum.thrillerLeader.thrillerLosses}L
                             </div>
-                            <div className="text-[9px] font-mono font-bold text-slate-400">
+                            <div className="text-[9px] font-mono font-bold text-white/40">
                               {advancedInsights.scoringSpectrum.thrillerLeader.thrillerWinRate}% clutch WR
                             </div>
                           </div>
@@ -2892,48 +2892,48 @@ export default function HistoryPage() {
                     </div>
 
                     {/* Tier 2: Decisive / Tactical Battles */}
-                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-indigo-50/30 to-white border border-indigo-200/70 flex flex-col justify-between space-y-3 shadow-2xs">
+                    <div className="p-3.5 rounded-2xl bg-[#16181F] border border-[#6C79E0]/20 flex flex-col justify-between space-y-3 shadow-2xs">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between gap-1.5">
-                          <span className="text-[11px] font-black uppercase tracking-wider text-indigo-800 flex items-center gap-1.5">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-[#6C79E0] flex items-center gap-1.5">
                             ⚔️ Decisive Battles
                           </span>
-                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 shrink-0">
+                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-[#6C79E0]/15 text-[#6C79E0] border border-[#6C79E0]/30 shrink-0">
                             {advancedInsights.scoringSpectrum.competitivePct}%
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                        <p className="text-[10px] text-white/40 font-medium leading-relaxed">
                           Controlled 2–3 pt margins (5-2, 5-3) where tactical point swings decided the outcome.
                         </p>
                       </div>
 
                       {advancedInsights.scoringSpectrum.blowoutResilient ? (
-                        <div className="pt-2 border-t border-indigo-100 flex items-center justify-between gap-2">
+                        <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <div className="text-[9px] uppercase font-bold text-indigo-600/80 tracking-wider truncate">
+                            <div className="text-[9px] uppercase font-bold text-[#6C79E0]/80 tracking-wider truncate">
                               Iron Shield (Toughest Out)
                             </div>
-                            <div className="text-xs font-black text-slate-900 truncate">
+                            <div className="text-xs font-black text-[#F3F4EE] truncate">
                               {advancedInsights.scoringSpectrum.blowoutResilient.name}
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <div className="text-xs font-mono font-black text-indigo-700">
+                            <div className="text-xs font-mono font-black text-[#6C79E0]">
                               {advancedInsights.scoringSpectrum.blowoutResilient.blowoutsSuffered === 0
                                 ? "0 Conceded"
                                 : `${advancedInsights.scoringSpectrum.blowoutResilient.blowoutsSuffered} Conceded`}
                             </div>
-                            <div className="text-[9px] font-mono font-bold text-slate-400">
+                            <div className="text-[9px] font-mono font-bold text-white/40">
                               Fewest blowouts
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="pt-2 border-t border-indigo-100 flex items-center justify-between gap-2">
-                          <div className="text-[9px] uppercase font-bold text-indigo-600/80 tracking-wider">
+                        <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
+                          <div className="text-[9px] uppercase font-bold text-[#6C79E0]/80 tracking-wider">
                             Squad Core
                           </div>
-                          <div className="text-xs font-mono font-black text-indigo-700">
+                          <div className="text-xs font-mono font-black text-[#6C79E0]">
                             {advancedInsights.scoringSpectrum.competitiveCount} matches
                           </div>
                         </div>
@@ -2941,36 +2941,36 @@ export default function HistoryPage() {
                     </div>
 
                     {/* Tier 3: Demolitions & Blowouts */}
-                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50/70 via-emerald-50/30 to-white border border-emerald-200/70 flex flex-col justify-between space-y-3 shadow-2xs">
+                    <div className="p-3.5 rounded-2xl bg-[#16181F] border border-[#9EC9A8]/20 flex flex-col justify-between space-y-3 shadow-2xs">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between gap-1.5">
-                          <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-[#9EC9A8] flex items-center gap-1.5">
                             💥 Demolitions (≥4 pts)
                           </span>
-                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                          <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-[#9EC9A8]/15 text-[#9EC9A8] border border-[#9EC9A8]/30 shrink-0">
                             {advancedInsights.scoringSpectrum.blowoutsPct}%
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                        <p className="text-[10px] text-white/40 font-medium leading-relaxed">
                           Runaway blowouts (5-1) and merciless 5-0 bagels with total offensive supremacy.
                         </p>
                       </div>
 
                       {advancedInsights.scoringSpectrum.blowoutDeliverer && (
-                        <div className="pt-2 border-t border-emerald-100 flex items-center justify-between gap-2">
+                        <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <div className="text-[9px] uppercase font-bold text-emerald-600/80 tracking-wider truncate">
+                            <div className="text-[9px] uppercase font-bold text-[#9EC9A8]/80 tracking-wider truncate">
                               Demolition Hammer
                             </div>
-                            <div className="text-xs font-black text-slate-900 truncate">
+                            <div className="text-xs font-black text-[#F3F4EE] truncate">
                               {advancedInsights.scoringSpectrum.blowoutDeliverer.name}
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <div className="text-xs font-mono font-black text-emerald-700">
+                            <div className="text-xs font-mono font-black text-[#9EC9A8]">
                               {advancedInsights.scoringSpectrum.blowoutDeliverer.blowoutsDelivered} Dealt
                             </div>
-                            <div className="text-[9px] font-mono font-bold text-slate-400">
+                            <div className="text-[9px] font-mono font-bold text-white/40">
                               ≥4 pt blowouts
                             </div>
                           </div>
@@ -2982,10 +2982,10 @@ export default function HistoryPage() {
                   {/* Most Frequent Scorelines in Squad History */}
                   <div className="space-y-2 pt-1">
                     <div className="flex flex-wrap items-center justify-between gap-1">
-                      <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-white/70 flex items-center gap-1.5">
                         📊 Most Frequent Final Scorelines in Squad History
                       </span>
-                      <span className="text-[10px] text-slate-400 font-medium">
+                      <span className="text-[10px] text-white/40 font-medium">
                         Ranked by total historical occurrences
                       </span>
                     </div>
@@ -2996,33 +2996,33 @@ export default function HistoryPage() {
                           key={sc.score}
                           className={`p-2.5 rounded-xl border flex flex-col justify-between items-center text-center transition-all ${
                             sc.margin >= 4
-                              ? "bg-emerald-50/50 border-emerald-200/70"
+                              ? "bg-[#9EC9A8]/5 border-[#9EC9A8]/20"
                               : sc.margin === 1
-                              ? "bg-rose-50/50 border-rose-200/70"
-                              : "bg-indigo-50/50 border-indigo-200/70"
+                              ? "bg-[#FF5E48]/5 border-[#FF5E48]/20"
+                              : "bg-[#6C79E0]/5 border-[#6C79E0]/20"
                           }`}
                         >
                           <div className="flex items-center justify-between w-full">
-                            <span className="text-[9px] font-mono font-bold text-slate-400">
+                            <span className="text-[9px] font-mono font-bold text-white/40">
                               #{i + 1}
                             </span>
                             <span
                               className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-full ${
                                 sc.margin >= 4
-                                  ? "bg-emerald-100 text-emerald-800"
+                                  ? "bg-[#9EC9A8]/15 text-[#9EC9A8] border border-[#9EC9A8]/30"
                                   : sc.margin === 1
-                                  ? "bg-rose-100 text-rose-800"
-                                  : "bg-indigo-100 text-indigo-800"
+                                  ? "bg-[#FF5E48]/15 text-[#FF5E48] border border-[#FF5E48]/30"
+                                  : "bg-[#6C79E0]/15 text-[#6C79E0] border border-[#6C79E0]/30"
                               }`}
                             >
                               {sc.margin >= 4 ? "Blowout" : sc.margin === 1 ? "Thriller" : "Decisive"}
                             </span>
                           </div>
-                          <div className="text-base font-black font-mono text-slate-900 my-1">
+                          <div className="text-base font-black font-mono text-[#F3F4EE] my-1">
                             {sc.score}
                           </div>
-                          <div className="text-[10px] font-semibold text-slate-500 font-mono">
-                            <strong className="text-slate-900">{sc.count}</strong> matches ({sc.percentage}%)
+                          <div className="text-[10px] font-semibold text-white/40 font-mono">
+                            <strong className="text-[#F3F4EE]">{sc.count}</strong> matches ({sc.percentage}%)
                           </div>
                         </div>
                       ))}
@@ -3036,14 +3036,14 @@ export default function HistoryPage() {
           {/* Day Champions & Day Last-Place Hall of Fame Bento Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Day Champions Card */}
-            <div className="bg-[#FFFBEB] border border-amber-200/80 rounded-[26px] p-4 space-y-3 shadow-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-sm shadow-2xs">
+            <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-4 space-y-3 shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#F5BA38]/15 border border-[#F5BA38]/25 flex items-center justify-center text-sm shadow-2xs">
                   👑
                 </div>
                 <div>
-                  <h3 className="text-xs font-extrabold text-slate-900">Day Champions</h3>
-                  <p className="text-[10px] text-amber-700 font-semibold">Daily 1st place finishes (All squad members)</p>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">Day Champions</h3>
+                  <p className="text-[10px] text-[#F5BA38]/70 font-semibold">Daily 1st place finishes (All squad members)</p>
                 </div>
               </div>
 
@@ -3052,34 +3052,34 @@ export default function HistoryPage() {
                   {displayedDayHonors.dayChampions.map((c) => (
                     <div
                       key={c.playerId}
-                      className="flex items-center justify-between p-2 rounded-xl bg-white border border-amber-200/50 shadow-2xs"
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-[#16181F] border border-white/5"
                     >
                       <div className="flex items-center gap-2">
                         <AvatarSVG type={c.avatar} size={28} emoji={c.emoji} color={c.color} />
-                        <span className="text-xs font-extrabold text-slate-900">{c.name}</span>
+                        <span className="text-xs font-extrabold text-[#F3F4EE]">{c.name}</span>
                       </div>
-                      <div className="px-2.5 py-0.5 bg-amber-100 rounded-full text-[10px] font-extrabold text-amber-800">
+                      <div className="px-2.5 py-0.5 bg-[#F5BA38]/15 border border-[#F5BA38]/30 rounded-full text-[10px] font-black text-[#F5BA38]">
                         {c.count} {c.count === 1 ? "Day" : "Days"}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-[11px] text-slate-400 text-center py-4">
+                <div className="text-[11px] text-white/40 text-center py-4">
                   Close a day table to crown day champions!
                 </div>
               )}
             </div>
 
             {/* Day Last Place Card */}
-            <div className="bg-[#FFF1F2] border border-rose-200/80 rounded-[26px] p-4 space-y-3 shadow-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-rose-500/20 flex items-center justify-center text-sm shadow-2xs">
+            <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-4 space-y-3 shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#FF5E48]/15 border border-[#FF5E48]/25 flex items-center justify-center text-sm shadow-2xs">
                   🥄
                 </div>
                 <div>
-                  <h3 className="text-xs font-extrabold text-slate-900">Wooden Spoon</h3>
-                  <p className="text-[10px] text-rose-700 font-semibold">Daily last-place finishes (All squad members)</p>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">Wooden Spoon</h3>
+                  <p className="text-[10px] text-[#FF5E48]/70 font-semibold">Daily last-place finishes (All squad members)</p>
                 </div>
               </div>
 
@@ -3088,20 +3088,20 @@ export default function HistoryPage() {
                   {displayedDayHonors.dayLastPlaces.map((c) => (
                     <div
                       key={c.playerId}
-                      className="flex items-center justify-between p-2 rounded-xl bg-white border border-rose-200/50 shadow-2xs"
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-[#16181F] border border-white/5"
                     >
                       <div className="flex items-center gap-2">
                         <AvatarSVG type={c.avatar} size={28} emoji={c.emoji} color={c.color} />
-                        <span className="text-xs font-extrabold text-slate-900">{c.name}</span>
+                        <span className="text-xs font-extrabold text-[#F3F4EE]">{c.name}</span>
                       </div>
-                      <div className="px-2.5 py-0.5 bg-rose-100 rounded-full text-[10px] font-extrabold text-rose-800">
+                      <div className="px-2.5 py-0.5 bg-[#FF5E48]/15 border border-[#FF5E48]/30 rounded-full text-[10px] font-black text-[#FF5E48]">
                         {c.count} {c.count === 1 ? "Day" : "Days"}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-[11px] text-slate-400 text-center py-4">
+                <div className="text-[11px] text-white/40 text-center py-4">
                   No last place finishes recorded yet.
                 </div>
               )}
@@ -3110,17 +3110,17 @@ export default function HistoryPage() {
 
           {/* Day by Day History */}
           {dayHonors?.history && dayHonors.history.length > 0 && (
-            <div className="bg-white border border-slate-200/80 rounded-[26px] p-4 space-y-2 shadow-xs">
-              <h4 className="text-xs font-extrabold text-slate-900">📅 Day Results Archive</h4>
-              <div className="divide-y divide-slate-100">
+            <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-4 space-y-2 shadow-xs">
+              <h4 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">📅 Day Results Archive</h4>
+              <div className="divide-y divide-white/5">
                 {dayHonors.history.map((h) => (
                   <div key={h.id} className="py-2.5 flex items-center justify-between text-xs">
-                    <span className="font-mono text-slate-400 text-xs font-bold">{formatDateDDMMYY(h.date)}</span>
+                    <span className="font-mono text-white/40 text-xs font-bold">{formatDateDDMMYY(h.date)}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-amber-700 font-bold flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full">
+                      <span className="text-[#F5BA38] font-bold flex items-center gap-1 bg-[#F5BA38]/15 border border-[#F5BA38]/25 px-2.5 py-0.5 rounded-full text-[11px]">
                         👑 {h.topPlayerName}
                       </span>
-                      <span className="text-rose-700 font-bold flex items-center gap-1 bg-rose-50 px-2 py-0.5 rounded-full">
+                      <span className="text-[#FF5E48] font-bold flex items-center gap-1 bg-[#FF5E48]/15 border border-[#FF5E48]/25 px-2.5 py-0.5 rounded-full text-[11px]">
                         🥄 {h.bottomPlayerName}
                       </span>
                       {!isViewer && (
@@ -3128,7 +3128,7 @@ export default function HistoryPage() {
                           type="button"
                           onClick={() => setDayToDelete(h.date)}
                           title={`Delete Day Result for ${h.date}`}
-                          className="w-6 h-6 rounded-full hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors flex items-center justify-center cursor-pointer text-xs ml-1"
+                          className="w-6 h-6 rounded-full hover:bg-[#FF5E48]/20 text-white/40 hover:text-[#FF5E48] transition-colors flex items-center justify-center cursor-pointer text-xs ml-1"
                         >
                           🗑️
                         </button>
@@ -3145,24 +3145,24 @@ export default function HistoryPage() {
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {tournamentToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-sm bg-white border border-slate-200/80 rounded-[32px] p-6 shadow-2xl space-y-4 text-slate-900"
+              className="w-full max-w-sm bg-[#1E2128] border border-white/10 rounded-[32px] p-6 shadow-2xl space-y-4 text-[#F3F4EE]"
             >
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-red-50 flex items-center justify-center text-xl text-red-600 shadow-2xs">
+                <div className="w-11 h-11 rounded-2xl bg-[#FF5E48]/15 border border-[#FF5E48]/30 flex items-center justify-center text-xl text-[#FF5E48] shadow-2xs">
                   🗑️
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-slate-900">Delete Tournament?</h2>
-                  <p className="text-[11px] text-slate-400 font-medium">Remove accidental or test match</p>
+                  <h2 className="text-base font-black text-[#F3F4EE]">Delete Tournament?</h2>
+                  <p className="text-[11px] text-white/40 font-medium">Remove accidental or test match</p>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-white/60 leading-relaxed">
                 This will permanently delete this tournament and its matches, and automatically recalculate player points and day standings.
               </p>
 
@@ -3171,7 +3171,7 @@ export default function HistoryPage() {
                   type="button"
                   onClick={() => setTournamentToDelete(null)}
                   disabled={isDeleting}
-                  className="flex-1 py-3 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
+                  className="flex-1 py-3 px-4 rounded-full bg-white/5 hover:bg-white/10 text-xs font-bold text-white/80 transition-colors"
                 >
                   Cancel
                 </button>
@@ -3179,7 +3179,7 @@ export default function HistoryPage() {
                   type="button"
                   onClick={() => handleDeleteTournament(tournamentToDelete)}
                   disabled={isDeleting}
-                  className="flex-1 py-3 px-4 rounded-full bg-red-600 hover:bg-red-700 active:scale-95 text-xs font-extrabold text-white shadow-md transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 py-3 px-4 rounded-full bg-[#FF5E48] hover:bg-[#ff462e] active:scale-95 text-xs font-black uppercase tracking-wider text-white shadow-md transition-all flex items-center justify-center gap-1.5"
                 >
                   {isDeleting ? <span>Deleting...</span> : <span>Delete</span>}
                 </button>
@@ -3192,24 +3192,24 @@ export default function HistoryPage() {
       {/* Delete Day Confirmation Modal */}
       <AnimatePresence>
         {dayToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-sm bg-white border border-slate-200/80 rounded-[32px] p-6 shadow-2xl space-y-4 text-slate-900"
+              className="w-full max-w-sm bg-[#1E2128] border border-white/10 rounded-[32px] p-6 shadow-2xl space-y-4 text-[#F3F4EE]"
             >
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-rose-50 flex items-center justify-center text-xl text-rose-600 shadow-2xs">
+                <div className="w-11 h-11 rounded-2xl bg-[#FF5E48]/15 border border-[#FF5E48]/30 flex items-center justify-center text-xl text-[#FF5E48] shadow-2xs">
                   🗑️
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-slate-900">Delete Day Table?</h2>
-                  <p className="text-[11px] text-slate-400 font-medium">{formatDateDDMMYY(dayToDelete)}</p>
+                  <h2 className="text-base font-black text-[#F3F4EE]">Delete Day Table?</h2>
+                  <p className="text-[11px] text-white/40 font-medium">{formatDateDDMMYY(dayToDelete)}</p>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-white/60 leading-relaxed">
                 This will permanently delete the day table, all tournaments, matches, and day champions for {formatDateDDMMYY(dayToDelete)}.
               </p>
 
@@ -3218,7 +3218,7 @@ export default function HistoryPage() {
                   type="button"
                   onClick={() => setDayToDelete(null)}
                   disabled={isDeleting}
-                  className="flex-1 py-3 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
+                  className="flex-1 py-3 px-4 rounded-full bg-white/5 hover:bg-white/10 text-xs font-bold text-white/80 transition-colors"
                 >
                   Cancel
                 </button>
@@ -3226,7 +3226,7 @@ export default function HistoryPage() {
                   type="button"
                   onClick={() => handleDeleteDay(dayToDelete)}
                   disabled={isDeleting}
-                  className="flex-1 py-3 px-4 rounded-full bg-rose-600 hover:bg-rose-700 active:scale-95 text-xs font-extrabold text-white shadow-md transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 py-3 px-4 rounded-full bg-[#FF5E48] hover:bg-[#ff462e] active:scale-95 text-xs font-black uppercase tracking-wider text-white shadow-md transition-all flex items-center justify-center gap-1.5"
                 >
                   {isDeleting ? <span>Deleting...</span> : <span>Delete Day</span>}
                 </button>
@@ -3246,7 +3246,7 @@ export default function HistoryPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowFilterMenu(false)}
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/60 backdrop-blur-md"
             />
 
             {/* Bottom Sheet */}
@@ -3255,16 +3255,16 @@ export default function HistoryPage() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 350 }}
-              className="relative z-10 w-full max-w-md bg-white border-t border-slate-200/80 rounded-t-[36px] shadow-2xl pb-8 pt-4 px-5 space-y-4 max-h-[82vh] overflow-y-auto"
+              className="relative z-10 w-full max-w-md bg-[#1A1D24] border-t border-white/10 rounded-t-[36px] shadow-2xl pb-8 pt-4 px-5 space-y-4 max-h-[82vh] overflow-y-auto"
             >
               {/* Drag Handle */}
-              <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto" />
+              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto" />
 
               {/* Sheet Header */}
-              <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-1 border-b border-white/10">
                 <div>
-                  <h3 className="text-base font-black text-slate-900">Filter History</h3>
-                  <p className="text-xs text-slate-400 font-medium">Customize matches & stats view</p>
+                  <h3 className="text-base font-black text-[#F3F4EE]">Filter History</h3>
+                  <p className="text-xs text-white/40 font-medium">Customize matches &amp; stats view</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {hasActiveFilter && (
@@ -3275,7 +3275,7 @@ export default function HistoryPage() {
                         setPlayerFilter("all");
                         setPatternFilter("all");
                       }}
-                      className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full cursor-pointer transition-colors"
+                      className="text-xs font-bold text-[#FF5E48] hover:text-[#ff462e] bg-[#FF5E48]/15 border border-[#FF5E48]/30 px-2.5 py-1 rounded-full cursor-pointer transition-colors"
                     >
                       Reset All
                     </button>
@@ -3283,7 +3283,7 @@ export default function HistoryPage() {
                   <button
                     type="button"
                     onClick={() => setShowFilterMenu(false)}
-                    className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-sm cursor-pointer transition-colors"
+                    className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/15 text-white/70 font-bold flex items-center justify-center text-sm cursor-pointer transition-colors"
                   >
                     ✕
                   </button>
@@ -3292,7 +3292,7 @@ export default function HistoryPage() {
 
               {/* 1. Time Range */}
               <div>
-                <label className="block text-[11px] uppercase font-black tracking-wider text-slate-400 mb-2">
+                <label className="block text-[11px] uppercase font-black tracking-wider text-white/40 mb-2">
                   📅 Time Range
                 </label>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -3306,8 +3306,8 @@ export default function HistoryPage() {
                         onClick={() => setRangeFilter(opt.value as any)}
                         className={`py-2 px-1 text-center text-xs font-extrabold rounded-xl transition-all cursor-pointer ${
                           selected
-                            ? "bg-slate-950 text-white shadow-xs"
-                            : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                            ? "bg-[#F3F4EE] text-[#14161B] shadow-xs"
+                            : "bg-[#16181F] hover:bg-white/10 text-white/70 border border-white/5"
                         }`}
                       >
                         {opt.label}
@@ -3319,7 +3319,7 @@ export default function HistoryPage() {
 
               {/* 2. Player Filter */}
               <div>
-                <label className="block text-[11px] uppercase font-black tracking-wider text-slate-400 mb-2">
+                <label className="block text-[11px] uppercase font-black tracking-wider text-white/40 mb-2">
                   👤 Squad Players
                 </label>
                 <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
@@ -3328,8 +3328,8 @@ export default function HistoryPage() {
                     onClick={() => setPlayerFilter("all")}
                     className={`py-1.5 px-3 text-xs font-extrabold rounded-full transition-all cursor-pointer ${
                       playerFilter === "all"
-                        ? "bg-slate-950 text-white shadow-xs"
-                        : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                        ? "bg-[#F3F4EE] text-[#14161B] shadow-xs"
+                        : "bg-[#16181F] hover:bg-white/10 text-white/70 border border-white/5"
                     }`}
                   >
                     All Players
@@ -3344,8 +3344,8 @@ export default function HistoryPage() {
                         onClick={() => setPlayerFilter(p.id)}
                         className={`py-1 px-2.5 text-xs font-extrabold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                           selected
-                            ? "bg-slate-950 text-white shadow-xs ring-1 ring-slate-950"
-                            : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                            ? "bg-[#F3F4EE] text-[#14161B] shadow-xs ring-1 ring-[#F3F4EE]"
+                            : "bg-[#16181F] hover:bg-white/10 text-white/70 border border-white/5"
                         }`}
                       >
                         <AvatarSVG type={p.avatar} size={20} emoji={p.avatarEmoji} color={p.avatarColor} />
@@ -3358,7 +3358,7 @@ export default function HistoryPage() {
 
               {/* 3. Match Pattern */}
               <div>
-                <label className="block text-[11px] uppercase font-black tracking-wider text-slate-400 mb-2">
+                <label className="block text-[11px] uppercase font-black tracking-wider text-white/40 mb-2">
                   🎯 Match Outcome / Score
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -3372,8 +3372,8 @@ export default function HistoryPage() {
                         onClick={() => setPatternFilter(opt.value)}
                         className={`py-1.5 px-3 text-xs font-extrabold rounded-full transition-all cursor-pointer ${
                           selected
-                            ? "bg-slate-950 text-white shadow-xs"
-                            : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                            ? "bg-[#F3F4EE] text-[#14161B] shadow-xs"
+                            : "bg-[#16181F] hover:bg-white/10 text-white/70 border border-white/5"
                         }`}
                       >
                         {opt.label}
@@ -3387,9 +3387,9 @@ export default function HistoryPage() {
               <button
                 type="button"
                 onClick={() => setShowFilterMenu(false)}
-                className="w-full py-3.5 bg-slate-950 hover:bg-slate-800 text-white font-black text-sm rounded-2xl shadow-xl shadow-slate-950/20 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-[#FF5E48] hover:bg-[#ff462e] text-white font-black uppercase tracking-wider text-xs rounded-2xl shadow-xl shadow-[#FF5E48]/20 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
-                <span>Apply & View Matches</span>
+                <span>Apply &amp; View Matches</span>
                 <span className="text-white/60 font-medium">({displayedHistory.totalMatches})</span>
                 <span>✓</span>
               </button>
