@@ -2691,18 +2691,18 @@ export default function ProfilesPage() {
               </div>
 
               {/* Dedicated Shutout Intelligence Dossier */}
-              <div className="rounded-[28px] bg-white border border-slate-200/80 p-5 shadow-xs space-y-3.5">
+              <div className="rounded-[30px] bg-[#1E2128] border border-white/10 p-5 shadow-xs space-y-3.5">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-base">⚡</span>
-                      <h3 className="text-slate-900 font-black text-sm">Shutout Intelligence</h3>
+                      <h3 className="text-[#F3F4EE] font-black text-xs uppercase tracking-wider">Shutout Intelligence</h3>
                     </div>
-                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    <p className="text-[10px] text-white/40 font-semibold mt-0.5">
                       3-pt bonus wins (margin ≥4) &amp; Championship final blowouts
                     </p>
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60 font-mono">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#F5BA38] bg-[#F5BA38]/10 px-2.5 py-1 rounded-full border border-[#F5BA38]/20 font-mono">
                     Margin ≥ 4
                   </span>
                 </div>
@@ -2711,29 +2711,29 @@ export default function ProfilesPage() {
                   {/* Card 1: Shuts Delivered (Shutting) */}
                   <button
                     onClick={() => setShutoutModalType("delivered")}
-                    className="text-left rounded-[24px] bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-transparent border border-amber-200/80 hover:border-amber-400/90 p-4 transition-all active:scale-[0.98] shadow-xs hover:shadow-md group flex flex-col justify-between"
+                    className="text-left rounded-[24px] bg-[#16181F] border border-[#F5BA38]/30 hover:border-[#F5BA38]/60 p-4 transition-all active:scale-[0.98] shadow-xs group flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#F5BA38] bg-[#F5BA38]/10 border border-[#F5BA38]/20 px-2 py-0.5 rounded-full">
                           <span>⚡</span>
                           <span>Shutting</span>
                         </span>
-                        <span className="text-xs text-amber-600 font-bold group-hover:translate-x-0.5 transition-transform">
+                        <span className="text-xs text-[#F5BA38] font-bold group-hover:translate-x-0.5 transition-transform">
                           →
                         </span>
                       </div>
-                      <p className="text-3xl font-black text-slate-900 font-mono mt-2.5 tracking-tight">
+                      <p className="text-3xl font-black text-[#F3F4EE] font-mono mt-2.5 tracking-tight">
                         {activeStats.shutsDelivered}
                       </p>
-                      <p className="text-xs font-black text-amber-950 mt-1">
+                      <p className="text-xs font-black text-white/90 mt-1">
                         Shuts Delivered
                       </p>
-                      <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                      <p className="text-[11px] text-white/40 font-medium mt-0.5 leading-snug">
                         Times {activeLore.name} handed out a blowout
                       </p>
                     </div>
-                    <div className="mt-3 pt-2 border-t border-amber-200/50 flex items-center justify-between text-[10px] font-bold text-amber-800">
+                    <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-bold text-[#F5BA38]">
                       <span>Breakdown</span>
                       <span className="underline">View who shut →</span>
                     </div>
@@ -2742,29 +2742,29 @@ export default function ProfilesPage() {
                   {/* Card 2: Times Shut Out (Shutted) */}
                   <button
                     onClick={() => setShutoutModalType("received")}
-                    className="text-left rounded-[24px] bg-gradient-to-br from-rose-500/10 via-rose-400/5 to-transparent border border-rose-200/80 hover:border-rose-400/90 p-4 transition-all active:scale-[0.98] shadow-xs hover:shadow-md group flex flex-col justify-between"
+                    className="text-left rounded-[24px] bg-[#16181F] border border-[#FF5E48]/30 hover:border-[#FF5E48]/60 p-4 transition-all active:scale-[0.98] shadow-xs group flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-rose-800 bg-rose-100/80 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#FF5E48] bg-[#FF5E48]/10 border border-[#FF5E48]/20 px-2 py-0.5 rounded-full">
                           <span>🛡️</span>
                           <span>Shutted</span>
                         </span>
-                        <span className="text-xs text-rose-600 font-bold group-hover:translate-x-0.5 transition-transform">
+                        <span className="text-xs text-[#FF5E48] font-bold group-hover:translate-x-0.5 transition-transform">
                           →
                         </span>
                       </div>
-                      <p className="text-3xl font-black text-slate-900 font-mono mt-2.5 tracking-tight">
+                      <p className="text-3xl font-black text-[#F3F4EE] font-mono mt-2.5 tracking-tight">
                         {activeStats.shutsReceived}
                       </p>
-                      <p className="text-xs font-black text-rose-950 mt-1">
+                      <p className="text-xs font-black text-white/90 mt-1">
                         Times Shut Out
                       </p>
-                      <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                      <p className="text-[11px] text-white/40 font-medium mt-0.5 leading-snug">
                         Blowout losses conceded to squad
                       </p>
                     </div>
-                    <div className="mt-3 pt-2 border-t border-rose-200/50 flex items-center justify-between text-[10px] font-bold text-rose-800">
+                    <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-bold text-[#FF5E48]">
                       <span>Breakdown</span>
                       <span className="underline">View who shut →</span>
                     </div>
@@ -2776,17 +2776,17 @@ export default function ProfilesPage() {
         </AnimatePresence>
 
         {/* Squad Hall of Fame Quick Link */}
-        <div className="p-4 rounded-[26px] bg-white border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="p-4 rounded-[26px] bg-[#1E2128] border border-white/10 shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-2xl">👑</span>
             <div>
-              <p className="text-xs font-black text-slate-900">Looking for Match Records?</p>
-              <p className="text-[11px] text-slate-500 font-medium">Check game scores &amp; standings</p>
+              <p className="text-xs font-black text-[#F3F4EE] uppercase tracking-wider">Looking for Match Records?</p>
+              <p className="text-[11px] text-white/40 font-medium">Check game scores &amp; standings</p>
             </div>
           </div>
           <Link
             href="/history"
-            className="px-4 py-2 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-black text-xs shadow-xs transition-all active:scale-95 flex items-center gap-1"
+            className="px-4 py-2 rounded-full bg-[#F3F4EE] hover:bg-white text-[#14161B] font-black text-xs shadow-xs transition-all active:scale-95 flex items-center gap-1"
           >
             <span>View History</span>
           </Link>
@@ -2800,7 +2800,7 @@ export default function ProfilesPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => setShutoutModalType(null)}
           >
             <motion.div
@@ -2809,21 +2809,21 @@ export default function ProfilesPage() {
               exit={{ scale: 0.95, opacity: 0, y: 16 }}
               transition={{ type: "spring", duration: 0.25 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-[32px] p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4 max-h-[85vh] flex flex-col"
+              className="bg-[#1E2128] rounded-[32px] p-6 max-w-md w-full shadow-2xl border border-white/10 space-y-4 max-h-[85vh] flex flex-col text-[#F3F4EE]"
             >
               {/* Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
                 <div className="flex items-center gap-2.5">
                   <span className="text-2xl">
                     {shutoutModalType === "delivered" ? "⚡" : "🛡️"}
                   </span>
                   <div>
-                    <h3 className="text-slate-900 font-black text-base leading-tight">
+                    <h3 className="text-[#F3F4EE] font-black text-base leading-tight">
                       {shutoutModalType === "delivered"
                         ? `Shuts Delivered by ${activeLore.name}`
                         : `Times ${activeLore.name} Was Shut Out`}
                     </h3>
-                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    <p className="text-[11px] text-white/40 font-medium mt-0.5">
                       {shutoutModalType === "delivered"
                         ? `${activeStats.shutsDelivered} total clean blowouts delivered against opponents`
                         : `${activeStats.shutsReceived} total blowout losses suffered from opponents`}
@@ -2832,7 +2832,7 @@ export default function ProfilesPage() {
                 </div>
                 <button
                   onClick={() => setShutoutModalType(null)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm transition-colors"
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 flex items-center justify-center font-bold text-sm transition-colors border border-white/10"
                 >
                   ✕
                 </button>
@@ -2875,23 +2875,23 @@ export default function ProfilesPage() {
                       className={`p-3.5 rounded-2xl border transition-all ${
                         count > 0
                           ? shutoutModalType === "delivered"
-                            ? "bg-amber-50/50 border-amber-200/70"
-                            : "bg-rose-50/50 border-rose-200/70"
-                          : "bg-slate-50/60 border-slate-200/60 opacity-60"
+                            ? "bg-[#16181F] border-[#F5BA38]/30"
+                            : "bg-[#16181F] border-[#FF5E48]/30"
+                          : "bg-[#16181F]/40 border-white/5 opacity-50"
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                          <span className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center shadow-xs">
+                          <span className="w-8 h-8 rounded-xl bg-[#1E2128] border border-white/10 flex items-center justify-center shadow-xs">
                             <AvatarSVG type={opp.avatar} size={22} />
                           </span>
                           <div>
-                            <p className="font-extrabold text-xs text-slate-900 leading-tight">
+                            <p className="font-extrabold text-xs text-[#F3F4EE] leading-tight">
                               {shutoutModalType === "delivered"
                                 ? `vs ${opp.name}`
                                 : `by ${opp.name}`}
                             </p>
-                            <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            <p className="text-[10px] text-white/40 font-mono mt-0.5">
                               {rec.played} total matches played ({rec.won}W - {rec.lost}L)
                             </p>
                           </div>
@@ -2902,9 +2902,9 @@ export default function ProfilesPage() {
                             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black font-mono shadow-2xs ${
                               count > 0
                                 ? shutoutModalType === "delivered"
-                                  ? "bg-amber-100 text-amber-900 border border-amber-300/80"
-                                  : "bg-rose-100 text-rose-900 border border-rose-300/80"
-                                : "bg-slate-100 text-slate-500 border border-slate-200"
+                                  ? "bg-[#F5BA38]/10 text-[#F5BA38] border border-[#F5BA38]/20"
+                                  : "bg-[#FF5E48]/10 text-[#FF5E48] border border-[#FF5E48]/20"
+                                : "bg-white/5 text-white/30 border border-white/5"
                             }`}
                           >
                             <span>{shutoutModalType === "delivered" ? "⚡" : "🛡️"}</span>
@@ -2916,19 +2916,19 @@ export default function ProfilesPage() {
                       </div>
 
                       {count > 0 && (
-                        <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[10px] font-medium text-slate-600">
+                        <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-medium text-white/60">
                           <div className="flex items-center gap-2">
                             <span className="inline-flex items-center gap-1">
-                              <span className="font-bold text-slate-800">{regularCount}</span>{" "}
+                              <span className="font-bold text-[#F3F4EE]">{regularCount}</span>{" "}
                               regular (3 pts)
                             </span>
                             <span>•</span>
                             <span className="inline-flex items-center gap-1">
-                              <span className="font-bold text-slate-800">{finalCount}</span>{" "}
+                              <span className="font-bold text-[#F3F4EE]">{finalCount}</span>{" "}
                               final blowout (≥4)
                             </span>
                           </div>
-                          <span className="font-mono text-[10px] text-slate-400">
+                          <span className="font-mono text-[10px] text-white/40">
                             {shutoutModalType === "delivered" && activeStats.shutsDelivered > 0
                               ? `${Math.round((count / activeStats.shutsDelivered) * 100)}% of total`
                               : shutoutModalType === "received" && activeStats.shutsReceived > 0
@@ -2942,9 +2942,9 @@ export default function ProfilesPage() {
               </div>
 
               {/* Footer explaining condition */}
-              <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 leading-normal">
+              <div className="pt-2 border-t border-white/10 text-[10px] text-white/40 leading-normal">
                 <p>
-                  <span className="font-bold text-slate-600">Rule definition:</span> A shutout
+                  <span className="font-bold text-white/70">Rule definition:</span> A shutout
                   occurs when a player wins by margin ≥4 earning 3 points in a match, or wins
                   the Championship Final by margin ≥4.
                 </p>
