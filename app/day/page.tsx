@@ -252,7 +252,7 @@ export default function DayPage() {
               <h1 className="text-slate-900 font-black text-2xl tracking-tight">Day Table</h1>
             </div>
             <p className="text-slate-500 text-xs mt-0.5 font-medium">
-              {dayTable.date || new Date().toISOString().split("T")[0]} · {effectiveTournaments.length} tournament
+              {formatDateDDMMYY(dayTable.date || new Date().toISOString().split("T")[0])} · {effectiveTournaments.length} tournament
               {effectiveTournaments.length !== 1 ? "s" : ""}
             </p>
           </div>
