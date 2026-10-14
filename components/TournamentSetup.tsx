@@ -29,26 +29,26 @@ function Stepper({
   max: number;
 }) {
   return (
-    <div className="flex items-center justify-between py-3.5 border-b border-slate-100 last:border-0">
+    <div className="flex items-center justify-between py-3.5 border-b border-white/5 last:border-0">
       <div className="flex-1 min-w-0 pr-4">
-        <p className="text-slate-900 text-sm font-bold">{label}</p>
-        {hint && <p className="text-slate-500 text-xs mt-0.5 font-medium leading-tight">{hint}</p>}
+        <p className="text-[#F3F4EE] text-sm font-black">{label}</p>
+        {hint && <p className="text-[#8E95A5] text-xs mt-0.5 font-medium leading-tight">{hint}</p>}
       </div>
       <div className="flex items-center gap-2.5 flex-shrink-0">
         <button
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+          className="w-9 h-9 rounded-full bg-[#181B22] border border-white/10 hover:border-white/20 text-[#F3F4EE] font-black text-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-20 disabled:pointer-events-none"
         >
           −
         </button>
-        <span className="text-slate-900 font-black text-lg w-8 text-center tabular-nums">
+        <span className="text-[#F3F4EE] font-black text-lg w-8 text-center tabular-nums">
           {value}
         </span>
         <button
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
-          className="w-9 h-9 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-black text-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none shadow-xs"
+          className="w-9 h-9 rounded-full bg-[#FF5E48] hover:bg-[#fa6249] text-white font-black text-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-20 disabled:pointer-events-none shadow-sm"
         >
           +
         </button>
@@ -67,22 +67,22 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
   const loserPts = cfg.finalLoserPenalty;
 
   return (
-    <div className="min-h-full flex flex-col bg-[#F7F9FD] text-slate-900 pb-32">
+    <div className="min-h-full flex flex-col bg-[#14161B] text-[#F3F4EE] pb-32">
       {/* Top Header */}
-      <div className="px-5 pt-6 pb-3 border-b border-slate-200/60 bg-[#F7F9FD]/90 backdrop-blur-md sticky top-0 z-20">
+      <div className="px-5 pt-6 pb-3 border-b border-white/10 bg-[#14161B]/90 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="w-9 h-9 rounded-full bg-white border border-slate-200/80 text-slate-700 font-black text-sm flex items-center justify-center shadow-xs hover:bg-slate-50 active:scale-95 transition-all"
+            className="w-9 h-9 rounded-full bg-[#1E2128] border border-white/10 text-[#F3F4EE] font-black text-sm flex items-center justify-center hover:bg-[#252932] active:scale-95 transition-all"
             title="Back to Player Selection"
           >
             ←
           </button>
           <div>
-            <h1 className="text-slate-900 font-black text-2xl tracking-tight leading-none">
+            <h1 className="text-[#F3F4EE] font-black text-2xl uppercase tracking-tight leading-none">
               Tournament Setup
             </h1>
-            <p className="text-slate-500 text-xs mt-1 font-medium">
+            <p className="text-[#8E95A5] text-xs mt-1 font-semibold uppercase tracking-wider">
               {playerCount} players · {matchCount} round-robin matches
             </p>
           </div>
@@ -91,44 +91,42 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
 
       <div className="flex-1 overflow-y-auto px-5 pt-4 space-y-4">
         {/* Hero Info Card */}
-        <div className="rounded-[30px] p-5 bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border border-indigo-100/90 shadow-xs relative overflow-hidden">
+        <div className="rounded-[30px] p-5 bg-[#1E2128] border border-white/10 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center text-2xl shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-[#14161B] border border-white/10 flex items-center justify-center text-2xl">
                 🏸
               </div>
               <div>
-                <p className="text-[10px] uppercase font-black tracking-wider text-indigo-700">
+                <p className="text-[10px] uppercase font-black tracking-wider text-[#FF5E48]">
                   Scoring Configuration
                 </p>
-                <h3 className="text-slate-900 font-black text-base leading-tight">
+                <h3 className="text-[#F3F4EE] font-black text-base leading-tight">
                   Round-Robin &amp; Finals
                 </h3>
               </div>
             </div>
-            <span className="text-xs font-black text-indigo-900 bg-indigo-100/80 px-3 py-1.5 rounded-full">
+            <span className="text-xs font-black text-[#F3F4EE] bg-white/10 px-3 py-1.5 rounded-full uppercase tracking-wider">
               {matchCount} Matches
             </span>
           </div>
-          <p className="text-slate-600 text-xs mt-2.5 leading-relaxed font-medium">
+          <p className="text-[#8E95A5] text-xs mt-2.5 leading-relaxed font-medium">
             Customize target win scores, bonus point thresholds, and final match rules before launching.
           </p>
         </div>
-
-
 
         {/* Round-robin rules card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-1"
+          className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-sm space-y-1"
         >
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/80 inline-flex items-center gap-1">
+          <div className="flex items-center justify-between pb-2 border-b border-white/5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[#FF5E48] bg-[#FF5E48]/10 px-2.5 py-1 rounded-full border border-[#FF5E48]/20 inline-flex items-center gap-1">
               <span>🏸</span>
-              <span>Round-Robin Match Rules</span>
+              <span>Round-Robin Rules</span>
             </span>
-            <span className="text-[10px] text-slate-400 font-mono font-medium">Stage 1</span>
+            <span className="text-[10px] text-[#8E95A5] font-mono font-medium">Stage 1</span>
           </div>
 
           <Stepper
@@ -170,13 +168,13 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-indigo-50/60 border border-indigo-100/90 rounded-[26px] p-4.5 space-y-2.5"
+          className="bg-[#181B22] border border-white/5 rounded-[26px] p-4.5 space-y-2.5"
         >
           <div className="flex items-center justify-between">
-            <p className="text-indigo-900 text-[10px] uppercase tracking-wider font-black">
+            <p className="text-[#8E95A5] text-[10px] uppercase tracking-wider font-black">
               📊 Points Preview (Round-Robin)
             </p>
-            <span className="text-[10px] text-indigo-600 font-bold">First to {cfg.winScore}</span>
+            <span className="text-[10px] text-[#FF5E48] font-bold">First to {cfg.winScore}</span>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-sm">
@@ -189,16 +187,16 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
                   key={loserScore}
                   className={`flex justify-between items-center rounded-xl px-3 py-1.5 border transition-all ${
                     hasBonus
-                      ? "bg-amber-50/90 border-amber-200/80 shadow-2xs"
-                      : "bg-white border-slate-200/70 shadow-2xs"
+                      ? "bg-[#F5BA38]/15 border-[#F5BA38]/30"
+                      : "bg-[#1E2128] border-white/5"
                   }`}
                 >
-                  <span className="text-slate-600 font-mono font-bold text-xs">
+                  <span className="text-[#8E95A5] font-mono font-bold text-xs">
                     {cfg.winScore}–{loserScore}
                   </span>
                   <span
                     className={`font-black text-xs ${
-                      hasBonus ? "text-amber-900" : "text-slate-900"
+                      hasBonus ? "text-[#F5BA38]" : "text-[#F3F4EE]"
                     }`}
                   >
                     {pts} pts {hasBonus ? "⭐" : ""}
@@ -214,14 +212,14 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-xs space-y-1"
+          className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-sm space-y-1"
         >
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/80 inline-flex items-center gap-1">
+          <div className="flex items-center justify-between pb-2 border-b border-white/5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[#F5BA38] bg-[#F5BA38]/10 px-2.5 py-1 rounded-full border border-[#F5BA38]/30 inline-flex items-center gap-1">
               <span>🏆</span>
               <span>Final Match Rules</span>
             </span>
-            <span className="text-[10px] text-slate-400 font-mono font-medium">Championship</span>
+            <span className="text-[10px] text-[#8E95A5] font-mono font-medium">Championship</span>
           </div>
 
           <Stepper
@@ -247,53 +245,53 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-amber-50/70 border border-amber-200/80 rounded-[26px] p-4.5 space-y-2.5"
+          className="bg-[#181B22] border border-white/5 rounded-[26px] p-4.5 space-y-2.5"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-amber-900 text-[10px] uppercase tracking-wider font-black">
+              <p className="text-[#F5BA38] text-[10px] uppercase tracking-wider font-black">
                 🏆 Day Points Breakdown ({playerCount} Players)
               </p>
-              <p className="text-slate-500 text-[11px] mt-0.5 leading-tight">
+              <p className="text-[#8E95A5] text-[11px] mt-0.5 leading-tight">
                 Points are awarded based on the final match margin.
               </p>
             </div>
-            <span className="text-[10px] text-amber-800 font-bold">First to {cfg.finalWinScore}</span>
+            <span className="text-[10px] text-[#F5BA38] font-bold">First to {cfg.finalWinScore}</span>
           </div>
 
           <div className="space-y-1.5 text-xs">
-            <div className="flex justify-between items-center bg-white rounded-xl px-3 py-2 border border-amber-200/60 shadow-2xs">
-              <span className="text-slate-700 font-mono font-bold text-[11px]">
+            <div className="flex justify-between items-center bg-[#1E2128] rounded-xl px-3 py-2 border border-white/5">
+              <span className="text-[#8E95A5] font-mono font-bold text-[11px]">
                 Margin &ge; {cfg.finalBonusMargin} (Blowout)
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-slate-700 font-bold text-[11px]">
-                  1st: <strong className="text-emerald-700 font-black">{playerCount} pts</strong>
+                <span className="text-[#F3F4EE] font-bold text-[11px]">
+                  1st: <strong className="text-[#9EC9A8] font-black">{playerCount} pts</strong>
                 </span>
-                <span className="text-slate-300">·</span>
-                <span className="text-slate-700 font-bold text-[11px]">
-                  2nd: <strong className="text-amber-700 font-black">{Math.max(1, playerCount - 2)} pts 🚨</strong>
+                <span className="text-white/20">·</span>
+                <span className="text-[#F3F4EE] font-bold text-[11px]">
+                  2nd: <strong className="text-[#FF5E48] font-black">{Math.max(1, playerCount - 2)} pts 🚨</strong>
                 </span>
               </div>
             </div>
 
-            <div className="flex justify-between items-center bg-white rounded-xl px-3 py-2 border border-amber-200/60 shadow-2xs">
-              <span className="text-slate-700 font-mono font-bold text-[11px]">
+            <div className="flex justify-between items-center bg-[#1E2128] rounded-xl px-3 py-2 border border-white/5">
+              <span className="text-[#8E95A5] font-mono font-bold text-[11px]">
                 Margin &lt; {cfg.finalBonusMargin} (Close)
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-slate-700 font-bold text-[11px]">
-                  1st: <strong className="text-emerald-700 font-black">{playerCount} pts</strong>
+                <span className="text-[#F3F4EE] font-bold text-[11px]">
+                  1st: <strong className="text-[#9EC9A8] font-black">{playerCount} pts</strong>
                 </span>
-                <span className="text-slate-300">·</span>
-                <span className="text-slate-700 font-bold text-[11px]">
-                  2nd: <strong className="text-slate-800 font-black">{Math.max(1, playerCount - 1)} pts</strong>
+                <span className="text-white/20">·</span>
+                <span className="text-[#F3F4EE] font-bold text-[11px]">
+                  2nd: <strong className="text-[#F3F4EE] font-black">{Math.max(1, playerCount - 1)} pts</strong>
                 </span>
               </div>
             </div>
           </div>
 
-          <p className="text-[10px] text-slate-500 pt-1 leading-relaxed">
+          <p className="text-[10px] text-[#8E95A5] pt-1 leading-relaxed">
             💡 <strong>Rest of the table:</strong> 3rd place gets {Math.max(1, playerCount - 2)} pts, 4th gets {Math.max(1, Math.max(0, playerCount - 3))} pts, down to 1 pt for last place.
           </p>
         </motion.div>
@@ -304,30 +302,30 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           onClick={() => setCfg((c) => ({ ...c, isPractice: !c.isPractice }))}
-          className={`cursor-pointer border rounded-[28px] p-4.5 transition-all flex items-center justify-between gap-3 shadow-xs ${
+          className={`cursor-pointer border rounded-[28px] p-4.5 transition-all flex items-center justify-between gap-3 shadow-sm ${
             cfg.isPractice
-              ? "bg-amber-50/90 border-2 border-amber-400"
-              : "bg-white border border-slate-200/80 hover:border-slate-300"
+              ? "bg-[#F5BA38]/15 border-2 border-[#F5BA38]"
+              : "bg-[#1E2128] border border-white/10 hover:border-white/20"
           }`}
         >
           <div className="flex items-center gap-3">
             <div
-              className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-xs ${
-                cfg.isPractice ? "bg-amber-100 border border-amber-300 text-amber-900" : "bg-slate-100 text-slate-600"
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl ${
+                cfg.isPractice ? "bg-[#F5BA38] text-[#14161B]" : "bg-white/10 text-[#8E95A5]"
               }`}
             >
               🧪
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-black text-slate-900">Practice / Test Mode</span>
+                <span className="text-sm font-black text-[#F3F4EE]">Practice / Test Mode</span>
                 {cfg.isPractice && (
-                  <span className="text-[10px] bg-amber-200/80 text-amber-950 font-black px-2 py-0.5 rounded-full border border-amber-300">
+                  <span className="text-[10px] bg-[#F5BA38] text-[#14161B] font-black px-2 py-0.5 rounded-full">
                     TESTING
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5 font-medium leading-tight">
+              <p className="text-xs text-[#8E95A5] mt-0.5 font-medium leading-tight">
                 {cfg.isPractice
                   ? "Test match active: won't be saved to permanent history or leaderboards."
                   : "Ranked match: will be saved to Day Table & permanent Leaderboards."}
@@ -338,7 +336,7 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
           {/* Toggle Switch */}
           <div
             className={`w-12 h-6 rounded-full transition-colors p-0.5 flex items-center flex-shrink-0 ${
-              cfg.isPractice ? "bg-slate-950 justify-end" : "bg-slate-200 justify-start"
+              cfg.isPractice ? "bg-[#FF5E48] justify-end" : "bg-white/20 justify-start"
             }`}
           >
             <motion.div
@@ -350,14 +348,14 @@ export function TournamentSetup({ playerCount, matchCount, onConfirm, onBack }: 
       </div>
 
       {/* Sticky Bottom CTA Bar */}
-      <div className="sticky bottom-0 p-5 bg-gradient-to-t from-[#F7F9FD] via-[#F7F9FD]/95 to-transparent pt-3 z-30">
+      <div className="sticky bottom-0 p-5 bg-gradient-to-t from-[#14161B] via-[#14161B]/95 to-transparent pt-3 z-30">
         <motion.button
           onClick={() => onConfirm(cfg)}
           whileTap={{ scale: 0.98 }}
-          className={`w-full py-4 rounded-full font-black text-white text-base shadow-lg transition-all flex items-center justify-center gap-2 ${
+          className={`w-full py-4 rounded-full font-black text-white text-xs uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-2 ${
             cfg.isPractice
-              ? "bg-amber-600 hover:bg-amber-500 shadow-amber-600/20"
-              : "bg-slate-950 hover:bg-slate-800 shadow-slate-950/20"
+              ? "bg-[#F5BA38] text-[#14161B] shadow-[0_10px_25px_rgba(245,186,56,0.3)]"
+              : "bg-[#FF5E48] hover:bg-[#fa6249] shadow-[0_10px_25px_rgba(255,94,72,0.35)]"
           }`}
         >
           <span>{cfg.isPractice ? "Start Practice Tournament 🧪" : "Start Ranked Tournament 🏸"}</span>

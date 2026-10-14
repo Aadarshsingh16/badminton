@@ -725,10 +725,10 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
   // Loading Screen
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F7F9FD] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
-        <h2 className="text-slate-900 font-extrabold text-lg">Connecting to Court Stream...</h2>
-        <p className="text-slate-500 text-xs mt-1">Live courtside sync via Socket.io</p>
+      <div className="min-h-full bg-[#14161B] text-[#F3F4EE] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-12 h-12 border-4 border-white/10 border-t-[#FF5E48] rounded-full animate-spin mb-4" />
+        <h2 className="text-[#F3F4EE] font-black text-lg uppercase tracking-tight">Connecting to Court Stream...</h2>
+        <p className="text-[#8E95A5] text-xs mt-1 font-semibold uppercase tracking-wider">Live courtside sync via Socket.io</p>
       </div>
     );
   }
@@ -736,20 +736,20 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
   // Waiting Screen (no games started yet today)
   if (isWaiting && !dayData && !singleTourneyData) {
     return (
-      <div className="min-h-screen bg-[#F7F9FD] flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-full bg-[#14161B] text-[#F3F4EE] flex flex-col items-center justify-center p-6 text-center">
         <motion.div
           animate={{ scale: [1, 1.08, 1], rotate: [0, 6, -6, 0] }}
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-          className="w-16 h-16 rounded-3xl bg-white border border-indigo-200/80 shadow-md shadow-indigo-100/50 flex items-center justify-center text-3xl mb-4"
+          className="w-16 h-16 rounded-[28px] bg-[#1E2128] border border-white/10 flex items-center justify-center text-3xl mb-4 shadow-sm"
         >
           🏸
         </motion.div>
-        <h2 className="text-slate-900 font-black text-xl mb-2">Court Stream Connecting</h2>
-        <p className="text-slate-500 text-xs max-w-xs mb-5 leading-relaxed">
+        <h2 className="text-[#F3F4EE] font-black text-xl uppercase tracking-tight mb-2">Court Stream Connecting</h2>
+        <p className="text-[#8E95A5] text-xs max-w-xs mb-5 leading-relaxed font-medium">
           Waiting for the scorekeeper to broadcast tournament matches for {isDateSlug ? formatDateDDMMYY(slug) : slug}. This screen will auto-refresh the moment court play begins!
         </p>
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-semibold mb-6">
-          <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1E2128] border border-white/10 text-[#9EC9A8] text-xs font-black uppercase tracking-wider mb-6">
+          <span className="w-2 h-2 rounded-full bg-[#9EC9A8] animate-ping" />
           Listening for live match updates...
         </div>
         <button
@@ -758,30 +758,32 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
             if (isDateSlug) fetchDaySession(slug);
             else fetchSingleTournament(slug);
           }}
-          className="px-5 py-2.5 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-extrabold text-xs shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+          className="px-6 py-3 rounded-full bg-[#FF5E48] hover:bg-[#fa6249] text-white font-black text-xs uppercase tracking-widest shadow-[0_10px_25px_rgba(255,94,72,0.35)] transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
         >
           <span>↻</span>
-          <span>Refresh Live Stream</span>
+          <span>Refresh Live Stream ↗</span>
         </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F9FD] text-slate-900 flex flex-col max-w-md mx-auto">
+    <div className="min-h-full bg-[#14161B] text-[#F3F4EE] flex flex-col max-w-md mx-auto">
       {/* Top Header */}
-      <div className="sticky top-0 z-20 bg-[#F7F9FD]/95 backdrop-blur-md border-b border-slate-200/80 px-4 pt-3.5 pb-3">
+      <div className="sticky top-0 z-20 bg-[#14161B]/95 backdrop-blur-md border-b border-white/10 px-4 pt-3.5 pb-3">
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2.5">
-            <span className="text-2xl">🏸</span>
+            <div className="w-10 h-10 rounded-2xl bg-[#1E2128] border border-white/10 flex items-center justify-center text-xl">
+              🏸
+            </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-slate-900 font-black text-lg leading-tight">Badminton Live</h1>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80">
+                <h1 className="text-[#F3F4EE] font-black text-base uppercase tracking-tight leading-tight">Badminton Live</h1>
+                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-[#8E95A5]">
                   Spectator
                 </span>
               </div>
-              <p className="text-slate-500 text-[11px] font-medium">
+              <p className="text-[#8E95A5] text-[10px] font-bold uppercase tracking-wider">
                 {isDateSlug ? `Session: ${formatDateDDMMYY(slug)}` : "Live Tournament"}
               </p>
             </div>
@@ -792,15 +794,15 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
             <Link
               href="/"
               onClick={() => clearViewerMode()}
-              className="text-[11px] text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-full transition-all font-semibold flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer"
+              className="text-[11px] text-[#F3F4EE] bg-[#1E2128] hover:bg-[#252932] border border-white/10 px-3 py-1 rounded-full transition-all font-black uppercase tracking-wider flex items-center gap-1 active:scale-95 cursor-pointer"
             >
               <span>⚙️</span>
               <span>Host</span>
             </Link>
 
-            <div className="flex items-center gap-1.5 bg-white border border-slate-200/80 px-2.5 py-1 rounded-full text-xs shadow-2xs">
-              <span className={`w-2 h-2 rounded-full ${socketConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-400"}`} />
-              <span className="text-slate-700 font-bold text-[11px]">
+            <div className="flex items-center gap-1.5 bg-[#1E2128] border border-white/10 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
+              <span className={`w-2 h-2 rounded-full ${socketConnected ? "bg-[#9EC9A8] animate-pulse" : "bg-[#F5BA38]"}`} />
+              <span className={socketConnected ? "text-[#9EC9A8]" : "text-[#F5BA38]"}>
                 {socketConnected ? "Live" : "Polling"}
               </span>
             </div>
@@ -808,38 +810,38 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex gap-1 bg-white p-1 rounded-full border border-slate-200/80 shadow-xs">
+        <div className="flex gap-1 bg-[#181B22] p-1 rounded-full border border-white/10 shadow-sm">
           <button
             onClick={() => setTab("court")}
-            className={`flex-1 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer ${
+            className={`flex-1 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
               tab === "court"
-                ? "bg-slate-950 text-white shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                : "text-[#8E95A5] hover:text-[#F3F4EE]"
             }`}
           >
-            🏸 Live Court
+            🏸 Court
           </button>
           <button
             onClick={() => setTab("day-table")}
-            className={`flex-1 py-1.5 rounded-full text-xs font-black transition-all relative cursor-pointer ${
+            className={`flex-1 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all relative cursor-pointer ${
               tab === "day-table"
-                ? "bg-slate-950 text-white shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                : "text-[#8E95A5] hover:text-[#F3F4EE]"
             }`}
           >
-            📊 Day Table
+            📊 Standings
             {dayStandings.length > 0 && (
-              <span className="ml-1 text-[10px] opacity-75 font-normal">
+              <span className="ml-1 text-[10px] opacity-75 font-mono">
                 ({dayStandings.length})
               </span>
             )}
           </button>
           <button
             onClick={() => setTab("tournaments")}
-            className={`flex-1 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer ${
+            className={`flex-1 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
               tab === "tournaments"
-                ? "bg-slate-950 text-white shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                : "text-[#8E95A5] hover:text-[#F3F4EE]"
             }`}
           >
             📋 Today ({allTournaments.length})
@@ -861,35 +863,35 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
             {activeTournament ? (
               <>
                 {/* Active Tournament Status Bar */}
-                <div className="bg-white border border-slate-200/80 rounded-[26px] p-4 flex items-center justify-between shadow-2xs">
+                <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-4 flex items-center justify-between shadow-sm">
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#FF5E48]">
                       Tournament #{tournamentDisplayNumber}
                     </span>
-                    <h3 className="text-slate-900 font-extrabold text-sm">
+                    <h3 className="text-[#F3F4EE] font-black text-sm uppercase tracking-tight">
                       {isTournamentCompleted ? "Tournament Concluded 🏆" : "Round-Robin in Progress"}
                     </h3>
                   </div>
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-500 font-medium block">
+                    <span className="text-xs font-black text-[#9EC9A8] tabular-nums block">
                       {playedMatches.length}/{currentMatches.length} played
                     </span>
                     {lastUpdated && (
-                      <span className="text-[9px] text-slate-400">Synced {lastUpdated}</span>
+                      <span className="text-[9px] text-[#8E95A5] uppercase tracking-wider">Synced {lastUpdated}</span>
                     )}
                   </div>
                 </div>
 
                 {/* Grand Final Banner (if final is scheduled or completed) */}
                 {currentFinal && (
-                  <div className="bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white border border-amber-200/90 rounded-[28px] p-4 shadow-xs">
+                  <div className="bg-[#1E2128] border border-[#F5BA38]/40 rounded-[28px] p-5 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-amber-800 font-black text-xs uppercase tracking-widest flex items-center gap-1.5">
+                      <span className="text-[#F5BA38] font-black text-xs uppercase tracking-widest flex items-center gap-1.5">
                         <span>🏆</span>
                         <span>{isTournamentCompleted ? "Grand Final Result" : "Grand Final"}</span>
                       </span>
-                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
-                        currentFinal.played ? "bg-amber-100 text-amber-800 border border-amber-200" : "bg-white/80 text-slate-600 border border-slate-200"
+                      <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                        currentFinal.played ? "bg-[#F5BA38] text-[#14161B]" : "bg-white/10 text-[#8E95A5]"
                       }`}>
                         {currentFinal.played ? "Final Scored ✓" : "Upcoming"}
                       </span>
@@ -897,7 +899,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
 
                     <div className="flex items-center justify-around py-1">
                       {/* Finalist A */}
-                      <div className="flex flex-col items-center gap-1 text-center">
+                      <div className="flex flex-col items-center gap-1.5 text-center">
                         <div className="relative">
                           <AvatarSVG
                             type={getPlayer(currentFinal.playerA, allPlayers).avatar}
@@ -909,22 +911,22 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                             <span className="absolute -top-1 -right-1 text-xs">👑</span>
                           )}
                         </div>
-                        <span className="text-slate-900 font-bold text-xs truncate max-w-[85px]">
+                        <span className="text-[#F3F4EE] font-black text-xs uppercase truncate max-w-[85px]">
                           {getPlayer(currentFinal.playerA, allPlayers).name}
                         </span>
                         {currentFinal.played && (
                           <span className={`text-2xl font-black tabular-nums ${
-                            (currentFinal.scoreA ?? 0) > (currentFinal.scoreB ?? 0) ? "text-amber-600 font-black" : "text-slate-400"
+                            (currentFinal.scoreA ?? 0) > (currentFinal.scoreB ?? 0) ? "text-[#F5BA38]" : "text-[#8E95A5]"
                           }`}>
                             {currentFinal.scoreA}
                           </span>
                         )}
                       </div>
 
-                      <div className="text-slate-300 font-black text-lg">VS</div>
+                      <div className="text-white/20 font-black text-lg">VS</div>
 
                       {/* Finalist B */}
-                      <div className="flex flex-col items-center gap-1 text-center">
+                      <div className="flex flex-col items-center gap-1.5 text-center">
                         <div className="relative">
                           <AvatarSVG
                             type={getPlayer(currentFinal.playerB, allPlayers).avatar}
@@ -936,12 +938,12 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                             <span className="absolute -top-1 -right-1 text-xs">👑</span>
                           )}
                         </div>
-                        <span className="text-slate-900 font-bold text-xs truncate max-w-[85px]">
+                        <span className="text-[#F3F4EE] font-black text-xs uppercase truncate max-w-[85px]">
                           {getPlayer(currentFinal.playerB, allPlayers).name}
                         </span>
                         {currentFinal.played && (
                           <span className={`text-2xl font-black tabular-nums ${
-                            (currentFinal.scoreB ?? 0) > (currentFinal.scoreA ?? 0) ? "text-amber-600 font-black" : "text-slate-400"
+                            (currentFinal.scoreB ?? 0) > (currentFinal.scoreA ?? 0) ? "text-[#F5BA38]" : "text-[#8E95A5]"
                           }`}>
                             {currentFinal.scoreB}
                           </span>
@@ -953,23 +955,23 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
 
                 {/* Sub-tab Switcher: Fixtures vs Current Standings */}
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex gap-1 bg-white p-1 rounded-full border border-slate-200/80 shadow-2xs">
+                  <div className="flex gap-1 bg-[#181B22] p-1 rounded-full border border-white/10 shadow-xs">
                     <button
                       onClick={() => setCourtSubTab("fixtures")}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                         courtSubTab === "fixtures"
-                          ? "bg-slate-950 text-white shadow-2xs"
-                          : "text-slate-500 hover:text-slate-800"
+                          ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                          : "text-[#8E95A5] hover:text-[#F3F4EE]"
                       }`}
                     >
                       🏸 Fixtures ({currentMatches.length})
                     </button>
                     <button
                       onClick={() => setCourtSubTab("table")}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                         courtSubTab === "table"
-                          ? "bg-slate-950 text-white shadow-2xs"
-                          : "text-slate-500 hover:text-slate-800"
+                          ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                          : "text-[#8E95A5] hover:text-[#F3F4EE]"
                       }`}
                     >
                       📊 Table
@@ -977,9 +979,9 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                   </div>
 
                   {isTournamentCompleted && (
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#9EC9A8] bg-[#9EC9A8]/15 border border-[#9EC9A8]/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                       <span>✓</span>
-                      <span>Points Awarded</span>
+                      <span>Awarded</span>
                     </span>
                   )}
                 </div>
@@ -1007,7 +1009,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                     })}
                   </div>
                 ) : (
-                  <div className="bg-white border border-slate-200/80 rounded-[26px] p-2 overflow-hidden shadow-2xs">
+                  <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-2 overflow-hidden shadow-sm">
                     <TournamentTable
                       rows={computedStandings}
                       players={allPlayers}
@@ -1018,42 +1020,42 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
               </>
             ) : (
               /* Intermission Screen (between tournaments) */
-              <div className="bg-white border border-slate-200/80 rounded-[26px] p-6 text-center space-y-4 shadow-2xs">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-200/80 flex items-center justify-center text-3xl mx-auto shadow-2xs">
+              <div className="bg-[#1E2128] border border-white/10 rounded-[28px] p-6 text-center space-y-4 shadow-sm">
+                <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-3xl mx-auto shadow-xs">
                   ⏸️
                 </div>
                 <div>
-                  <h3 className="text-slate-900 font-extrabold text-lg">
+                  <h3 className="text-[#F3F4EE] font-black text-lg uppercase tracking-tight">
                     {allTournaments.length > 0 ? "Between Tournaments" : "Ready for Play"}
                   </h3>
-                  <p className="text-slate-500 text-xs mt-1 max-w-xs mx-auto">
+                  <p className="text-[#8E95A5] text-xs mt-1 max-w-xs mx-auto font-medium leading-relaxed">
                     {allTournaments.length > 0
-                      ? `Tournament #${allTournaments.length} has completed! Waiting for the scorekeeper to set up Tournament #${allTournaments.length + 1}.`
+                      ? `Tournament #${allTournaments.length} has concluded! Waiting for the scorekeeper to start Tournament #${allTournaments.length + 1}.`
                       : "Waiting for the scorekeeper to broadcast the first tournament of the session."}
                   </p>
                 </div>
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
-                  Live stream will auto-switch when next tournament starts
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#181B22] border border-white/10 text-[#9EC9A8] text-xs font-black uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-[#9EC9A8] animate-ping" />
+                  Auto-syncing next tournament
                 </div>
 
                 {/* Preview running Day Table */}
                 {dayStandings.length > 0 && (
                   <div className="pt-2 text-left">
-                    <p className="text-slate-400 text-[11px] font-extrabold uppercase tracking-wider mb-2">
+                    <p className="text-[#8E95A5] text-[10px] font-black uppercase tracking-wider mb-2">
                       Current Day Standings
                     </p>
                     <div className="space-y-1.5">
                       {dayStandings.slice(0, 4).map((s, idx) => (
                         <div
                           key={s.playerId}
-                          className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-200/60"
+                          className="flex items-center justify-between p-2.5 rounded-2xl bg-[#181B22] border border-white/5"
                         >
                           <div className="flex items-center gap-2">
-                            <span className="text-sm">{RANK_MEDALS[idx] ?? `${idx + 1}`}</span>
-                            <span className="text-xs font-bold text-slate-800">{s.name}</span>
+                            <span className="text-xs font-black text-[#8E95A5]">#{idx + 1}</span>
+                            <span className="text-xs font-bold text-[#F3F4EE]">{s.name}</span>
                           </div>
-                          <span className="text-xs font-black text-indigo-600">{s.points} pts</span>
+                          <span className="text-xs font-black text-[#F5BA38] tabular-nums">{s.points} pts</span>
                         </div>
                       ))}
                     </div>
@@ -1071,30 +1073,43 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="space-y-3.5"
+            className="space-y-3"
           >
             {/* Header Card */}
-            <div className="bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white border border-indigo-200/80 rounded-[26px] p-4 shadow-2xs">
+            <div className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-indigo-600 font-extrabold text-xs uppercase tracking-wider">
+                <span className="text-[#FF5E48] font-black text-[10px] uppercase tracking-wider">
                   Session Leaderboard
                 </span>
-                <span className="text-xs text-slate-400 font-medium">
+                <span className="text-[10px] text-[#8E95A5] font-black uppercase tracking-wider">
                   {allTournaments.length} Tournament{allTournaments.length !== 1 ? "s" : ""}
                 </span>
               </div>
-              <h2 className="text-slate-900 font-black text-xl">Cumulative Day Standings</h2>
-              <p className="text-slate-500 text-xs mt-1">
-                Points awarded across all tournaments played today. Top player wins the Day Trophy!
+              <h2 className="text-[#F3F4EE] font-black text-xl uppercase tracking-tight">Cumulative Standings</h2>
+              <p className="text-[#8E95A5] text-xs mt-1 font-semibold">
+                Points awarded across all tournaments today. Top player wins the Day Trophy!
               </p>
             </div>
 
-            {/* Standings List */}
+            {/* Standings List — Bold Tactile Color Slabs from reference image */}
             {dayStandings.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {dayStandings.map((standing, idx) => {
-                  const medal = RANK_MEDALS[idx] ?? `${idx + 1}`;
-                  const isLeader = idx === 0;
+                  // Style top 3 like reference mockup cards (1st Mustard, 2nd Coral, 3rd Periwinkle, 4th Inky)
+                  const isFirst = idx === 0;
+                  const isSecond = idx === 1;
+                  const isThird = idx === 2;
+
+                  const cardStyle = isFirst
+                    ? "bg-[#F5BA38] text-[#14161B] border-[#F5BA38] shadow-md"
+                    : isSecond
+                    ? "bg-[#FF5E48] text-white border-[#FF5E48] shadow-md"
+                    : isThird
+                    ? "bg-[#6C79E0] text-white border-[#6C79E0] shadow-sm"
+                    : "bg-[#1E2128] text-[#F3F4EE] border-white/10 shadow-sm";
+
+                  const numberColor = isFirst ? "text-[#14161B]" : "text-white";
+                  const subColor = isFirst ? "text-[#14161B]/70" : isSecond || isThird ? "text-white/80" : "text-[#8E95A5]";
 
                   return (
                     <motion.div
@@ -1102,49 +1117,47 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: idx * 0.04 }}
-                      className={`p-3.5 rounded-[22px] border transition-all flex items-center justify-between ${
-                        isLeader
-                          ? "bg-gradient-to-r from-amber-50/90 via-orange-50/40 to-white border-amber-300 shadow-2xs"
-                          : "bg-white border-slate-200/80 shadow-2xs"
-                      }`}
+                      className={`p-4 rounded-[26px] border transition-all flex items-center justify-between ${cardStyle}`}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-lg w-7 text-center">{medal}</span>
-                        <AvatarSVG
-                          type={standing.avatar}
-                          size={38}
-                          emoji={standing.avatarEmoji}
-                          color={standing.avatarColor}
-                        />
+                        <span className={`text-base font-black w-6 text-center tabular-nums ${numberColor}`}>
+                          #{idx + 1}
+                        </span>
+                        <div className="p-0.5 rounded-full bg-white/20">
+                          <AvatarSVG
+                            type={standing.avatar}
+                            size={40}
+                            emoji={standing.avatarEmoji}
+                            color={standing.avatarColor}
+                          />
+                        </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-slate-900 font-extrabold text-sm">{standing.name}</span>
-                            {isLeader && (
-                              <span className="text-[10px] bg-amber-100 text-amber-800 font-black px-1.5 py-0.2 rounded-full border border-amber-200">
+                            <span className="font-black text-sm uppercase tracking-tight">{standing.name}</span>
+                            {isFirst && (
+                              <span className="text-[9px] bg-[#14161B] text-[#F5BA38] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
                                 Leader 👑
                               </span>
                             )}
                           </div>
-                          <span className="text-slate-400 text-[10px] font-medium">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${subColor}`}>
                             Rank #{idx + 1}
                           </span>
                         </div>
                       </div>
 
                       <div className="text-right">
-                        <span className={`text-xl font-black block tabular-nums ${
-                          isLeader ? "text-amber-600" : "text-slate-900"
-                        }`}>
+                        <span className="text-2xl font-black block tabular-nums leading-none">
                           {standing.points}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">day pts</span>
+                        <span className={`text-[9px] font-black uppercase tracking-widest ${subColor}`}>day pts</span>
                       </div>
                     </motion.div>
                   );
                 })}
               </div>
             ) : (
-              <div className="bg-white border border-slate-200/80 rounded-[26px] p-6 text-center text-slate-400 text-xs shadow-2xs">
+              <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-6 text-center text-[#8E95A5] text-xs shadow-sm">
                 🏸 No tournament points finalized yet today. Once Tournament #1 finishes, overall day points will accumulate here!
               </div>
             )}
@@ -1161,8 +1174,8 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
             className="space-y-3"
           >
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-slate-900 font-extrabold text-sm">Tournaments Played Today</h3>
-              <span className="text-xs text-slate-400 font-medium">{allTournaments.length} Total</span>
+              <h3 className="text-[#8E95A5] font-black text-[10px] uppercase tracking-wider">Tournaments Played Today</h3>
+              <span className="text-[10px] text-[#8E95A5] font-bold uppercase tracking-wider">{allTournaments.length} Total</span>
             </div>
 
             {allTournaments.length > 0 ? (
@@ -1175,34 +1188,34 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                 return (
                   <div
                     key={t.id}
-                    className="bg-white border border-slate-200/80 rounded-[24px] overflow-hidden shadow-2xs transition-all"
+                    className="bg-[#1E2128] border border-white/10 rounded-[26px] overflow-hidden shadow-sm transition-all"
                   >
                     <button
                       onClick={() => setExpandedTournamentId(isExpanded ? null : t.id)}
-                      className="w-full p-4 flex items-center justify-between text-left cursor-pointer hover:bg-slate-50/70 transition-colors"
+                      className="w-full p-4 flex items-center justify-between text-left cursor-pointer hover:bg-white/5 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center text-sm font-black text-slate-700">
+                        <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-black text-[#F3F4EE]">
                           #{idx + 1}
                         </span>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-slate-900 font-extrabold text-sm">
+                            <span className="text-[#F3F4EE] font-black text-sm uppercase tracking-tight">
                               Tournament #{idx + 1}
                             </span>
                             {isLive ? (
-                              <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.2 rounded-full font-bold flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              <span className="text-[10px] bg-[#9EC9A8]/15 text-[#9EC9A8] border border-[#9EC9A8]/30 px-2 py-0.2 rounded-full font-black uppercase tracking-wider flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#9EC9A8] animate-pulse" />
                                 Live Now
                               </span>
                             ) : (
-                              <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.2 rounded-full font-bold">
-                                ✓ Completed
+                              <span className="text-[10px] bg-white/10 text-[#8E95A5] px-2 py-0.2 rounded-full font-black uppercase tracking-wider">
+                                ✓ Done
                               </span>
                             )}
                           </div>
                           {winnerPlayer && !isLive && (
-                            <p className="text-amber-700 text-xs font-semibold mt-0.5 flex items-center gap-1">
+                            <p className="text-[#F5BA38] text-xs font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1">
                               <span>🏆</span>
                               <span>Winner: {winnerPlayer.name} ({winnerRow.dayPoints ?? winnerRow.points} pts)</span>
                             </p>
@@ -1210,18 +1223,18 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                         </div>
                       </div>
 
-                      <span className="text-slate-400 text-xs font-bold">
+                      <span className="text-[#8E95A5] text-xs font-black uppercase tracking-wider">
                         {isExpanded ? "▲ Hide" : "▼ View"}
                       </span>
                     </button>
 
-                    {/* Expanded details: Tournament standings table */}
+                    {/* Expanded details */}
                     {isExpanded && (
-                      <div className="px-4 pb-4 pt-1 border-t border-slate-100 bg-slate-50/50">
+                      <div className="px-4 pb-4 pt-1 border-t border-white/5 bg-[#181B22]">
                         {t.final && t.final.played && (
-                          <div className="mb-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-xs flex items-center justify-between">
-                            <span className="text-amber-800 font-bold">Grand Final:</span>
-                            <span className="text-slate-800 font-bold">
+                          <div className="mb-3 p-3 rounded-2xl bg-[#1E2128] border border-white/5 text-xs flex items-center justify-between">
+                            <span className="text-[#F5BA38] font-black uppercase tracking-wider">Grand Final:</span>
+                            <span className="text-[#F3F4EE] font-bold">
                               {getPlayer(t.final.playerA, allPlayers).name} {t.final.scoreA} – {t.final.scoreB} {getPlayer(t.final.playerB, allPlayers).name}
                             </span>
                           </div>
@@ -1243,7 +1256,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                 );
               })
             ) : (
-              <div className="bg-white border border-slate-200/80 rounded-[26px] p-6 text-center text-slate-400 text-xs shadow-2xs">
+              <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-6 text-center text-[#8E95A5] text-xs shadow-sm">
                 No tournaments recorded yet today.
               </div>
             )}
@@ -1252,9 +1265,9 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-200/80 text-center text-slate-400 text-[11px] flex items-center justify-between">
+      <div className="p-4 border-t border-white/10 text-center text-[#8E95A5] text-[10px] font-bold uppercase tracking-wider flex items-center justify-between">
         <span>🏸 Badminton Live Court</span>
-        <span>Auto-syncing courtside stream</span>
+        <span>Auto-syncing stream</span>
       </div>
     </div>
   );
