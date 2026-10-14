@@ -307,7 +307,7 @@ export default function DayPage() {
                   👑
                 </div>
                 <h3 className="text-slate-900 font-black text-xl">Crown Day Champions</h3>
-                <p className="text-slate-400 text-xs font-medium">Finish session for {dayTable.date}</p>
+                <p className="text-slate-400 text-xs font-medium">Finish session for {formatDateDDMMYY(dayTable.date)}</p>
               </div>
 
               {/* Honors Preview */}
