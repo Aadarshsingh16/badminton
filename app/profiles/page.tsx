@@ -17,6 +17,7 @@ import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
 import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
+import { formatDateDDMMYY } from "@/lib/dateUtils";
 
 interface PlayerLore {
   id: string;
@@ -1865,7 +1866,7 @@ export default function ProfilesPage() {
                                     className="fill-slate-400 font-mono"
                                     style={{ fontSize: "7px", fontWeight: 700 }}
                                   >
-                                    {pt.date.length > 5 ? pt.date.slice(-5) : pt.date}
+                                    {formatDateDDMMYY(pt.date)}
                                   </text>
                                 </g>
                               ))}
