@@ -2882,12 +2882,12 @@ export default function HistoryPage() {
                 </div>
                 <div>
                   <h2 className="text-base font-extrabold text-slate-900">Delete Day Table?</h2>
-                  <p className="text-[11px] text-slate-400 font-medium">{dayToDelete}</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{formatDateDDMMYY(dayToDelete)}</p>
                 </div>
               </div>
 
               <p className="text-xs text-slate-500 leading-relaxed">
-                This will permanently delete the day table, all tournaments, matches, and day champions for {dayToDelete}.
+                This will permanently delete the day table, all tournaments, matches, and day champions for {formatDateDDMMYY(dayToDelete)}.
               </p>
 
               <div className="flex gap-2.5 pt-2">
