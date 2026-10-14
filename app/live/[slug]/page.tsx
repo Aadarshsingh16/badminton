@@ -12,6 +12,7 @@ import { useStore, getLocalDateString } from "@/lib/store";
 import { computeTournamentTable } from "@/lib/ranking";
 import { setViewerSlug, clearViewerMode } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
+import { formatDateDDMMYY } from "@/lib/dateUtils";
 import Link from "next/link";
 
 interface DayStandingItem {
