@@ -1023,9 +1023,13 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                   ⏸️
                 </div>
                 <div>
-                  <h3 className="text-slate-900 font-extrabold text-lg">Between Tournaments</h3>
+                  <h3 className="text-slate-900 font-extrabold text-lg">
+                    {allTournaments.length > 0 ? "Between Tournaments" : "Ready for Play"}
+                  </h3>
                   <p className="text-slate-500 text-xs mt-1 max-w-xs mx-auto">
-                    Tournament #{allTournaments.length} has completed! Waiting for the scorekeeper to set up Tournament #{allTournaments.length + 1}.
+                    {allTournaments.length > 0
+                      ? `Tournament #${allTournaments.length} has completed! Waiting for the scorekeeper to set up Tournament #${allTournaments.length + 1}.`
+                      : "Waiting for the scorekeeper to broadcast the first tournament of the session."}
                   </p>
                 </div>
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-semibold">
