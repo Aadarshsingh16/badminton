@@ -492,7 +492,15 @@ export default function HistoryPage() {
 
     const days: DayGroup[] = Object.entries(daysMap)
       .sort(([a], [b]) => b.localeCompare(a))
-      .map(([date, tournaments]) => ({ date, tournaments }));
+      .map(([date, tournaments]) => ({
+        date,
+        tournaments: [...tournaments].sort((t1, t2) => {
+          const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
+          const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
+          if (idx1 !== -1 && idx2 !== -1) return idx2 - idx1;
+          return 0;
+        }),
+      }));
 
     const miniLeaderboard = players
       .map((p) => {
