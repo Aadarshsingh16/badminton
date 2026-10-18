@@ -2,6 +2,7 @@
 // app/page.tsx — Play tab: context-aware screen (player-select → setup → fixtures/table → final → summary)
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStore, FIXED_PLAYERS, getLocalDateString } from "@/lib/store";
 import { computeTournamentTable } from "@/lib/ranking";
