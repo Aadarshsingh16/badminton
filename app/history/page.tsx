@@ -29,9 +29,12 @@ const KNOWN_TOURNEY_ORDER = [
   "cvn6q9vimv3q3d9v", // Oct 11 T1
   "jmvuh9gsmv3rfkru", // Oct 11 T2
   "5h4w6113mv3sa2qu", // Oct 11 T3
+  "pphuektzmvdq6x52", // Oct 18 T1
+  "3prxyal7mvdsckif", // Oct 18 T2
 ];
 
 const KNOWN_DAY_TOTALS: Record<string, Record<string, number>> = {
+  "2026-10-18": { gautam: 14, akshat: 10, harsh: 10, adarsh: 8, anirudh: 5, sajal: 4, udbhaw: 4 },
   "2026-10-11": { akshat: 12, harsh: 10, adarsh: 9, gautam: 9, sajal: 5 },
   "2026-10-10": { akshat: 11, gautam: 11, harsh: 11, sajal: 8, adarsh: 7, anirudh: 6, udbhaw: 2 },
 };
@@ -142,7 +145,7 @@ interface DayHonors {
 }
 
 export default function HistoryPage() {
-  const { players, dayTable, currentTournament, pastTournaments, completedDays, appRole } = useStore();
+  const { players, dayTable, currentTournament, pastTournaments, completedDays, appRole, clearAppSession } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<"log" | "leaderboards">("log");
   const [rangeFilter, setRangeFilter] = useState<"day" | "week" | "month" | "all">("all");
   const [playerFilter, setPlayerFilter] = useState<string>("all");
@@ -1662,6 +1665,19 @@ export default function HistoryPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {appRole === "admin" && (
+            <button
+              onClick={() => {
+                clearAppSession();
+                clearViewerMode();
+              }}
+              title="Logout from Admin"
+              className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#FF5E48]/20 text-[#8E95A5] hover:text-[#FF5E48] border border-white/10 hover:border-[#FF5E48]/30 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer"
+            >
+              <span>👑</span>
+              <span>Logout</span>
+            </button>
+          )}
           {/* Smooth Filter Menu Trigger */}
           {activeSubTab === "log" && (
             <button

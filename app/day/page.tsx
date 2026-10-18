@@ -22,7 +22,7 @@ const PODIUM_COLORS = ["#D97706", "#475569", "#C2410C", "#64748B"];
 const RANK_MEDAL = ["🥇", "🥈", "🥉", "4th", "5th", "6th", "7th"];
 
 export default function DayPage() {
-  const { players, dayTable, currentTournament, pastTournaments, startNewDay, resetDayTable, appRole } = useStore();
+  const { players, dayTable, currentTournament, pastTournaments, startNewDay, resetDayTable, appRole, clearAppSession } = useStore();
   const [isViewer, setIsViewer] = useState(false);
   const [viewerSlug, setViewerSlugState] = useState<string | null>(null);
 
@@ -79,13 +79,26 @@ export default function DayPage() {
     return players.find((p) => p.id === targetId || p.id === id) ?? { id, name: id, avatar: "custom" as any };
   };
 
-  // Combine past tournaments + recovered tournaments + cloud fallback tournaments
+  // Combine past tournaments + recovered tournaments + cloud fallback tournaments for the current day
   const effectiveTournaments = useMemo<Tournament[]>(() => {
     const deletedIds = getDeletedTournamentIds();
-    let list = pastTournaments.filter((t) => !deletedIds.has(t.id));
+    const currentDate = dayTable.date || new Date().toISOString().split("T")[0];
+    let list = pastTournaments.filter(
+      (t) =>
+        !deletedIds.has(t.id) &&
+        (dayTable.tournaments.includes(t.id) ||
+          (t.date || (t.createdAt && new Date(t.createdAt).toISOString().split("T")[0])) === currentDate)
+    );
     if (list.length === 0) {
       const rec = recoverTournamentsFromSyncQueue();
-      if (rec.length > 0) list = rec.filter((t) => !deletedIds.has(t.id));
+      if (rec.length > 0) {
+        list = rec.filter(
+          (t) =>
+            !deletedIds.has(t.id) &&
+            (dayTable.tournaments.includes(t.id) ||
+              (t.date || (t.createdAt && new Date(t.createdAt).toISOString().split("T")[0])) === currentDate)
+        );
+      }
     }
 
     if (list.length === 0 && cloudDayData?.tournaments && cloudDayData.tournaments.length > 0) {
@@ -121,7 +134,7 @@ export default function DayPage() {
     }
 
     return list;
-  }, [pastTournaments, cloudDayData]);
+  }, [pastTournaments, dayTable.tournaments, dayTable.date, cloudDayData]);
 
   // Sort players by cumulative day points (derive directly from completed tournaments or cloud day totals)
   const sortedPlayers = useMemo(() => {
@@ -284,6 +297,19 @@ export default function DayPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {appRole === "admin" && (
+              <button
+                onClick={() => {
+                  clearAppSession();
+                  clearViewerMode();
+                }}
+                title="Logout from Admin"
+                className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#FF5E48]/20 text-[#8E95A5] hover:text-[#FF5E48] border border-white/10 hover:border-[#FF5E48]/30 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer"
+              >
+                <span>👑</span>
+                <span>Logout</span>
+              </button>
+            )}
             <button
               onClick={() => setShowShareModal(true)}
               title="Share day live stream"
