@@ -1106,6 +1106,12 @@ export const useStore = create<AppState>()(
         if (state) {
           state.isScoreSheetOpen = false;
 
+          // Session expiration check (5-6 hours TTL)
+          if (isSessionExpired(state.sessionCreatedAt)) {
+            state.appRole = null;
+            state.sessionCreatedAt = null;
+          }
+
           // Ensure all fixed players (including Sajal) are present in state.players
           const existingIds = new Set((state.players || []).map((p) => p.id));
           const playersToAdd: Player[] = [];
@@ -1123,35 +1129,96 @@ export const useStore = create<AppState>()(
             (p) => !SAJAL_ALIASES.has(p.id) && !(p.name.toLowerCase() === "sajal" && p.id !== "sajal")
           );
 
+          const oct18TourneyIds = new Set(["pphuektzmvdq6x52", "3prxyal7mvdsckif"]);
+          const oct11TourneyIds = new Set(["cvn6q9vimv3q3d9v", "jmvuh9gsmv3rfkru", "5h4w6113mv3sa2qu"]);
+
           // Migrate pastTournaments
           if (state.pastTournaments && state.pastTournaments.length > 0) {
-            state.pastTournaments = state.pastTournaments.map(migrateTournamentData);
+            state.pastTournaments = state.pastTournaments.map((t) => {
+              const mig = migrateTournamentData(t);
+              if (oct18TourneyIds.has(mig.id)) {
+                return { ...mig, date: "2026-10-18" };
+              }
+              if (oct11TourneyIds.has(mig.id)) {
+                return { ...mig, date: "2026-10-11" };
+              }
+              return mig;
+            });
             try {
               localStorage.setItem("badminton_archived_tournaments_v1", JSON.stringify(state.pastTournaments));
             } catch {}
           } else {
             const recovered = recoverTournamentsFromSyncQueue();
             if (recovered.length > 0) {
-              state.pastTournaments = recovered;
+              state.pastTournaments = recovered.map((t) => {
+                if (oct18TourneyIds.has(t.id)) return { ...t, date: "2026-10-18" };
+                if (oct11TourneyIds.has(t.id)) return { ...t, date: "2026-10-11" };
+                return t;
+              });
             }
           }
 
           // Migrate completedDays
+          // Note: 18th Oct is explicitly not finished yet by the user, so remove any premature 18th Oct entry
           if (state.completedDays && state.completedDays.length > 0) {
-            state.completedDays = state.completedDays.map(migrateCompletedDayData);
+            state.completedDays = state.completedDays
+              .filter((cd) => cd.date !== "2026-10-18")
+              .map((cd) => {
+                const mig = migrateCompletedDayData(cd);
+                if (mig.date === "2026-10-11") {
+                  return {
+                    ...mig,
+                    totals: { akshat: 12, harsh: 10, adarsh: 9, gautam: 9, sajal: 5 },
+                    topPlayerId: "akshat",
+                    spoonPlayerId: "sajal",
+                    tournamentIds: ["cvn6q9vimv3q3d9v", "jmvuh9gsmv3rfkru", "5h4w6113mv3sa2qu"],
+                  };
+                }
+                return mig;
+              });
             try {
               localStorage.setItem("badminton_completed_days_v1", JSON.stringify(state.completedDays));
             } catch {}
           } else {
             const recoveredDays = recoverCompletedDaysFromSyncQueue();
             if (recoveredDays.length > 0) {
-              state.completedDays = recoveredDays;
+              state.completedDays = recoveredDays
+                .filter((cd) => cd.date !== "2026-10-18")
+                .map((cd) => {
+                  if (cd.date === "2026-10-11") {
+                    return {
+                      ...cd,
+                      totals: { akshat: 12, harsh: 10, adarsh: 9, gautam: 9, sajal: 5 },
+                      topPlayerId: "akshat",
+                      spoonPlayerId: "sajal",
+                      tournamentIds: ["cvn6q9vimv3q3d9v", "jmvuh9gsmv3rfkru", "5h4w6113mv3sa2qu"],
+                    };
+                  }
+                  return cd;
+                });
             }
           }
 
           // Migrate dayTable
           if (state.dayTable) {
             state.dayTable = migrateDayTableData(state.dayTable);
+            if (state.dayTable.date === "2026-10-11") {
+              state.dayTable.tournaments = (state.dayTable.tournaments || []).filter(
+                (id) => !oct18TourneyIds.has(id)
+              );
+              state.dayTable.totals = { akshat: 12, harsh: 10, adarsh: 9, gautam: 9, sajal: 5 };
+            } else if (state.dayTable.date === "2026-10-18") {
+              state.dayTable.tournaments = ["pphuektzmvdq6x52", "3prxyal7mvdsckif"];
+              state.dayTable.totals = {
+                gautam: 14,
+                akshat: 10,
+                harsh: 10,
+                adarsh: 8,
+                anirudh: 5,
+                sajal: 4,
+                udbhaw: 4,
+              };
+            }
           }
 
           // Migrate currentTournament if active
