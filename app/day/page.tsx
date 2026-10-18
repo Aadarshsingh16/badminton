@@ -13,7 +13,7 @@ import { PinModal } from "@/components/PinModal";
 import { ShareModal } from "@/components/ShareModal";
 import { apiSync } from "@/lib/apiSync";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
-import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
+import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
 import { formatDateDDMMYY } from "@/lib/dateUtils";
 

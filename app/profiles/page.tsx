@@ -248,7 +248,7 @@ const KNOWN_TOURNEY_ORDER = [
 
 
 export default function ProfilesPage() {
-  const { players, pastTournaments, currentTournament, completedDays, dayTable, appRole } = useStore();
+  const { players, pastTournaments, currentTournament, completedDays, dayTable, appRole, clearAppSession } = useStore();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(FIXED_PLAYERS[0]?.id || "adarsh");
   const [activeProfileTab, setActiveProfileTab] = useState<"dossier" | "vibes" | "stats">("dossier");
   const [activeMoodTab, setActiveMoodTab] = useState<"courtMood" | "dailyRoast" | "excuse">("courtMood");
@@ -1169,22 +1169,37 @@ export default function ProfilesPage() {
               Scouting dossiers, personality roasts &amp; career stats
             </p>
           </div>
-          {isViewer && viewerSlug ? (
-            <Link
-              href={`/live/${viewerSlug}`}
-              className="text-xs bg-[#FF5E48] hover:bg-[#ff462e] text-white font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 shadow-sm"
-            >
-              <span>🏸 Stream</span>
-            </Link>
-          ) : (
-            <Link
-              href="/history"
-              className="text-xs bg-[#1E2128] border border-white/10 text-white/80 font-bold px-3 py-1.5 rounded-full hover:bg-white/10 transition-all flex items-center gap-1.5 shadow-xs"
-            >
-              <span>📊</span>
-              <span>Logs</span>
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            {appRole === "admin" && (
+              <button
+                onClick={() => {
+                  clearAppSession();
+                  clearViewerMode();
+                }}
+                title="Logout from Admin"
+                className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#FF5E48]/20 text-[#8E95A5] hover:text-[#FF5E48] border border-white/10 hover:border-[#FF5E48]/30 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer"
+              >
+                <span>👑</span>
+                <span>Logout</span>
+              </button>
+            )}
+            {isViewer && viewerSlug ? (
+              <Link
+                href={`/live/${viewerSlug}`}
+                className="text-xs bg-[#FF5E48] hover:bg-[#ff462e] text-white font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                <span>🏸 Stream</span>
+              </Link>
+            ) : (
+              <Link
+                href="/history"
+                className="text-xs bg-[#1E2128] border border-white/10 text-white/80 font-bold px-3 py-1.5 rounded-full hover:bg-white/10 transition-all flex items-center gap-1.5 shadow-xs"
+              >
+                <span>📊</span>
+                <span>Logs</span>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
