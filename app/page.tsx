@@ -48,6 +48,8 @@ export default function PlayPage() {
     shuffleFixtures,
     cancelTournament,
     setPhase,
+    appRole,
+    clearAppSession,
   } = useStore();
 
   const [fixtureTab, setFixtureTab] = useState<FixtureTab>("fixtures");
@@ -210,6 +212,19 @@ export default function PlayPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              {appRole === "admin" && (
+                <button
+                  onClick={() => {
+                    clearAppSession();
+                    clearViewerMode();
+                  }}
+                  title="Logout from Admin"
+                  className="px-3 py-2 rounded-full bg-[#1E2128] hover:bg-[#FF5E48]/20 text-[#8E95A5] hover:text-[#FF5E48] border border-white/10 hover:border-[#FF5E48]/30 transition-all active:scale-95 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider cursor-pointer"
+                >
+                  <span>👑</span>
+                  <span>Logout</span>
+                </button>
+              )}
               <button
                 onClick={() => setShowShareModal(true)}
                 title="Share today's live stream"
@@ -541,6 +556,19 @@ export default function PlayPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {appRole === "admin" && (
+                <button
+                  onClick={() => {
+                    clearAppSession();
+                    clearViewerMode();
+                  }}
+                  title="Logout from Admin"
+                  className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#FF5E48]/20 text-[#8E95A5] hover:text-[#FF5E48] border border-white/10 hover:border-[#FF5E48]/30 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer"
+                >
+                  <span>👑</span>
+                  <span>Logout</span>
+                </button>
+              )}
               <button
                 onClick={() => {
                   setPinIsInvalid(false);
