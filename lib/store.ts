@@ -139,6 +139,9 @@ export function migrateCompletedDayData(cd: CompletedDaySummary): CompletedDaySu
   } else if (migrated.date === "2026-10-11") {
     migrated.topPlayerId = "akshat";
     migrated.spoonPlayerId = "sajal";
+  } else if (migrated.date === "2026-10-18") {
+    migrated.topPlayerId = "gautam";
+    migrated.spoonPlayerId = "sajal";
   } else {
     if (migrated.topPlayerId) migrated.topPlayerId = normalizePlayerId(migrated.topPlayerId);
     if (migrated.spoonPlayerId) migrated.spoonPlayerId = normalizePlayerId(migrated.spoonPlayerId);
@@ -459,6 +462,9 @@ export function recoverCompletedDaysFromSyncQueue(): CompletedDaySummary[] {
                 spoonPlayerId = "udbhaw";
               } else if (date === "2026-10-11") {
                 topPlayerId = "akshat";
+                spoonPlayerId = "sajal";
+              } else if (date === "2026-10-18") {
+                topPlayerId = "gautam";
                 spoonPlayerId = "sajal";
               } else {
                 const sorted = Object.entries(totals).sort(([, a]: any, [, b]: any) => b - a);
@@ -1005,6 +1011,9 @@ export const useStore = create<AppState>()(
             spoonPlayerId = "udbhaw";
           } else if (dayTable.date === "2026-10-11") {
             topPlayerId = "akshat";
+            spoonPlayerId = "sajal";
+          } else if (dayTable.date === "2026-10-18") {
+            topPlayerId = "gautam";
             spoonPlayerId = "sajal";
           } else {
             const sorted = Object.entries(finalTotals).sort(([, a], [, b]) => b - a);

@@ -136,8 +136,37 @@ export default function DayPage() {
     return list;
   }, [pastTournaments, dayTable.tournaments, dayTable.date, cloudDayData]);
 
-  // Sort players by cumulative day points (derive directly from completed tournaments or cloud day totals)
+  // Helper to get tiebreak stats (wins, pointDiff) across effectiveTournaments
+  const playerDayStats = useMemo(() => {
+    const stats: Record<string, { wins: number; pointDiff: number }> = {};
+    for (const t of effectiveTournaments) {
+      const allMatches = [...(t.matches || [])];
+      if (t.final && t.final.played) allMatches.push(t.final);
+      for (const m of allMatches) {
+        if (!m.played || m.scoreA === undefined || m.scoreB === undefined) continue;
+        const pA = normalizePlayerId(m.playerA);
+        const pB = normalizePlayerId(m.playerB);
+        if (!stats[pA]) stats[pA] = { wins: 0, pointDiff: 0 };
+        if (!stats[pB]) stats[pB] = { wins: 0, pointDiff: 0 };
+        stats[pA].pointDiff += m.scoreA - m.scoreB;
+        stats[pB].pointDiff += m.scoreB - m.scoreA;
+        if (m.scoreA > m.scoreB) stats[pA].wins += 1;
+        if (m.scoreB > m.scoreA) stats[pB].wins += 1;
+      }
+    }
+    return stats;
+  }, [effectiveTournaments]);
+
+  // Sort players by cumulative day points with standard sports tiebreakers (wins, pointDiff)
   const sortedPlayers = useMemo(() => {
+    const tiebreakCompare = (idA: string, ptsA: number, idB: string, ptsB: number) => {
+      if (ptsB !== ptsA) return ptsB - ptsA;
+      const sA = playerDayStats[idA] || { wins: 0, pointDiff: 0 };
+      const sB = playerDayStats[idB] || { wins: 0, pointDiff: 0 };
+      if (sB.wins !== sA.wins) return sB.wins - sA.wins;
+      return sB.pointDiff - sA.pointDiff;
+    };
+
     // 1. Backend is the true source of truth. If we have cloud totals, use them directly.
     const backendTotals = cloudDayData?.totals || {};
     if (Object.keys(backendTotals).length > 0) {
@@ -147,7 +176,7 @@ export default function DayPage() {
         merged[targetId] = (merged[targetId] || 0) + (pts as number);
       }
       return Object.entries(merged)
-        .sort(([, a], [, b]) => (b as number) - (a as number))
+        .sort(([idA, a], [idB, b]) => tiebreakCompare(idA, a as number, idB, b as number))
         .map(([id, pts], idx) => ({ id, pts: pts as number, rank: idx + 1 }));
     }
 
@@ -164,7 +193,7 @@ export default function DayPage() {
         });
       }
       return Object.entries(computedTotals)
-        .sort(([, a], [, b]) => b - a)
+        .sort(([idA, a], [idB, b]) => tiebreakCompare(idA, a, idB, b))
         .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
     }
 
@@ -176,12 +205,12 @@ export default function DayPage() {
         merged[targetId] = (merged[targetId] || 0) + pts;
       }
       return Object.entries(merged)
-        .sort(([, a], [, b]) => b - a)
+        .sort(([idA, a], [idB, b]) => tiebreakCompare(idA, a, idB, b))
         .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
     }
 
     return [];
-  }, [effectiveTournaments, dayTable.totals, cloudDayData]);
+  }, [effectiveTournaments, dayTable.totals, cloudDayData, playerDayStats]);
 
   const hasTournaments = effectiveTournaments.length > 0;
   const hasData = sortedPlayers.length > 0;
