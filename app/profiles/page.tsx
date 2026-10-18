@@ -15,7 +15,7 @@ import {
 import { computeDayPoints } from "@/lib/ranking";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
-import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
+import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
 import { formatDateDDMMYY } from "@/lib/dateUtils";
 

@@ -19,7 +19,7 @@ import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
 import { PinModal } from "@/components/PinModal";
 import { apiSync } from "@/lib/apiSync";
-import { isViewerMode, getViewerSlug } from "@/lib/viewerMode";
+import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
 import { formatDateDDMMYY } from "@/lib/dateUtils";
 
