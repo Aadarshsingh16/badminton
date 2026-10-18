@@ -81,6 +81,15 @@ export default function PlayPage() {
     });
   }, []);
 
+  const router = useRouter();
+
+  // Redirect viewer role to Day Table page since Play is for admin scorekeeping
+  React.useEffect(() => {
+    if (appRole === "viewer") {
+      router.replace("/day");
+    }
+  }, [appRole, router]);
+
   const ensurePin = (action: () => void) => {
     if (currentTournament?.isPractice) {
       action();
