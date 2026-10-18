@@ -160,10 +160,18 @@ export function migrateDayTableData(dt: DayTable): DayTable {
   return migrated;
 }
 
+export const SESSION_TTL_MS = 5 * 60 * 60 * 1000; // 5 hours
+
+export function isSessionExpired(sessionCreatedAt: number | null | undefined): boolean {
+  if (!sessionCreatedAt) return true;
+  return Date.now() - sessionCreatedAt > SESSION_TTL_MS;
+}
+
 interface AppState {
   // Session
   appRole: AppRole;
   appDate: string | null;
+  sessionCreatedAt: number | null;
   setAppSession: (role: AppRole, date: string) => void;
   clearAppSession: () => void;
 
