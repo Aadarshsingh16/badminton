@@ -493,17 +493,41 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       appRole: null,
       appDate: null,
+      sessionCreatedAt: null,
       setAppSession: (role, date) => {
-        set((s) => ({
-          appRole: role,
-          appDate: date,
-          dayTable: {
-            ...s.dayTable,
-            date: date,
-          },
-        }));
+        set((s) => {
+          const sessionCreatedAt = Date.now();
+          const tournamentsForDate = (s.pastTournaments || []).filter(
+            (t) =>
+              !t.isPractice &&
+              (t.date === date ||
+                (t.createdAt && new Date(t.createdAt).toISOString().split("T")[0] === date))
+          );
+          const totals: Record<string, number> = {};
+          for (const t of tournamentsForDate) {
+            const ptsMap = t.dayPointsAwarded ?? computeDayPoints(t);
+            for (const [pid, pts] of Object.entries(ptsMap)) {
+              totals[pid] = (totals[pid] ?? 0) + pts;
+            }
+          }
+          return {
+            appRole: role,
+            appDate: date,
+            sessionCreatedAt,
+            dayTable: {
+              date: date,
+              tournaments: tournamentsForDate.map((t) => t.id),
+              totals: totals,
+            },
+          };
+        });
       },
-      clearAppSession: () => set({ appRole: null, appDate: null }),
+      clearAppSession: () => {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("scorekeeper_pin");
+        }
+        set({ appRole: null, appDate: null, sessionCreatedAt: null });
+      },
 
       players: FIXED_PLAYERS,
       selectedPlayerIds: [],
