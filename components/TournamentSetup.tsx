@@ -1,12 +1,16 @@
-"use client";
-// components/TournamentSetup.tsx — Pre-tournament config screen (scoring rules & tournament format)
-
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { TournamentConfig, DEFAULT_CONFIG, TournamentFormat, Player } from "@/lib/types";
-import { useStore } from "@/lib/store";
+import { useStore, normalizePlayerId } from "@/lib/store";
 import { AvatarSVG } from "./avatars/AvatarSVG";
 import { computePlayerByeCounts } from "@/lib/ranking";
+import { getBackendUrl } from "@/lib/backend";
+
+const HISTORICAL_TOTALS: { [date: string]: { [pid: string]: number } } = {
+  "2026-10-10": { harsh: 11, sajal: 8, adarsh: 7, akshat: 11, gautam: 11, udbhaw: 2, anirudh: 6 },
+  "2026-10-11": { harsh: 10, sajal: 5, adarsh: 9, akshat: 12, gautam: 9 },
+  "2026-10-18": { harsh: 10, sajal: 4, adarsh: 8, akshat: 10, gautam: 14, udbhaw: 4, anirudh: 5 },
+};
 
 interface TournamentSetupProps {
   playerCount: number;
