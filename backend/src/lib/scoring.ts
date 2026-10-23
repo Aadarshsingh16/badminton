@@ -1,6 +1,7 @@
 // backend/src/lib/scoring.ts — Ported from frontend lib/scoring.ts
 
 export interface TournamentConfig {
+  format?: "round-robin" | "double-elimination";
   winScore: number;
   bonusMargin: number;
   winPoints: number;
@@ -10,9 +11,12 @@ export interface TournamentConfig {
   finalWinBase: number;
   finalWinBonus: number;
   finalLoserPenalty: number;
+  deciderWinScore?: number;
+  upperByePlayerId?: string;
 }
 
 export const DEFAULT_CONFIG: TournamentConfig = {
+  format: "round-robin",
   winScore: 5,
   bonusMargin: 4,
   winPoints: 2,
@@ -22,6 +26,7 @@ export const DEFAULT_CONFIG: TournamentConfig = {
   finalWinBase: 2,
   finalWinBonus: 0,
   finalLoserPenalty: -1,
+  deciderWinScore: 3,
 };
 
 /**

@@ -292,7 +292,7 @@ export function TournamentSetup({
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#14161B] border border-white/10 flex-shrink-0 flex items-center justify-center">
-                        <AvatarSVG avatar={player.avatar} size={40} />
+                        <AvatarSVG type={player.avatar} size={40} emoji={player.avatarEmoji} color={player.avatarColor} />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">

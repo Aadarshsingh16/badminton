@@ -1,6 +1,6 @@
 // lib/fixtures.ts — Round-robin fixture generation using the circle method
 
-import { Match } from "./types";
+import { Match, Tournament, TournamentConfig } from "./types";
 
 function makeMatch(round: number, playerA: string, playerB: string, matchIndex: number): Match {
   // Alternate court sides based on round + match index

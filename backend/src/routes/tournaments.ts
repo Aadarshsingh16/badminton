@@ -16,6 +16,132 @@ export function computeTable(matches: any[], playerIds: string[], config: Tourna
     stats[id] = { points: 0, wins: 0, matchesPlayed: 0, pointDiff: 0 };
   }
 
+  // Double elimination table computation
+  if (config?.format === "double-elimination") {
+    for (const m of matches) {
+      const pA = m.playerA || m.player_a;
+      const pB = m.playerB || m.player_b;
+      const sA = m.scoreA ?? m.score_a;
+      const sB = m.scoreB ?? m.score_b;
+      if (!m.played || sA === null || sB === null || sA === undefined || sB === undefined) continue;
+
+      if (!stats[pA]) stats[pA] = { points: 0, wins: 0, matchesPlayed: 0, pointDiff: 0 };
+      if (!stats[pB]) stats[pB] = { points: 0, wins: 0, matchesPlayed: 0, pointDiff: 0 };
+
+      stats[pA].matchesPlayed++;
+      stats[pB].matchesPlayed++;
+      stats[pA].pointDiff += sA - sB;
+      stats[pB].pointDiff += sB - sA;
+      if (sA > sB) stats[pA].wins++;
+      if (sB > sA) stats[pB].wins++;
+      stats[pA].points += sA > sB ? (config.winPoints ?? 2) : 0;
+      stats[pB].points += sB > sA ? (config.winPoints ?? 2) : 0;
+    }
+
+    const rankMap: { [pid: string]: number } = {};
+    const dayPointsMap: { [pid: string]: number } = {};
+
+    const findM = (key: string) =>
+      matches.find(
+        (m) =>
+          (m.id === `de-${key.toLowerCase()}` ||
+            m.bracketRound === key ||
+            m.bracket_round === key) &&
+          m.played
+      );
+
+    const gf = findM("GF") || matches.find((m) => (m.isFinal || m.is_final) && m.played);
+    const lf = findM("LF");
+    const lr3 = findM("LR3");
+    const p56 = findM("P56");
+    const p78 = findM("P78");
+    const lr1 = findM("LR1");
+
+    const getW = (m: any) => {
+      if (!m) return null;
+      const pA = m.playerA || m.player_a;
+      const pB = m.playerB || m.player_b;
+      const sA = m.scoreA ?? m.score_a;
+      const sB = m.scoreB ?? m.score_b;
+      return sA > sB ? pA : pB;
+    };
+    const getL = (m: any) => {
+      if (!m) return null;
+      const pA = m.playerA || m.player_a;
+      const pB = m.playerB || m.player_b;
+      const sA = m.scoreA ?? m.score_a;
+      const sB = m.scoreB ?? m.score_b;
+      return sA > sB ? pB : pA;
+    };
+
+    const gfW = getW(gf);
+    const gfL = getL(gf);
+    const lfL = getL(lf);
+    const lr3L = getL(lr3);
+    const p56W = getW(p56);
+    const p56L = getL(p56);
+    const p78W = getW(p78);
+    const p78L = getL(p78);
+    const lr1L = getL(lr1);
+
+    const gfMargin = gf ? Math.abs((gf.scoreA ?? gf.score_a) - (gf.scoreB ?? gf.score_b)) : 0;
+    const gfPenalty = gfMargin >= (config.finalBonusMargin ?? DEFAULT_CONFIG.finalBonusMargin);
+
+    const lfMargin = lf ? Math.abs((lf.scoreA ?? lf.score_a) - (lf.scoreB ?? lf.score_b)) : 0;
+    const lfPenalty = lfMargin >= (config.bonusMargin ?? DEFAULT_CONFIG.bonusMargin);
+
+    if (N === 8) {
+      if (gfW) { rankMap[gfW] = 1; dayPointsMap[gfW] = 8; }
+      if (gfL) { rankMap[gfL] = 2; dayPointsMap[gfL] = gfPenalty ? 6 : 7; }
+      if (lfL) { rankMap[lfL] = 3; dayPointsMap[lfL] = lfPenalty ? 5 : 6; }
+      if (lr3L) { rankMap[lr3L] = 4; dayPointsMap[lr3L] = 5; }
+      if (p56W) { rankMap[p56W] = 5; dayPointsMap[p56W] = 4; }
+      if (p56L) { rankMap[p56L] = 6; dayPointsMap[p56L] = 3; }
+      if (p78W) { rankMap[p78W] = 7; dayPointsMap[p78W] = 2; }
+      if (p78L) { rankMap[p78L] = 8; dayPointsMap[p78L] = 1; }
+    } else if (N === 7) {
+      if (gfW) { rankMap[gfW] = 1; dayPointsMap[gfW] = 7; }
+      if (gfL) { rankMap[gfL] = 2; dayPointsMap[gfL] = gfPenalty ? 5 : 6; }
+      if (lfL) { rankMap[lfL] = 3; dayPointsMap[lfL] = lfPenalty ? 4 : 5; }
+      if (lr3L) { rankMap[lr3L] = 4; dayPointsMap[lr3L] = 4; }
+      if (p56W) { rankMap[p56W] = 5; dayPointsMap[p56W] = 3; }
+      if (p56L) { rankMap[p56L] = 6; dayPointsMap[p56L] = 2; }
+      if (lr1L) { rankMap[lr1L] = 7; dayPointsMap[lr1L] = 1; }
+    }
+
+    const unassigned = playerIds.filter((pid) => rankMap[pid] === undefined);
+    unassigned.sort((a, b) => {
+      if (stats[b].wins !== stats[a].wins) return stats[b].wins - stats[a].wins;
+      return stats[b].pointDiff - stats[a].pointDiff;
+    });
+
+    const usedRanks = new Set(Object.values(rankMap));
+    const availableRanks: number[] = [];
+    for (let r = 1; r <= N; r++) {
+      if (!usedRanks.has(r)) availableRanks.push(r);
+    }
+
+    unassigned.forEach((pid, idx) => {
+      const assignedRank = availableRanks[idx] ?? (N - idx);
+      rankMap[pid] = assignedRank;
+      dayPointsMap[pid] = Math.max(1, N - assignedRank + 1);
+    });
+
+    const rows = playerIds.map((pid) => ({
+      playerId: pid,
+      ...stats[pid],
+      dayPoints: dayPointsMap[pid] ?? Math.max(1, N - (rankMap[pid] ?? N) + 1),
+      rank: rankMap[pid] ?? N,
+    }));
+
+    rows.sort((a, b) => {
+      if (a.rank !== b.rank) return a.rank - b.rank;
+      return b.pointDiff - a.pointDiff;
+    });
+
+    return rows;
+  }
+
   for (const m of matches) {
     if (!m.played || m.isFinal || m.round === -1 || m.scoreA === null || m.scoreB === null) continue;
     const { playerA, playerB, scoreA, scoreB, pointsA, pointsB } = m;
