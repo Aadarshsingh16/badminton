@@ -6,11 +6,12 @@ export const leaderboardRouter = Router();
 
 // GET /leaderboard — overall ranking sortable by points or matches
 leaderboardRouter.get("/", async (req, res) => {
-  const { range, from, to, sortBy } = req.query as {
+  const { range, from, to, sortBy, format } = req.query as {
     range?: string;
     from?: string;
     to?: string;
     sortBy?: "points" | "matches" | "wins";
+    format?: string;
   };
 
   try {
@@ -26,6 +27,13 @@ leaderboardRouter.get("/", async (req, res) => {
       dateFilter = "AND d.date >= CURRENT_DATE - INTERVAL '7 days'";
     } else if (range === "month") {
       dateFilter = "AND d.date >= CURRENT_DATE - INTERVAL '30 days'";
+    }
+
+    let tournamentFilter = "";
+    if (format === "double-elimination") {
+      tournamentFilter = "AND t.config->>'format' = 'double-elimination'";
+    } else if (format === "round-robin") {
+      tournamentFilter = "AND (t.config->>'format' IS NULL OR t.config->>'format' = 'round-robin')";
     }
 
     const query = `
@@ -88,7 +96,7 @@ leaderboardRouter.get("/", async (req, res) => {
           m.player_a = p.id OR m.player_b = p.id OR
           (p.id = 'sajal' AND (m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909') OR m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909')))
         ) AND m.played = true AND (m.is_final = false AND m.round != -1)
-        JOIN tournaments t ON m.tournament_id = t.id
+        JOIN tournaments t ON m.tournament_id = t.id ${tournamentFilter}
         JOIN date_filtered_days d ON t.day_id = d.id
         GROUP BY p.id
       ),
@@ -116,7 +124,7 @@ leaderboardRouter.get("/", async (req, res) => {
           m.player_a = p.id OR m.player_b = p.id OR
           (p.id = 'sajal' AND (m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909') OR m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909')))
         ) AND m.played = true AND (m.is_final = true OR m.round = -1)
-        JOIN tournaments t ON m.tournament_id = t.id
+        JOIN tournaments t ON m.tournament_id = t.id ${tournamentFilter}
         JOIN date_filtered_days d ON t.day_id = d.id
         GROUP BY p.id
       )
