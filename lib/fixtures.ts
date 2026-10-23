@@ -142,6 +142,43 @@ function makeDEMatch(
   };
 }
 
+export function getMatchShortform(m: Match): string {
+  if (m.bracketRound) {
+    if (m.bracketRound === "UQ") {
+      const num = m.id.replace("de-uq-", "");
+      return num ? `UQF${num}` : "UQF";
+    }
+    if (m.bracketRound === "US") {
+      const num = m.id.replace("de-us-", "");
+      return num ? `US${num}` : "US";
+    }
+    if (m.bracketRound === "Q-DECIDER") return "Q-DEC";
+    if (m.bracketRound === "Q-RR") {
+      const num = m.id.replace("de-q-rr-", "");
+      return num ? `QRR${num}` : "QRR";
+    }
+    return m.bracketRound;
+  }
+  if (m.id.startsWith("de-")) {
+    if (m.id.startsWith("de-uq-")) return `UQF${m.id.replace("de-uq-", "")}`;
+    if (m.id.startsWith("de-us-")) return `US${m.id.replace("de-us-", "")}`;
+    if (m.id === "de-uf") return "UF";
+    if (m.id.startsWith("de-lr1-")) return `LR1-${m.id.replace("de-lr1-", "")}`;
+    if (m.id === "de-lr1") return "LR1";
+    if (m.id.startsWith("de-lr2-")) return `LR2-${m.id.replace("de-lr2-", "")}`;
+    if (m.id === "de-lr2") return "LR2";
+    if (m.id === "de-lr3") return "LR3";
+    if (m.id === "de-lf") return "LF";
+    if (m.id === "de-gf") return "GF";
+    if (m.id === "de-p78") return "P78";
+    if (m.id === "de-p56") return "P56";
+    if (m.id === "de-q-decider") return "Q-DEC";
+    if (m.id.startsWith("de-q-rr-")) return `QRR${m.id.replace("de-q-rr-", "")}`;
+  }
+  if (m.round === -1 || m.isFinal) return "GF";
+  return `R${m.round + 1}`;
+}
+
 /**
  * Generate the initial matches for a 7 or 8 player Double Elimination tournament.
  */
@@ -161,28 +198,28 @@ export function generateDoubleElimination(
     const matches: Match[] = [
       makeDEMatch("de-uq-1", 1, p1, p2, {
         bracket: "upper",
-        bracketRound: "UQ",
+        bracketRound: "UQF1",
         label: "Upper Quarterfinal 1",
         targetScore: winScore,
         matchIndex: 0,
       }),
       makeDEMatch("de-uq-2", 1, p3, p4, {
         bracket: "upper",
-        bracketRound: "UQ",
+        bracketRound: "UQF2",
         label: "Upper Quarterfinal 2",
         targetScore: winScore,
         matchIndex: 1,
       }),
       makeDEMatch("de-uq-3", 1, p5, p6, {
         bracket: "upper",
-        bracketRound: "UQ",
+        bracketRound: "UQF3",
         label: "Upper Quarterfinal 3",
         targetScore: winScore,
         matchIndex: 2,
       }),
       makeDEMatch("de-uq-4", 1, p7, p8, {
         bracket: "upper",
-        bracketRound: "UQ",
+        bracketRound: "UQF4",
         label: "Upper Quarterfinal 4",
         targetScore: winScore,
         matchIndex: 3,
@@ -203,21 +240,21 @@ export function generateDoubleElimination(
     const matches: Match[] = [
       makeDEMatch("de-uq-1", 1, p1, p3, {
         bracket: "upper",
-        bracketRound: "UQ",
+        bracketRound: "UQF1",
         label: "Upper Quarterfinal 1",
         targetScore: winScore,
         matchIndex: 0,
       }),
       makeDEMatch("de-uq-2", 1, p2, p4, {
         bracket: "upper",
-        bracketRound: "UQ",
+        bracketRound: "UQF2",
         label: "Upper Quarterfinal 2",
         targetScore: winScore,
         matchIndex: 1,
       }),
       makeDEMatch("de-uq-3", 1, p5, p6, {
         bracket: "upper",
-        bracketRound: "UQ",
+        bracketRound: "UQF3",
         label: "Upper Quarterfinal 3",
         targetScore: winScore,
         matchIndex: 2,
@@ -301,7 +338,7 @@ export function advanceDoubleElimination(tournament: Tournament): Tournament {
     if (wUQ1 && wUQ2) {
       addOrUpdateMatch("de-us-1", 2, wUQ1, wUQ2, {
         bracket: "upper",
-        bracketRound: "US",
+        bracketRound: "US1",
         label: "Upper Semifinal 1",
         targetScore: winScore,
         matchIndex: 4,
@@ -312,7 +349,7 @@ export function advanceDoubleElimination(tournament: Tournament): Tournament {
     if (wUQ3 && wUQ4) {
       addOrUpdateMatch("de-us-2", 2, wUQ3, wUQ4, {
         bracket: "upper",
-        bracketRound: "US",
+        bracketRound: "US2",
         label: "Upper Semifinal 2",
         targetScore: winScore,
         matchIndex: 5,
