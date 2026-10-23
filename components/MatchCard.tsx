@@ -19,6 +19,7 @@ interface MatchCardProps {
 
 export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap, readOnly = false }: MatchCardProps) {
   const played = match.played;
+  const isDEMatch = !!(match.bracket || match.bracketRound || match.id.startsWith("de-"));
   const winnerIsA = played && match.scoreA !== undefined && match.scoreB !== undefined && match.scoreA > match.scoreB;
   const winnerIsB = played && match.scoreA !== undefined && match.scoreB !== undefined && match.scoreB > match.scoreA;
 
@@ -92,7 +93,7 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap, rea
               {match.scoreA}
             </div>
           )}
-          {played && match.pointsAwarded && (
+          {!isDEMatch && played && match.pointsAwarded && (
             <div className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
               (match.pointsAwarded[playerA.id] ?? 0) >= 2
                 ? "bg-[#9EC9A8]/20 text-[#A8DAB3] border-[#9EC9A8]/30"
@@ -147,7 +148,7 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap, rea
               {match.scoreB}
             </div>
           )}
-          {played && match.pointsAwarded && (
+          {!isDEMatch && played && match.pointsAwarded && (
             <div className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
               (match.pointsAwarded[playerB.id] ?? 0) >= 2
                 ? "bg-[#9EC9A8]/20 text-[#A8DAB3] border-[#9EC9A8]/30"
