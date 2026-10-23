@@ -321,8 +321,16 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
       }
     }
 
-    // Insert final match if provided
-    if (final && final.playerA && final.playerB) {
+    // Insert final match if provided and not already included in tournament.matches (e.g. de-gf or de-gfr)
+    const finalAlreadyInserted = insertedMatches.some(
+      (m: any) =>
+        m.id === final?.id ||
+        m.id === `final-${tournament.id}` ||
+        m.id === "de-gf" ||
+        m.id === "de-gfr" ||
+        (m.is_final && m.player_a === final?.playerA && m.player_b === final?.playerB)
+    );
+    if (!finalAlreadyInserted && final && final.playerA && final.playerB) {
       const finalId = final.id || `final-${tournament.id}`;
       const fScoreA = typeof final.scoreA === "number" ? final.scoreA : null;
       const fScoreB = typeof final.scoreB === "number" ? final.scoreB : null;
@@ -572,8 +580,12 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
 
     await pool.query("BEGIN");
 
-    // Upsert final match
-    const finalMatchId = `final-${tournamentId}`;
+    // Upsert final match: check if a final match already exists for this tournament (e.g. de-gf or de-gfr in Double Elimination)
+    const existingFinalRes = await pool.query(
+      `SELECT id FROM matches WHERE tournament_id = $1 AND (is_final = true OR id = 'de-gf' OR id = 'de-gfr') ORDER BY played_at DESC NULLS LAST LIMIT 1`,
+      [tournamentId]
+    );
+    const finalMatchId = existingFinalRes.rows[0]?.id || `final-${tournamentId}`;
     const mRes = await pool.query(
       `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, score_a, score_b, points_a, points_b, played, played_at)
        VALUES ($1, $2, -1, true, $3, $4, $5, $6, $7, $8, true, now())

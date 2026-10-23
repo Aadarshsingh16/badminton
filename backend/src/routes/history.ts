@@ -134,6 +134,19 @@ historyRouter.get("/", async (req, res) => {
         };
       }
 
+      // Guard against duplicate final match rows (e.g. legacy de-gf + final-[id] with identical players/scores)
+      const existingMatches = daysMap[dateStr].tournaments[r.tournamentId].matches;
+      const isDuplicateFinal = (r.isFinal || r.round === -1) && existingMatches.some((m: any) =>
+        (m.isFinal || m.round === -1) &&
+        ((m.playerA === r.playerA && m.playerB === r.playerB && m.scoreA === r.scoreA && m.scoreB === r.scoreB) ||
+         (m.id === 'de-gf' && r.id?.startsWith('final-')) ||
+         (r.id === 'de-gf' && m.id?.startsWith('final-')))
+      );
+
+      if (isDuplicateFinal) {
+        continue;
+      }
+
       daysMap[dateStr].tournaments[r.tournamentId].matches.push(r);
 
       // Tally summary stats for the filtered range
@@ -162,12 +175,17 @@ historyRouter.get("/", async (req, res) => {
       tournaments: Object.values(d.tournaments),
     }));
 
+    const totalMatches = Object.values(daysMap).reduce(
+      (sum, d) => sum + Object.values(d.tournaments).reduce((tSum, t) => tSum + t.matches.length, 0),
+      0
+    );
+
     const miniLeaderboard = Object.entries(playerStats)
       .map(([playerId, s]) => ({ playerId, ...s }))
       .sort((a, b) => b.points - a.points);
 
     res.json({
-      totalMatches: rows.length,
+      totalMatches,
       totalPoints,
       days: groupedDays,
       miniLeaderboard,

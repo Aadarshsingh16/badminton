@@ -108,22 +108,22 @@ leaderboardRouter.get("/", async (req, res) => {
       final_stats AS (
         SELECT
           p.id as player_id,
-          COUNT(m.id) as finals_played,
-          SUM(CASE WHEN (
+          COUNT(DISTINCT m.tournament_id) as finals_played,
+          COUNT(DISTINCT CASE WHEN (
             (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b
           ) OR (
             (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a
-          ) THEN 1 ELSE 0 END) as finals_won,
-          SUM(CASE WHEN (
+          ) THEN m.tournament_id ELSE NULL END) as finals_won,
+          COUNT(DISTINCT CASE WHEN (
             (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_a - m.score_b) >= 4
           ) OR (
             (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_b - m.score_a) >= 4
-          ) THEN 1 ELSE 0 END) as final_shutout_wins,
-          SUM(CASE WHEN (
+          ) THEN m.tournament_id ELSE NULL END) as final_shutout_wins,
+          COUNT(DISTINCT CASE WHEN (
             (m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_b - m.score_a) >= 4
           ) OR (
             (m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND (m.score_a - m.score_b) >= 4
-          ) THEN 1 ELSE 0 END) as final_shutout_losses
+          ) THEN m.tournament_id ELSE NULL END) as final_shutout_losses
         FROM players p
         JOIN matches m ON (
           m.player_a = p.id OR m.player_b = p.id OR
