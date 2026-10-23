@@ -434,7 +434,15 @@ export default function HistoryPage() {
           allMatches.push(item);
         });
 
-      if (t.final && t.final.played) {
+      const finalAlreadyInMatches = tourneyMatches.some(
+        (tm) =>
+          tm.id === t.final?.id ||
+          tm.id === "de-gf" ||
+          tm.id === "de-gfr" ||
+          (tm.isFinal && tm.playerA === t.final?.playerA && tm.playerB === t.final?.playerB)
+      );
+
+      if (t.final && t.final.played && !finalAlreadyInMatches) {
         const m = t.final;
         const pa = players.find((p) => p.id === m.playerA);
         const pb = players.find((p) => p.id === m.playerB);
