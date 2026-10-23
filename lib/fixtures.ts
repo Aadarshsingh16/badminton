@@ -518,7 +518,7 @@ export function advanceDoubleElimination(tournament: Tournament): Tournament {
     if (wUQ1 && wUQ2) {
       addOrUpdateMatch("de-us-1", 2, wUQ1, wUQ2, {
         bracket: "upper",
-        bracketRound: "US",
+        bracketRound: "US1",
         label: "Upper Semifinal 1",
         targetScore: winScore,
         matchIndex: 3,
@@ -529,7 +529,7 @@ export function advanceDoubleElimination(tournament: Tournament): Tournament {
     if (wUQ3 && upperByePlayerId) {
       addOrUpdateMatch("de-us-2", 2, wUQ3, upperByePlayerId, {
         bracket: "upper",
-        bracketRound: "US",
+        bracketRound: "US2",
         label: "Upper Semifinal 2",
         targetScore: winScore,
         matchIndex: 4,
