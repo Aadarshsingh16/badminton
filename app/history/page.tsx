@@ -718,7 +718,7 @@ export default function HistoryPage() {
     }).filter((p) => p.leagueMatchesPlayed > 0 || p.dayPointsTotal > 0 || p.finalsPlayed > 0);
 
     return entries;
-  }, [pastTournaments, currentTournament, dayTable, players]);
+  }, [pastTournaments, currentTournament, dayTable, players, historyFormatFilter]);
 
   // Local fallback synthesis for Day Honors (Champion & Wooden Spoon)
   const localDayHonorsFallback = useMemo<DayHonors>(() => {
@@ -839,7 +839,16 @@ export default function HistoryPage() {
           closed: day.closed ?? !!cd,
           totals: day.totals ?? cd?.totals ?? KNOWN_DAY_TOTALS[day.date] ?? null,
           tournaments: day.tournaments
-            .filter((t) => !deletedIds.has(t.tournamentId))
+            .filter((t) => {
+              if (deletedIds.has(t.tournamentId)) return false;
+              if (historyFormatFilter === "double-elimination") {
+                return t.config?.format === "double-elimination" || (t as any).matches?.some((m: any) => m.bracket || m.bracketRound || m.id?.startsWith("de-"));
+              }
+              if (historyFormatFilter === "round-robin") {
+                return t.config?.format !== "double-elimination" && !(t as any).matches?.some((m: any) => m.bracket || m.bracketRound || m.id?.startsWith("de-"));
+              }
+              return true;
+            })
             .sort((t1, t2) => {
               const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
               const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
@@ -858,10 +867,12 @@ export default function HistoryPage() {
       totalMatches: filteredMatches.length,
       totalPoints: filteredMatches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
     };
-  }, [historyData, localHistoryFallback, completedDays]);
+  }, [historyData, localHistoryFallback, completedDays, historyFormatFilter]);
 
   const baseLeaderboard =
-    leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;
+    historyFormatFilter === "all"
+      ? (leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback)
+      : localLeaderboardFallback;
 
   const displayedLeaderboard = useMemo(() => {
     if (!baseLeaderboard) return [];
