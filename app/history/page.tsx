@@ -2402,7 +2402,11 @@ export default function HistoryPage() {
               {(
                 [
                   { key: "day", label: "Day Points", icon: "🏆" },
-                  { key: "league", label: "League", icon: "🏸" },
+                  {
+                    key: "league",
+                    label: historyFormatFilter === "double-elimination" ? "Bracket" : "League",
+                    icon: historyFormatFilter === "double-elimination" ? "⚡" : "🏸",
+                  },
                   { key: "finals", label: "Finals", icon: "🎯" },
                   { key: "analytics", label: "Analytics", icon: "📊" },
                 ] as const
@@ -2455,7 +2459,13 @@ export default function HistoryPage() {
               <div className="p-3.5 border-b border-white/10 flex items-center justify-between bg-[#16181F]">
                 <div className="text-xs font-black text-[#F3F4EE] flex items-center gap-1.5 uppercase tracking-wider">
                   {leaderboardCategory === "day" && <span>🏆 Overall Day Leaderboard</span>}
-                  {leaderboardCategory === "league" && <span>🏸 League (Round-Robin) Standings</span>}
+                  {leaderboardCategory === "league" && (
+                    <span>
+                      {historyFormatFilter === "double-elimination"
+                        ? "⚡ Double Elim Bracket Standings"
+                        : "🏸 League (Round-Robin) Standings"}
+                    </span>
+                  )}
                   {leaderboardCategory === "finals" && <span>🎯 Championship (Finals) Record</span>}
                 </div>
                 <div className="text-[10px] font-bold text-white/50">
@@ -2504,7 +2514,12 @@ export default function HistoryPage() {
                             </div>
                             <div className="text-[10px] text-white/40 font-semibold flex items-center gap-1.5 mt-0.5">
                               {leaderboardCategory === "day" && (
-                                <span>{entry.finalsWon} finals won • {entry.leagueWins} league wins</span>
+                                <span>
+                                  {entry.finalsWon} {entry.finalsWon === 1 ? "final" : "finals"} won • {entry.leagueWins}{" "}
+                                  {historyFormatFilter === "double-elimination"
+                                    ? entry.leagueWins === 1 ? "bracket win" : "bracket wins"
+                                    : entry.leagueWins === 1 ? "match win" : "match wins"}
+                                </span>
                               )}
                               {leaderboardCategory === "league" && (
                                 <>
