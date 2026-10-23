@@ -76,16 +76,184 @@ export function computeRoundRobinTable(tournament: Tournament): TournamentRow[] 
 }
 
 /**
+ * Compute the live tournament table for double-elimination.
+ */
+export function computeDoubleEliminationTable(tournament: Tournament): TournamentRow[] {
+  if (!tournament) return [];
+  const { playerIds = [], matches = [], config } = tournament;
+  const N = playerIds.length;
+
+  const stats: {
+    [id: string]: {
+      points: number;
+      wins: number;
+      matchesPlayed: number;
+      scoreFor: number;
+      scoreAgainst: number;
+    };
+  } = {};
+
+  for (const pid of playerIds) {
+    stats[pid] = { points: 0, wins: 0, matchesPlayed: 0, scoreFor: 0, scoreAgainst: 0 };
+  }
+
+  // Accumulate all played matches
+  for (const m of matches) {
+    if (!m.played || m.scoreA === undefined || m.scoreB === undefined) continue;
+    const { playerA, playerB, scoreA, scoreB } = m;
+
+    if (stats[playerA]) {
+      stats[playerA].matchesPlayed++;
+      stats[playerA].scoreFor += scoreA;
+      stats[playerA].scoreAgainst += scoreB;
+      if (scoreA > scoreB) stats[playerA].wins++;
+    }
+
+    if (stats[playerB]) {
+      stats[playerB].matchesPlayed++;
+      stats[playerB].scoreFor += scoreB;
+      stats[playerB].scoreAgainst += scoreA;
+      if (scoreB > scoreA) stats[playerB].wins++;
+    }
+  }
+
+  // Also include final match if separate and played
+  if (tournament.final && tournament.final.played && !matches.some((m) => m.id === tournament.final?.id)) {
+    const f = tournament.final;
+    if (f.scoreA !== undefined && f.scoreB !== undefined) {
+      if (stats[f.playerA]) {
+        stats[f.playerA].matchesPlayed++;
+        stats[f.playerA].scoreFor += f.scoreA;
+        stats[f.playerA].scoreAgainst += f.scoreB;
+        if (f.scoreA > f.scoreB) stats[f.playerA].wins++;
+      }
+      if (stats[f.playerB]) {
+        stats[f.playerB].matchesPlayed++;
+        stats[f.playerB].scoreFor += f.scoreB;
+        stats[f.playerB].scoreAgainst += f.scoreA;
+        if (f.scoreB > f.scoreA) stats[f.playerB].wins++;
+      }
+    }
+  }
+
+  // Determine ranks & day points based on bracket results
+  const rankMap: { [pid: string]: number } = {};
+  const dayPointsMap: { [pid: string]: number } = {};
+
+  const findM = (roundKey: string) => matches.find((m) => m.bracketRound === roundKey && m.played);
+
+  const gf = findM("GF") || (tournament.final?.played && tournament.final.bracketRound === "GF" ? tournament.final : undefined);
+  const lf = findM("LF");
+  const lr3 = findM("LR3");
+  const p56 = findM("P56");
+  const p78 = findM("P78");
+  const lr1 = findM("LR1");
+
+  const gfWinner = gf && gf.scoreA !== undefined && gf.scoreB !== undefined ? (gf.scoreA > gf.scoreB ? gf.playerA : gf.playerB) : null;
+  const gfLoser = gf && gf.scoreA !== undefined && gf.scoreB !== undefined ? (gf.scoreA > gf.scoreB ? gf.playerB : gf.playerA) : null;
+
+  const lfWinner = lf && lf.scoreA !== undefined && lf.scoreB !== undefined ? (lf.scoreA > lf.scoreB ? lf.playerA : lf.playerB) : null;
+  const lfLoser = lf && lf.scoreA !== undefined && lf.scoreB !== undefined ? (lf.scoreA > lf.scoreB ? lf.playerB : lf.playerA) : null;
+
+  const lr3Loser = lr3 && lr3.scoreA !== undefined && lr3.scoreB !== undefined ? (lr3.scoreA > lr3.scoreB ? lr3.playerB : lr3.playerA) : null;
+
+  const p56Winner = p56 && p56.scoreA !== undefined && p56.scoreB !== undefined ? (p56.scoreA > p56.scoreB ? p56.playerA : p56.playerB) : null;
+  const p56Loser = p56 && p56.scoreA !== undefined && p56.scoreB !== undefined ? (p56.scoreA > p56.scoreB ? p56.playerB : p56.playerA) : null;
+
+  const p78Winner = p78 && p78.scoreA !== undefined && p78.scoreB !== undefined ? (p78.scoreA > p78.scoreB ? p78.playerA : p78.playerB) : null;
+  const p78Loser = p78 && p78.scoreA !== undefined && p78.scoreB !== undefined ? (p78.scoreA > p78.scoreB ? p78.playerB : p78.playerA) : null;
+
+  const lr1Loser = lr1 && lr1.scoreA !== undefined && lr1.scoreB !== undefined ? (lr1.scoreA > lr1.scoreB ? lr1.playerB : lr1.playerA) : null;
+
+  // Shutout penalties:
+  // Grand final: if margin >= finalBonusMargin (default 4), loser gets -1 day point penalty
+  const gfMargin = gf && gf.scoreA !== undefined && gf.scoreB !== undefined ? Math.abs(gf.scoreA - gf.scoreB) : 0;
+  const gfPenalty = gfMargin >= (config?.finalBonusMargin ?? DEFAULT_CONFIG.finalBonusMargin);
+
+  // Lower final: if margin >= bonusMargin (default 4), loser gets -1 day point penalty
+  const lfMargin = lf && lf.scoreA !== undefined && lf.scoreB !== undefined ? Math.abs(lf.scoreA - lf.scoreB) : 0;
+  const lfPenalty = lfMargin >= (config?.bonusMargin ?? DEFAULT_CONFIG.bonusMargin);
+
+  if (N === 8) {
+    if (gfWinner) { rankMap[gfWinner] = 1; dayPointsMap[gfWinner] = 8; }
+    if (gfLoser) { rankMap[gfLoser] = 2; dayPointsMap[gfLoser] = gfPenalty ? 6 : 7; }
+    if (lfLoser) { rankMap[lfLoser] = 3; dayPointsMap[lfLoser] = lfPenalty ? 5 : 6; }
+    if (lr3Loser) { rankMap[lr3Loser] = 4; dayPointsMap[lr3Loser] = 5; }
+    if (p56Winner) { rankMap[p56Winner] = 5; dayPointsMap[p56Winner] = 4; }
+    if (p56Loser) { rankMap[p56Loser] = 6; dayPointsMap[p56Loser] = 3; }
+    if (p78Winner) { rankMap[p78Winner] = 7; dayPointsMap[p78Winner] = 2; }
+    if (p78Loser) { rankMap[p78Loser] = 8; dayPointsMap[p78Loser] = 1; }
+  } else if (N === 7) {
+    if (gfWinner) { rankMap[gfWinner] = 1; dayPointsMap[gfWinner] = 7; }
+    if (gfLoser) { rankMap[gfLoser] = 2; dayPointsMap[gfLoser] = gfPenalty ? 5 : 6; }
+    if (lfLoser) { rankMap[lfLoser] = 3; dayPointsMap[lfLoser] = lfPenalty ? 4 : 5; }
+    if (lr3Loser) { rankMap[lr3Loser] = 4; dayPointsMap[lr3Loser] = 4; }
+    if (p56Winner) { rankMap[p56Winner] = 5; dayPointsMap[p56Winner] = 3; }
+    if (p56Loser) { rankMap[p56Loser] = 6; dayPointsMap[p56Loser] = 2; }
+    if (lr1Loser) { rankMap[lr1Loser] = 7; dayPointsMap[lr1Loser] = 1; }
+  }
+
+  // For any player not yet locked into rank (e.g. tournament still in progress):
+  // We sort unassigned players by wins desc, pointDiff desc, scoreFor desc
+  const unassigned = playerIds.filter((pid) => rankMap[pid] === undefined);
+  unassigned.sort((a, b) => {
+    if (stats[b].wins !== stats[a].wins) return stats[b].wins - stats[a].wins;
+    const diffA = stats[a].scoreFor - stats[a].scoreAgainst;
+    const diffB = stats[b].scoreFor - stats[b].scoreAgainst;
+    if (diffB !== diffA) return diffB - diffA;
+    return stats[b].scoreFor - stats[a].scoreFor;
+  });
+
+  // Find remaining available rank numbers
+  const usedRanks = new Set(Object.values(rankMap));
+  const availableRanks: number[] = [];
+  for (let r = 1; r <= N; r++) {
+    if (!usedRanks.has(r)) availableRanks.push(r);
+  }
+
+  unassigned.forEach((pid, idx) => {
+    const assignedRank = availableRanks[idx] ?? (N - idx);
+    rankMap[pid] = assignedRank;
+    dayPointsMap[pid] = Math.max(1, N - assignedRank + 1);
+  });
+
+  const hasPlayedMatches = matches.some((m) => m.played);
+
+  const rows: TournamentRow[] = playerIds.map((pid) => ({
+    playerId: pid,
+    points: stats[pid].wins * (config?.winPoints ?? 2),
+    wins: stats[pid].wins,
+    matchesPlayed: stats[pid].matchesPlayed,
+    pointDiff: stats[pid].scoreFor - stats[pid].scoreAgainst,
+    rank: rankMap[pid] ?? N,
+    dayPoints: hasPlayedMatches ? (dayPointsMap[pid] ?? Math.max(1, N - (rankMap[pid] ?? N) + 1)) : 0,
+  }));
+
+  rows.sort((a, b) => {
+    if (a.rank !== b.rank) return a.rank - b.rank;
+    return b.pointDiff - a.pointDiff;
+  });
+
+  return rows;
+}
+
+/**
  * Compute the live tournament table.
  * - During round-robin: sorted by league points (wins, bonuses, +/-).
  * - After the final ends: sorted by overall points (winner gets N, loser gets N-1 or N-2 on blowout penalty).
  *   Winner always finishes 1st, runner-up finishes 2nd, and 3rd..Nth are ordered by their league finish.
+ * - Double-elimination: determined by bracket placement & placement matches.
  */
 export function computeTournamentTable(tournament: Tournament): TournamentRow[] {
   if (!tournament) return [];
+
+  // Branch on double elimination
+  if (tournament.config?.format === "double-elimination") {
+    return computeDoubleEliminationTable(tournament);
+  }
+
   const { playerIds = [], matches = [], final, config } = tournament;
   const N = playerIds.length;
-
 
   // If the final has not been played yet, return round-robin standings
   if (!final?.played || final.scoreA === undefined || final.scoreB === undefined) {
@@ -280,4 +448,35 @@ export function computeDayPoints(tournament: Tournament): { [playerId: string]: 
 export function isRoundRobinComplete(tournament: Tournament): boolean {
   if (!tournament || !tournament.matches) return false;
   return tournament.matches.filter((m) => !m.isFinal && m.round !== -1).every((m) => m.played);
+}
+
+/**
+ * Check if a tournament is completely finished (either round-robin final played or DE grand final played).
+ */
+export function isTournamentComplete(tournament: Tournament): boolean {
+  if (!tournament) return false;
+  if (tournament.config?.format === "double-elimination") {
+    const gf = tournament.matches?.find((m) => m.bracketRound === "GF");
+    return !!gf?.played;
+  }
+  return isRoundRobinComplete(tournament) && !!tournament.final?.played;
+}
+
+/**
+ * Compute the number of upper bracket byes received by each player across past tournaments.
+ */
+export function computePlayerByeCounts(
+  tournaments: Tournament[],
+  playerIds: string[]
+): { [playerId: string]: number } {
+  const counts: { [playerId: string]: number } = {};
+  for (const pid of playerIds) {
+    counts[pid] = 0;
+  }
+  for (const t of tournaments) {
+    if (t.config?.upperByePlayerId && counts[t.config.upperByePlayerId] !== undefined) {
+      counts[t.config.upperByePlayerId]++;
+    }
+  }
+  return counts;
 }

@@ -12,9 +12,14 @@ import {
   TournamentConfig,
   DEFAULT_CONFIG,
 } from "./types";
-import { generateRoundRobin } from "./fixtures";
+import {
+  generateRoundRobin,
+  generateDoubleElimination,
+  advanceDoubleElimination,
+  isDoubleEliminationComplete,
+} from "./fixtures";
 import { pointsForMatch, pointsForFinal } from "./scoring";
-import { computeDayPoints, isRoundRobinComplete, getFinalists } from "./ranking";
+import { computeDayPoints, isRoundRobinComplete, getFinalists, isTournamentComplete } from "./ranking";
 import { apiSync } from "./apiSync";
 
 export type AppRole = 'admin' | 'viewer' | null;
@@ -583,6 +588,9 @@ export const useStore = create<AppState>()(
         if (selectedPlayerIds.length < 2) return;
 
         const isPractice = !!pendingConfig.isPractice;
+        const isDE =
+          pendingConfig.format === "double-elimination" &&
+          (selectedPlayerIds.length === 7 || selectedPlayerIds.length === 8);
 
         // Automatically randomize / shuffle player order so every tournament starts with fresh, random fixtures
         const randomized = [...selectedPlayerIds];
@@ -592,7 +600,10 @@ export const useStore = create<AppState>()(
         }
 
         const effectiveDate = appDate || dayTable.date || today();
-        const { matches, byes } = generateRoundRobin(randomized);
+        const { matches, byes } = isDE
+          ? generateDoubleElimination(randomized, pendingConfig)
+          : generateRoundRobin(randomized);
+
         const tournament: Tournament = {
           id: generateId(),
           createdAt: Date.now(),

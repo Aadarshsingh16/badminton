@@ -21,13 +21,21 @@ export interface Match {
   played: boolean;
   isFinal?: boolean;
   pointsAwarded?: { [playerId: string]: number };
+  bracket?: "upper" | "lower" | "grand-final" | "placement" | "qualifier";
+  bracketRound?: string; // e.g. "UQ1", "US1", "UF", "LR1", "LR2", "LR3", "LF", "GF", "P56", "P78", "Q-RR", "Q-DECIDER"
+  label?: string;        // e.g. "Upper Quarterfinal 1", "3-Point Bye Qualifier", "5th/6th Placement"
+  targetScore?: number;  // score to win this match (e.g. 5, 3, 6)
 }
+
+export type TournamentFormat = "round-robin" | "double-elimination";
 
 /**
  * Configurable scoring rules for a tournament.
  */
 export interface TournamentConfig {
-  // Round-robin match rules
+  format?: TournamentFormat; // "round-robin" (default) or "double-elimination"
+
+  // Bracket / Round-robin match rules
   winScore: number;        // score needed to win a match (default 5)
   bonusMargin: number;     // winning margin that earns +1 bonus point (default 4, i.e. 5-0 or 5-1)
   winPoints: number;       // base points for a win (default 2)
@@ -39,10 +47,16 @@ export interface TournamentConfig {
   finalWinBase: number;    // base points for winning the final (default 2)
   finalWinBonus: number;   // extra points for winning final with big margin (default 1, total 3)
   finalLoserPenalty: number; // points for loser when margin >= finalBonusMargin (default -1)
+
+  // Double elimination specific
+  deciderWinScore?: number;   // score needed to win decider/qualifier matches (default 3)
+  upperByePlayerId?: string;  // player who received the bye into Upper Semifinal (for 7-player bracket)
+
   isPractice?: boolean;    // when true, test tournament (scores not saved to permanent history)
 }
 
 export const DEFAULT_CONFIG: TournamentConfig = {
+  format: "round-robin",
   winScore: 5,
   bonusMargin: 4,
   winPoints: 2,
@@ -52,6 +66,7 @@ export const DEFAULT_CONFIG: TournamentConfig = {
   finalWinBase: 2,
   finalWinBonus: 0,
   finalLoserPenalty: -1,
+  deciderWinScore: 3,
   isPractice: false,
 };
 
