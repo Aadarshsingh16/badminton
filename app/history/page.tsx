@@ -110,6 +110,18 @@ interface LeaderboardEntry {
   highestWinMargin: number;
   finalsPlayed: number;
   finalsWon: number;
+  ufWins?: number;
+  ufPlayed?: number;
+  lfWins?: number;
+  lfPlayed?: number;
+  usfWins?: number;
+  usfPlayed?: number;
+  uqfWins?: number;
+  uqfPlayed?: number;
+  lrWins?: number;
+  lrPlayed?: number;
+  qrrWins?: number;
+  qrrPlayed?: number;
 }
 
 interface DayHonors {
@@ -609,6 +621,12 @@ export default function HistoryPage() {
       let highestWinMargin = 0;
       let finalsPlayed = 0;
       let finalsWon = 0;
+      let ufWins = 0, ufPlayed = 0;
+      let lfWins = 0, lfPlayed = 0;
+      let usfWins = 0, usfPlayed = 0;
+      let uqfWins = 0, uqfPlayed = 0;
+      let lrWins = 0, lrPlayed = 0;
+      let qrrWins = 0, qrrPlayed = 0;
 
       allTourneys.forEach((t) => {
         // Day points logic: check t.dayPointsAwarded or compute fallback
@@ -629,7 +647,7 @@ export default function HistoryPage() {
           }
         }
 
-        // League matches
+        // League / bracket matches
         t.matches.filter(m => m.played).forEach(m => {
           const isA = m.playerA === p.id || (p.id === "sajal" && isSajalId(m.playerA));
           const isB = m.playerB === p.id || (p.id === "sajal" && isSajalId(m.playerB));
@@ -657,6 +675,27 @@ export default function HistoryPage() {
             if (won && (myPoints === 3 || diff >= rrBonusMargin)) shutoutWins++;
             if (!won && (oppPoints === 3 || diff >= rrBonusMargin)) shutoutLosses++;
             if (won) highestWinMargin = Math.max(highestWinMargin, myScore - oppScore);
+
+            // Double Elimination specific stage tracking
+            if (m.id === "de-uf") {
+              ufPlayed++;
+              if (won) ufWins++;
+            } else if (m.id === "de-lf") {
+              lfPlayed++;
+              if (won) lfWins++;
+            } else if (m.id.startsWith("de-us")) {
+              usfPlayed++;
+              if (won) usfWins++;
+            } else if (m.id.startsWith("de-uq")) {
+              uqfPlayed++;
+              if (won) uqfWins++;
+            } else if (m.id.startsWith("de-lr")) {
+              lrPlayed++;
+              if (won) lrWins++;
+            } else if (m.id.startsWith("de-q-rr")) {
+              qrrPlayed++;
+              if (won) qrrWins++;
+            }
           }
         });
 
@@ -747,6 +786,18 @@ export default function HistoryPage() {
         highestWinMargin,
         finalsPlayed,
         finalsWon,
+        ufWins,
+        ufPlayed,
+        lfWins,
+        lfPlayed,
+        usfWins,
+        usfPlayed,
+        uqfWins,
+        uqfPlayed,
+        lrWins,
+        lrPlayed,
+        qrrWins,
+        qrrPlayed,
       };
     }).filter((p) => p.leagueMatchesPlayed > 0 || p.dayPointsTotal > 0 || p.finalsPlayed > 0);
 
@@ -1385,6 +1436,11 @@ export default function HistoryPage() {
     let finalsPlayedLeader: { name: string; finalsPlayed: number } | null = null;
     let finalsLostLeader: { name: string; lostCount: number; finalsPlayed: number; finalsWon: number } | null = null;
     let shutoutLossesLeader: { name: string; shutoutLosses: number } | null = null;
+    let upperFinalKing: { name: string; ufWins: number } | null = null;
+    let lowerFinalKing: { name: string; lfWins: number } | null = null;
+    let lowerBracketWarrior: { name: string; lrWins: number } | null = null;
+    let upperSemisWinner: { name: string; usfWins: number } | null = null;
+    let bracketDominator: { name: string; wins: number } | null = null;
 
     if (displayedLeaderboard.length > 0) {
       // Shutout King
@@ -1457,6 +1513,56 @@ export default function HistoryPage() {
           shutoutLosses: maxShutoutLosses,
         };
       }
+
+      // Upper Final King (Most UF wins)
+      const maxUfWins = Math.max(...displayedLeaderboard.map((l) => l.ufWins ?? 0));
+      if (maxUfWins > 0) {
+        const pList = displayedLeaderboard.filter((l) => (l.ufWins ?? 0) === maxUfWins);
+        upperFinalKing = {
+          name: pList.map((p) => p.name).join(" & "),
+          ufWins: maxUfWins,
+        };
+      }
+
+      // Lower Final King (Most LF wins)
+      const maxLfWins = Math.max(...displayedLeaderboard.map((l) => l.lfWins ?? 0));
+      if (maxLfWins > 0) {
+        const pList = displayedLeaderboard.filter((l) => (l.lfWins ?? 0) === maxLfWins);
+        lowerFinalKing = {
+          name: pList.map((p) => p.name).join(" & "),
+          lfWins: maxLfWins,
+        };
+      }
+
+      // Lower Bracket Warrior (Most Lower Round wins)
+      const maxLrWins = Math.max(...displayedLeaderboard.map((l) => l.lrWins ?? 0));
+      if (maxLrWins > 0) {
+        const pList = displayedLeaderboard.filter((l) => (l.lrWins ?? 0) === maxLrWins);
+        lowerBracketWarrior = {
+          name: pList.map((p) => p.name).join(" & "),
+          lrWins: maxLrWins,
+        };
+      }
+
+      // Upper Semis Winner
+      const maxUsfWins = Math.max(...displayedLeaderboard.map((l) => l.usfWins ?? 0));
+      if (maxUsfWins > 0) {
+        const pList = displayedLeaderboard.filter((l) => (l.usfWins ?? 0) === maxUsfWins);
+        upperSemisWinner = {
+          name: pList.map((p) => p.name).join(" & "),
+          usfWins: maxUsfWins,
+        };
+      }
+
+      // Bracket Dominator (Most Bracket Match Wins)
+      const maxBracketWins = Math.max(...displayedLeaderboard.map((l) => l.leagueWins ?? 0));
+      if (maxBracketWins > 0) {
+        const pList = displayedLeaderboard.filter((l) => (l.leagueWins ?? 0) === maxBracketWins);
+        bracketDominator = {
+          name: pList.map((p) => p.name).join(" & "),
+          wins: maxBracketWins,
+        };
+      }
     }
 
     const statLeaders = {
@@ -1473,6 +1579,11 @@ export default function HistoryPage() {
       dayChampLeader,
       peakDayScoreLeader,
       cardiacKing,
+      upperFinalKing,
+      lowerFinalKing,
+      lowerBracketWarrior,
+      upperSemisWinner,
+      bracketDominator,
     };
 
     return {
@@ -2532,6 +2643,42 @@ export default function HistoryPage() {
                                 <span>{entry.finalsWon} Won / {entry.finalsPlayed} Played</span>
                               )}
                             </div>
+
+                            {/* Extra Stage Breakdown Badges for Double Elimination */}
+                            {(historyFormatFilter === "double-elimination" || (entry.ufPlayed || 0) > 0 || (entry.lfPlayed || 0) > 0 || (entry.usfPlayed || 0) > 0 || (entry.lrPlayed || 0) > 0) && (
+                              <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                {(entry.finalsWon > 0 || entry.finalsPlayed > 0) && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[#F5BA38]/15 border border-[#F5BA38]/30 text-[#F5BA38] font-black" title="Grand Final (Championship)">
+                                    🏆 GF: {entry.finalsWon}W{entry.finalsPlayed - entry.finalsWon > 0 ? `-${entry.finalsPlayed - entry.finalsWon}L` : ""}
+                                  </span>
+                                )}
+                                {((entry.ufWins || 0) > 0 || (entry.ufPlayed || 0) > 0) && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[#FF5E48]/15 border border-[#FF5E48]/30 text-[#FF5E48] font-black" title="Upper Final">
+                                    ⚡ UF: {entry.ufWins || 0}W{(entry.ufPlayed || 0) - (entry.ufWins || 0) > 0 ? `-${(entry.ufPlayed || 0) - (entry.ufWins || 0)}L` : ""}
+                                  </span>
+                                )}
+                                {((entry.lfWins || 0) > 0 || (entry.lfPlayed || 0) > 0) && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[#6C79E0]/15 border border-[#6C79E0]/30 text-[#6C79E0] font-black" title="Lower Final">
+                                    🔥 LF: {entry.lfWins || 0}W{(entry.lfPlayed || 0) - (entry.lfWins || 0) > 0 ? `-${(entry.lfPlayed || 0) - (entry.lfWins || 0)}L` : ""}
+                                  </span>
+                                )}
+                                {((entry.usfWins || 0) > 0 || (entry.usfPlayed || 0) > 0) && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-white/10 border border-white/20 text-white/80 font-bold" title="Upper Semis">
+                                    🎯 USF: {entry.usfWins || 0}W{(entry.usfPlayed || 0) - (entry.usfWins || 0) > 0 ? `-${(entry.usfPlayed || 0) - (entry.usfWins || 0)}L` : ""}
+                                  </span>
+                                )}
+                                {((entry.lrWins || 0) > 0 || (entry.lrPlayed || 0) > 0) && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-white/10 border border-white/20 text-white/80 font-bold" title="Lower Rounds (LR1, LR2, LR3)">
+                                    🛡️ LR: {entry.lrWins || 0}W{(entry.lrPlayed || 0) - (entry.lrWins || 0) > 0 ? `-${(entry.lrPlayed || 0) - (entry.lrWins || 0)}L` : ""}
+                                  </span>
+                                )}
+                                {((entry.uqfWins || 0) > 0 || (entry.uqfPlayed || 0) > 0) && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-white/60 font-medium" title="Upper Quarters">
+                                    ⚔️ UQF: {entry.uqfWins || 0}W
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -2821,6 +2968,62 @@ export default function HistoryPage() {
                              <span className="text-[10px] font-bold text-[#FF5E48]">{advancedInsights.statLeaders.cardiacKing.wins} clutch wins (1-pt)</span>
                            </div>
                            <span className="text-lg opacity-90">💓</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Upper Final King (Double Elim) */}
+                    {advancedInsights.statLeaders.upperFinalKing && (
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Upper Final King</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.upperFinalKing.name}</span>
+                             <span className="text-[10px] font-bold text-[#FF5E48]">{advancedInsights.statLeaders.upperFinalKing.ufWins} UF title</span>
+                           </div>
+                           <span className="text-lg opacity-90">⚡</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lower Final King (Double Elim) */}
+                    {advancedInsights.statLeaders.lowerFinalKing && (
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Lower Final King</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.lowerFinalKing.name}</span>
+                             <span className="text-[10px] font-bold text-[#6C79E0]">{advancedInsights.statLeaders.lowerFinalKing.lfWins} LF title</span>
+                           </div>
+                           <span className="text-lg opacity-90">🔥</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lower Bracket Warrior (Double Elim) */}
+                    {advancedInsights.statLeaders.lowerBracketWarrior && (
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">LB Warrior</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.lowerBracketWarrior.name}</span>
+                             <span className="text-[10px] font-bold text-[#9EC9A8]">{advancedInsights.statLeaders.lowerBracketWarrior.lrWins} LR wins</span>
+                           </div>
+                           <span className="text-lg opacity-90">🛡️</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bracket Machine */}
+                    {advancedInsights.statLeaders.bracketDominator && (
+                      <div className="bg-[#16181F] rounded-2xl p-2.5 border border-white/5 flex flex-col justify-between">
+                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Bracket Machine</span>
+                        <div className="flex items-center justify-between mt-1">
+                           <div className="flex flex-col">
+                             <span className="text-[11px] font-black text-[#F3F4EE]">{advancedInsights.statLeaders.bracketDominator.name}</span>
+                             <span className="text-[10px] font-bold text-white/70">{advancedInsights.statLeaders.bracketDominator.wins} bracket wins</span>
+                           </div>
+                           <span className="text-lg opacity-90">⚔️</span>
                         </div>
                       </div>
                     )}
