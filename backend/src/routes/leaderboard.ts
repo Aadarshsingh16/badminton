@@ -37,8 +37,13 @@ leaderboardRouter.get("/", async (req, res) => {
     }
 
     const query = `
-      WITH date_filtered_days AS (
-        SELECT id, date, totals FROM day_tables d WHERE 1=1 ${dateFilter}
+      WITH format_filtered_tournaments AS (
+        SELECT id, day_id, config FROM tournaments t WHERE 1=1 ${tournamentFilter}
+      ),
+      date_filtered_days AS (
+        SELECT d.id, d.date, d.totals FROM day_tables d
+        WHERE 1=1 ${dateFilter}
+        ${format && format !== "all" ? `AND d.id IN (SELECT day_id FROM format_filtered_tournaments)` : ""}
       ),
       day_points AS (
         SELECT
@@ -175,8 +180,16 @@ leaderboardRouter.get("/", async (req, res) => {
 // GET /day-results — all-time Day Champions and Last-Place counts
 export const dayResultsRouter = Router();
 
-dayResultsRouter.get("/", async (_req, res) => {
+dayResultsRouter.get("/", async (req, res) => {
+  const { format } = req.query as { format?: string };
   try {
+    let dayFilter = "";
+    if (format === "double-elimination") {
+      dayFilter = "WHERE dr.day_table_id IN (SELECT day_id FROM tournaments WHERE config->>'format' = 'double-elimination')";
+    } else if (format === "round-robin") {
+      dayFilter = "WHERE dr.day_table_id IN (SELECT day_id FROM tournaments WHERE config->>'format' IS NULL OR config->>'format' = 'round-robin')";
+    }
+
     const historyQuery = `
       SELECT
         dr.id,
@@ -194,6 +207,7 @@ dayResultsRouter.get("/", async (_req, res) => {
       FROM day_results dr
       LEFT JOIN players tp ON dr.top_player_id = tp.id
       LEFT JOIN players bp ON dr.bottom_player_id = bp.id
+      ${dayFilter}
       ORDER BY dr.date DESC
     `;
 

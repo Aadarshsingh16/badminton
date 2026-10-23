@@ -289,7 +289,7 @@ export default function ProfilesPage() {
         const lbFormat = statsFormatFilter !== "all" ? `?format=${statsFormatFilter}` : "";
         const [resHist, resDays, resLb] = await Promise.all([
           fetch(`${backendUrl}/history?range=all${queryFormat}`),
-          fetch(`${backendUrl}/day-results`),
+          fetch(`${backendUrl}/day-results${statsFormatFilter !== "all" ? `?format=${statsFormatFilter}` : ""}`),
           fetch(`${backendUrl}/leaderboard${lbFormat}`),
         ]);
         if (resHist.ok) {

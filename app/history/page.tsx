@@ -328,9 +328,12 @@ export default function HistoryPage() {
       if (historyFormatFilter !== "all") params.append("format", historyFormatFilter);
       params.append("sortBy", sortBy);
 
+      const dayResultsParams = new URLSearchParams();
+      if (historyFormatFilter !== "all") dayResultsParams.append("format", historyFormatFilter);
+
       const [resLb, resDays] = await Promise.all([
         fetch(`${backendUrl}/leaderboard?${params.toString()}`),
-        fetch(`${backendUrl}/day-results`),
+        fetch(`${backendUrl}/day-results${dayResultsParams.toString() ? `?${dayResultsParams.toString()}` : ""}`),
       ]);
 
       if (resLb.ok) {
@@ -668,31 +671,52 @@ export default function HistoryPage() {
         }
       });
 
-      // If day points were not in tournaments, check completedDays
-      if (dayPointsTotal === 0 && completedDays && completedDays.length > 0) {
-        completedDays.forEach((cd) => {
-          if (cd.totals?.[p.id] !== undefined) {
-            dayPointsTotal += cd.totals[p.id];
-          }
-          if (p.id === "sajal") {
-            for (const alias of SAJAL_ALIASES) {
-              if (cd.totals?.[alias] !== undefined) {
-                dayPointsTotal += cd.totals[alias];
-              }
-            }
-          }
-        });
-      }
+      // If day points were not in tournaments, check completedDays and KNOWN_DAY_TOTALS
+      const isCurrentDayDE =
+        currentTournament?.config?.format === "double-elimination" ||
+        (dayTable?.tournaments || []).some(
+          (t: any) => t.config?.format === "double-elimination" || t.isDoubleElimination
+        );
 
-      // If still 0, check active dayTable totals
-      if (dayPointsTotal === 0 && dayTable.totals) {
-        if (dayTable.totals[p.id]) {
-          dayPointsTotal += dayTable.totals[p.id];
+      if (dayPointsTotal === 0) {
+        if (historyFormatFilter !== "double-elimination") {
+          // Add known round-robin completed days (Oct 10, 11, 18)
+          if (completedDays && completedDays.length > 0) {
+            completedDays.forEach((cd) => {
+              if (cd.date !== "2026-10-23") {
+                if (cd.totals?.[p.id] !== undefined) dayPointsTotal += cd.totals[p.id];
+                if (p.id === "sajal") {
+                  for (const alias of SAJAL_ALIASES) {
+                    if (cd.totals?.[alias] !== undefined) dayPointsTotal += cd.totals[alias];
+                  }
+                }
+              }
+            });
+          }
+          if (dayPointsTotal === 0) {
+            Object.entries(KNOWN_DAY_TOTALS).forEach(([_, totals]) => {
+              if (totals[p.id]) dayPointsTotal += totals[p.id];
+            });
+          }
         }
-        if (p.id === "sajal") {
-          for (const alias of SAJAL_ALIASES) {
-            if (dayTable.totals[alias]) {
-              dayPointsTotal += dayTable.totals[alias];
+
+        // Active dayTable totals
+        if (dayTable.totals) {
+          const includeActiveDay =
+            historyFormatFilter === "all" ||
+            (historyFormatFilter === "double-elimination" && isCurrentDayDE) ||
+            (historyFormatFilter === "round-robin" && !isCurrentDayDE);
+
+          if (includeActiveDay) {
+            if (dayTable.totals[p.id]) {
+              dayPointsTotal += dayTable.totals[p.id];
+            }
+            if (p.id === "sajal") {
+              for (const alias of SAJAL_ALIASES) {
+                if (dayTable.totals[alias]) {
+                  dayPointsTotal += dayTable.totals[alias];
+                }
+              }
             }
           }
         }
@@ -871,9 +895,7 @@ export default function HistoryPage() {
   }, [historyData, localHistoryFallback, completedDays, historyFormatFilter]);
 
   const baseLeaderboard =
-    historyFormatFilter === "all"
-      ? (leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback)
-      : localLeaderboardFallback;
+    leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;
 
   const displayedLeaderboard = useMemo(() => {
     if (!baseLeaderboard) return [];
