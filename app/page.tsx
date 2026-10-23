@@ -21,6 +21,7 @@ import { generateRoundRobin } from "@/lib/fixtures";
 import { apiSync } from "@/lib/apiSync";
 import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
+import { DoubleEliminationBracket } from "@/components/DoubleEliminationBracket";
 
 type FixtureTab = "fixtures" | "table";
 
