@@ -148,6 +148,7 @@ export default function HistoryPage() {
   const { players, dayTable, currentTournament, pastTournaments, completedDays, appRole, clearAppSession } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<"log" | "leaderboards">("log");
   const [rangeFilter, setRangeFilter] = useState<"day" | "week" | "month" | "all">("all");
+  const [historyFormatFilter, setHistoryFormatFilter] = useState<"all" | "round-robin" | "double-elimination">("all");
   const [playerFilter, setPlayerFilter] = useState<string>("all");
   const [patternFilter, setPatternFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"points" | "wins" | "matches">("points");
