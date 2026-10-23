@@ -304,6 +304,7 @@ export default function HistoryPage() {
       if (rangeFilter !== "all") params.append("range", rangeFilter);
       if (playerFilter !== "all") params.append("playerId", playerFilter);
       if (patternFilter !== "all") params.append("scorePattern", patternFilter);
+      if (historyFormatFilter !== "all") params.append("format", historyFormatFilter);
 
       const res = await fetch(`${backendUrl}/history?${params.toString()}`);
       if (res.ok) {
@@ -323,6 +324,7 @@ export default function HistoryPage() {
     try {
       const params = new URLSearchParams();
       if (rangeFilter !== "all") params.append("range", rangeFilter);
+      if (historyFormatFilter !== "all") params.append("format", historyFormatFilter);
       params.append("sortBy", sortBy);
 
       const [resLb, resDays] = await Promise.all([
@@ -364,7 +366,7 @@ export default function HistoryPage() {
   useEffect(() => {
     fetchHistory();
     fetchLeaderboards();
-  }, [rangeFilter, playerFilter, patternFilter, sortBy]);
+  }, [rangeFilter, playerFilter, patternFilter, sortBy, historyFormatFilter]);
 
   // Local fallback synthesis if backend returned no records or offline
   const localHistoryFallback = useMemo<HistoryData>(() => {
@@ -375,6 +377,12 @@ export default function HistoryPage() {
     }
     if (currentTournament) {
       allTourneys.push(currentTournament);
+    }
+
+    if (historyFormatFilter === "double-elimination") {
+      allTourneys = allTourneys.filter((t) => t.config?.format === "double-elimination" || t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
+    } else if (historyFormatFilter === "round-robin") {
+      allTourneys = allTourneys.filter((t) => t.config?.format !== "double-elimination" && !t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
     }
 
     if (allTourneys.length === 0) {
@@ -562,7 +570,7 @@ export default function HistoryPage() {
       days,
       miniLeaderboard,
     };
-  }, [currentTournament, pastTournaments, dayTable, players, playerFilter, patternFilter]);
+  }, [currentTournament, pastTournaments, dayTable, players, playerFilter, patternFilter, historyFormatFilter]);
 
   const localLeaderboardFallback = useMemo<LeaderboardEntry[]>(() => {
     let allTourneys = [...pastTournaments];
@@ -571,6 +579,12 @@ export default function HistoryPage() {
       if (rec.length > 0) allTourneys = rec;
     }
     if (currentTournament) allTourneys.push(currentTournament);
+
+    if (historyFormatFilter === "double-elimination") {
+      allTourneys = allTourneys.filter((t) => t.config?.format === "double-elimination" || t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
+    } else if (historyFormatFilter === "round-robin") {
+      allTourneys = allTourneys.filter((t) => t.config?.format !== "double-elimination" && !t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
+    }
 
     const entries: LeaderboardEntry[] = players.map((p) => {
       let dayPointsTotal = 0;
