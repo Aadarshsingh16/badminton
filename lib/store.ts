@@ -646,13 +646,17 @@ export const useStore = create<AppState>()(
         const { currentTournament } = get();
         if (!currentTournament) return;
 
+        const isDE = currentTournament.config?.format === "double-elimination";
         const shuffled = [...currentTournament.playerIds];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
 
-        const { matches, byes } = generateRoundRobin(shuffled);
+        const { matches, byes } = isDE
+          ? generateDoubleElimination(shuffled, currentTournament.config)
+          : generateRoundRobin(shuffled);
+
         set({
           currentTournament: {
             ...currentTournament,
@@ -698,8 +702,14 @@ export const useStore = create<AppState>()(
         const { currentTournament } = get();
         if (!currentTournament) return;
 
+        const isDE = currentTournament.config?.format === "double-elimination";
         const matchIdx = currentTournament.matches.findIndex((m) => m.id === matchId);
-        if (matchIdx === -1) return;
+        if (matchIdx === -1) {
+          if (currentTournament.final && currentTournament.final.id === matchId) {
+            get().confirmFinalScore(scoreA, scoreB);
+          }
+          return;
+        }
 
         const match = currentTournament.matches[matchIdx];
         const config = currentTournament.config;
@@ -708,7 +718,69 @@ export const useStore = create<AppState>()(
         const updatedMatches = [...currentTournament.matches];
         updatedMatches[matchIdx] = { ...match, scoreA, scoreB, played: true, pointsAwarded };
 
-        const updatedTournament: Tournament = { ...currentTournament, matches: updatedMatches };
+        let updatedTournament: Tournament = { ...currentTournament, matches: updatedMatches };
+
+        if (isDE) {
+          updatedTournament = advanceDoubleElimination(updatedTournament);
+          const isComplete = isDoubleEliminationComplete(updatedTournament);
+          const gfMatch = updatedTournament.matches.find((m) => m.bracketRound === "GF");
+
+          if (isComplete && gfMatch && gfMatch.played) {
+            const finalScoreA = gfMatch.scoreA ?? scoreA;
+            const finalScoreB = gfMatch.scoreB ?? scoreB;
+            const finalWinnerIsA = finalScoreA > finalScoreB;
+            const winnerId = finalWinnerIsA ? gfMatch.playerA : gfMatch.playerB;
+            const loserId = finalWinnerIsA ? gfMatch.playerB : gfMatch.playerA;
+            const dayPoints = computeDayPoints(updatedTournament);
+
+            const updatedGF = {
+              ...gfMatch,
+              played: true,
+              scoreA: finalScoreA,
+              scoreB: finalScoreB,
+              pointsAwarded: {
+                [winnerId]: currentTournament.playerIds.length,
+                [loserId]: dayPoints[loserId] ?? (currentTournament.playerIds.length - 1),
+              },
+            };
+
+            updatedTournament = {
+              ...updatedTournament,
+              final: updatedGF,
+              finalistIds: [gfMatch.playerA, gfMatch.playerB],
+              dayPointsAwarded: dayPoints,
+            };
+
+            set({
+              currentTournament: updatedTournament,
+              phase: "tournament-summary",
+            });
+
+            if (!currentTournament.isPractice) {
+              apiSync.enqueue(`/tournaments/${currentTournament.id}/final`, "PATCH", {
+                scoreA: finalScoreA,
+                scoreB: finalScoreB,
+                playerA: gfMatch.playerA,
+                playerB: gfMatch.playerB,
+              });
+              apiSync.syncTournamentDirectly(updatedTournament, get().players);
+            }
+            return;
+          }
+
+          set({
+            currentTournament: updatedTournament,
+            phase: "fixtures",
+          });
+
+          if (!currentTournament.isPractice) {
+            apiSync.enqueue(`/tournaments/${currentTournament.id}/matches/${matchId}`, "PATCH", { scoreA, scoreB });
+            apiSync.syncTournamentDirectly(updatedTournament, get().players);
+          }
+          return;
+        }
+
+        // Standard Round-Robin logic
         const allPlayed = updatedMatches.every((m) => m.played);
 
         set({
@@ -735,6 +807,7 @@ export const useStore = create<AppState>()(
         const { currentTournament } = get();
         if (!currentTournament) return;
 
+        const isDE = currentTournament.config?.format === "double-elimination";
         const matchIdx = currentTournament.matches.findIndex((m) => m.id === matchId);
         if (matchIdx === -1) {
           if (currentTournament.final && currentTournament.final.id === matchId) {
@@ -750,9 +823,24 @@ export const useStore = create<AppState>()(
         const updatedMatches = [...currentTournament.matches];
         updatedMatches[matchIdx] = { ...match, scoreA, scoreB, played: true, pointsAwarded };
 
-        const updatedTournament: Tournament = { ...currentTournament, matches: updatedMatches };
+        let updatedTournament: Tournament = { ...currentTournament, matches: updatedMatches };
 
-        // Re-evaluate if all matches played (could move back to final phase)
+        if (isDE) {
+          updatedTournament = advanceDoubleElimination(updatedTournament);
+          const isComplete = isDoubleEliminationComplete(updatedTournament);
+          set({
+            currentTournament: updatedTournament,
+            phase: isComplete ? "tournament-summary" : "fixtures",
+          });
+
+          if (!currentTournament.isPractice) {
+            apiSync.enqueue(`/tournaments/${currentTournament.id}/matches/${matchId}`, "PATCH", { scoreA, scoreB });
+            apiSync.syncTournamentDirectly(updatedTournament, get().players);
+          }
+          return;
+        }
+
+        // Round-robin re-evaluate
         const allPlayed = updatedMatches.every((m) => m.played);
         let newPhase = get().phase;
         if (allPlayed && newPhase === "fixtures") {
@@ -761,7 +849,6 @@ export const useStore = create<AppState>()(
 
         set({ currentTournament: updatedTournament, phase: newPhase });
 
-        // Re-compute finalists if all matches played
         if (allPlayed) {
           const { finalistIds, needsCoinFlip } = getFinalists(updatedTournament);
           set((s) => ({
