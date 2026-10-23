@@ -132,6 +132,54 @@ leaderboardRouter.get("/", async (req, res) => {
         JOIN tournaments t ON m.tournament_id = t.id ${tournamentFilter}
         JOIN date_filtered_days d ON t.day_id = d.id
         GROUP BY p.id
+      ),
+      bracket_stage_stats AS (
+        SELECT
+          p.id as player_id,
+          -- Upper Final (UF)
+          SUM(CASE WHEN m.id = 'de-uf' AND (
+            ((m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b) OR
+            ((m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a)
+          ) THEN 1 ELSE 0 END) as uf_wins,
+          SUM(CASE WHEN m.id = 'de-uf' THEN 1 ELSE 0 END) as uf_played,
+          -- Lower Final (LF)
+          SUM(CASE WHEN m.id = 'de-lf' AND (
+            ((m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b) OR
+            ((m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a)
+          ) THEN 1 ELSE 0 END) as lf_wins,
+          SUM(CASE WHEN m.id = 'de-lf' THEN 1 ELSE 0 END) as lf_played,
+          -- Upper Semis (USF)
+          SUM(CASE WHEN m.id LIKE 'de-us%' AND (
+            ((m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b) OR
+            ((m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a)
+          ) THEN 1 ELSE 0 END) as usf_wins,
+          SUM(CASE WHEN m.id LIKE 'de-us%' THEN 1 ELSE 0 END) as usf_played,
+          -- Upper Quarters (UQF)
+          SUM(CASE WHEN m.id LIKE 'de-uq%' AND (
+            ((m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b) OR
+            ((m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a)
+          ) THEN 1 ELSE 0 END) as uqf_wins,
+          SUM(CASE WHEN m.id LIKE 'de-uq%' THEN 1 ELSE 0 END) as uqf_played,
+          -- Lower Rounds (LR: LR1, LR2, LR3)
+          SUM(CASE WHEN m.id LIKE 'de-lr%' AND (
+            ((m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b) OR
+            ((m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a)
+          ) THEN 1 ELSE 0 END) as lr_wins,
+          SUM(CASE WHEN m.id LIKE 'de-lr%' THEN 1 ELSE 0 END) as lr_played,
+          -- Play-in / Quarters RR (QRR)
+          SUM(CASE WHEN m.id LIKE 'de-q-rr%' AND (
+            ((m.player_a = p.id OR (p.id = 'sajal' AND m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_a > m.score_b) OR
+            ((m.player_b = p.id OR (p.id = 'sajal' AND m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909'))) AND m.score_b > m.score_a)
+          ) THEN 1 ELSE 0 END) as qrr_wins,
+          SUM(CASE WHEN m.id LIKE 'de-q-rr%' THEN 1 ELSE 0 END) as qrr_played
+        FROM players p
+        JOIN matches m ON (
+          m.player_a = p.id OR m.player_b = p.id OR
+          (p.id = 'sajal' AND (m.player_a IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909') OR m.player_b IN ('custom-1791717061642', 'custom-1791630401707', 'custom-1791021029857', 'custom-1791025802127', 'custom-1790938366909')))
+        ) AND m.played = true
+        JOIN tournaments t ON m.tournament_id = t.id ${tournamentFilter}
+        JOIN date_filtered_days d ON t.day_id = d.id
+        GROUP BY p.id
       )
       SELECT
         p.id AS "playerId",
@@ -149,11 +197,24 @@ leaderboardRouter.get("/", async (req, res) => {
         COALESCE(ls.highest_win_margin, 0)::int AS "highestWinMargin",
         COALESCE(fs.finals_played, 0)::int AS "finalsPlayed",
         COALESCE(fs.finals_won, 0)::int AS "finalsWon",
+        COALESCE(bss.uf_wins, 0)::int AS "ufWins",
+        COALESCE(bss.uf_played, 0)::int AS "ufPlayed",
+        COALESCE(bss.lf_wins, 0)::int AS "lfWins",
+        COALESCE(bss.lf_played, 0)::int AS "lfPlayed",
+        COALESCE(bss.usf_wins, 0)::int AS "usfWins",
+        COALESCE(bss.usf_played, 0)::int AS "usfPlayed",
+        COALESCE(bss.uqf_wins, 0)::int AS "uqfWins",
+        COALESCE(bss.uqf_played, 0)::int AS "uqfPlayed",
+        COALESCE(bss.lr_wins, 0)::int AS "lrWins",
+        COALESCE(bss.lr_played, 0)::int AS "lrPlayed",
+        COALESCE(bss.qrr_wins, 0)::int AS "qrrWins",
+        COALESCE(bss.qrr_played, 0)::int AS "qrrPlayed",
         CASE WHEN COALESCE(ls.league_matches_played, 0) > 0 THEN ROUND((COALESCE(ls.league_wins, 0)::numeric / ls.league_matches_played::numeric) * 100, 1) ELSE 0 END AS "leagueWinRate"
       FROM players p
       LEFT JOIN day_points dp ON p.id = dp.player_id
       LEFT JOIN league_stats ls ON p.id = ls.player_id
       LEFT JOIN final_stats fs ON p.id = fs.player_id
+      LEFT JOIN bracket_stage_stats bss ON p.id = bss.player_id
       WHERE COALESCE(ls.league_matches_played, 0) > 0 OR COALESCE(dp.day_points_total, 0) > 0 OR COALESCE(fs.finals_played, 0) > 0
     `;
 
