@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useStore, recoverTournamentsFromSyncQueue, getDeletedTournamentIds, normalizePlayerId } from "@/lib/store";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { computeTournamentTable } from "@/lib/ranking";
+import { getMatchShortform } from "@/lib/fixtures";
 import { Player, Tournament } from "@/lib/types";
 
 import { PinModal } from "@/components/PinModal";
@@ -738,7 +739,26 @@ export default function DayPage() {
                                     {/* Matches in this tournament */}
                                     <div className="space-y-1">
                                       {playerMatches.map((m) => {
-                                        const isFinalMatch = m.round === -1 || m.isFinal;
+                                        const isDETournament = t.config?.format === "double-elimination" || playerMatches.some((match) => !!(match.bracket || match.bracketRound || match.id.startsWith("de-")));
+                                        const isFinalMatch = m.round === -1 || m.isFinal || m.bracketRound === "GF" || m.id === "de-gf";
+                                        const matchBadgeText = isDETournament || m.bracketRound || m.id.startsWith("de-")
+                                          ? getMatchShortform(m)
+                                          : (isFinalMatch ? "🏆 Final" : `R${m.round + 1}`);
+
+                                        const isUpperMatch = matchBadgeText.startsWith("UQ") || matchBadgeText.startsWith("US") || matchBadgeText === "UF";
+                                        const isLowerMatch = matchBadgeText.startsWith("LR") || matchBadgeText === "LF";
+                                        const isGrandFinal = isFinalMatch || matchBadgeText === "GF";
+
+                                        const badgeStyle = isGrandFinal
+                                          ? "bg-[#FF5E48] text-white"
+                                          : isUpperMatch
+                                          ? "bg-[#9EC9A8]/20 text-[#9EC9A8]"
+                                          : isLowerMatch
+                                          ? "bg-[#F5BA38]/20 text-[#F5BA38]"
+                                          : matchBadgeText.startsWith("P")
+                                          ? "bg-blue-500/20 text-blue-300"
+                                          : "bg-white/10 text-[#8E95A5]";
+
                                         const isPlayerA = m.playerA === id;
                                         const opponent = getPlayer(isPlayerA ? m.playerB : m.playerA);
                                         const myScore = isPlayerA ? m.scoreA : m.scoreB;
@@ -761,13 +781,9 @@ export default function DayPage() {
                                             }`}
                                           >
                                             <span
-                                              className={`font-black uppercase px-1.5 py-0.5 rounded-md text-[9px] flex-shrink-0 tracking-wider ${
-                                                isFinalMatch
-                                                  ? "bg-[#FF5E48] text-white"
-                                                  : "bg-white/10 text-[#8E95A5]"
-                                              }`}
+                                              className={`font-black uppercase px-1.5 py-0.5 rounded-md text-[9px] flex-shrink-0 tracking-wider ${badgeStyle}`}
                                             >
-                                              {isFinalMatch ? "🏆 Final" : `R${m.round + 1}`}
+                                              {matchBadgeText}
                                             </span>
                                             <AvatarSVG
                                               type={opponent.avatar}
@@ -788,7 +804,7 @@ export default function DayPage() {
                                                 >
                                                   {myScore}–{oppScore}
                                                 </span>
-                                                {myPts !== null && (
+                                                {!isDETournament && myPts !== null && (
                                                   <span
                                                     className={`font-black text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                                                       myPts > 0
