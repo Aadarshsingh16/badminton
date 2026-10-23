@@ -203,7 +203,7 @@ export function BottomTabBar() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`relative flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-full transition-all active:scale-95 group ${
+              className={`relative isolate flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-full transition-all active:scale-95 group ${
                 isActive ? "text-[#14161B]" : "text-[#8E95A5] hover:text-white"
               }`}
             >
@@ -212,17 +212,17 @@ export function BottomTabBar() {
                 <motion.div
                   layoutId="bottom-nav-active-pill"
                   transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                  className="absolute inset-0 bg-[#F3F4EE] rounded-full shadow-md -z-10"
+                  className="absolute inset-0 bg-[#F3F4EE] rounded-full shadow-md z-0"
                 />
               )}
 
-              <div className="relative flex items-center justify-center mb-0.5">
+              <div className="relative z-10 flex items-center justify-center mb-0.5">
                 {tab.icon(isActive)}
                 {tab.badge}
               </div>
 
               <span
-                className={`text-[10px] leading-tight font-black uppercase tracking-tight transition-colors ${
+                className={`relative z-10 text-[10px] leading-tight font-black uppercase tracking-tight transition-colors ${
                   isActive ? "text-[#14161B]" : "text-[#8E95A5] group-hover:text-white"
                 }`}
               >
