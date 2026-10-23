@@ -1637,12 +1637,13 @@ export default function HistoryPage() {
       : patternFilter;
 
   const hasActiveFilter =
-    rangeFilter !== "all" || playerFilter !== "all" || patternFilter !== "all";
+    rangeFilter !== "all" || playerFilter !== "all" || patternFilter !== "all" || historyFormatFilter !== "all";
 
   const activeFilterCount =
     (rangeFilter !== "all" ? 1 : 0) +
     (playerFilter !== "all" ? 1 : 0) +
-    (patternFilter !== "all" ? 1 : 0);
+    (patternFilter !== "all" ? 1 : 0) +
+    (historyFormatFilter !== "all" ? 1 : 0);
   if (!isMounted) {
     return <div className="min-h-full bg-[#14161B] text-[#F3F4EE]"></div>;
   }
@@ -1832,6 +1833,18 @@ export default function HistoryPage() {
                   <button
                     type="button"
                     onClick={() => setPatternFilter("all")}
+                    className="hover:text-[#FF5E48] cursor-pointer ml-0.5 font-black text-[10px]"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {historyFormatFilter !== "all" && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-[#1E2128] text-white/90 px-2.5 py-0.5 rounded-full border border-white/10 shadow-2xs">
+                  ⚡ {historyFormatFilter === "double-elimination" ? "Double Elim" : "Round Robin"}
+                  <button
+                    type="button"
+                    onClick={() => setHistoryFormatFilter("all")}
                     className="hover:text-[#FF5E48] cursor-pointer ml-0.5 font-black text-[10px]"
                   >
                     ✕
@@ -2296,6 +2309,36 @@ export default function HistoryPage() {
       {/* SUB-TAB 2: LEADERBOARDS & DAY HONORS */}
       {activeSubTab === "leaderboards" && (
         <div className="space-y-3">
+          {/* Format Switcher: Overall (default) | Round Robin | Double Elim */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-1.5 bg-[#1E2128] border border-white/10 rounded-2xl shadow-xs">
+            <div className="flex items-center gap-2 pl-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-white/40">Format:</span>
+            </div>
+            <div className="flex bg-[#14161B] border border-white/10 p-1 rounded-xl gap-1 w-full sm:w-auto">
+              {(
+                [
+                  { key: "all", label: "Overall", icon: "🌐" },
+                  { key: "round-robin", label: "Round Robin", icon: "🔄" },
+                  { key: "double-elimination", label: "Double Elim", icon: "⚡" },
+                ] as const
+              ).map((fmt) => (
+                <button
+                  key={fmt.key}
+                  type="button"
+                  onClick={() => setHistoryFormatFilter(fmt.key)}
+                  className={`flex-1 sm:flex-initial py-1.5 px-3 flex items-center justify-center gap-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    historyFormatFilter === fmt.key
+                      ? "bg-[#FF5E48] text-white shadow-xs"
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  <span className="text-xs">{fmt.icon}</span>
+                  <span>{fmt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Combined Controls for Leaderboards */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             {/* Time Filter Pill */}
@@ -3316,6 +3359,7 @@ export default function HistoryPage() {
                         setRangeFilter("all");
                         setPlayerFilter("all");
                         setPatternFilter("all");
+                        setHistoryFormatFilter("all");
                       }}
                       className="text-xs font-bold text-[#FF5E48] hover:text-[#ff462e] bg-[#FF5E48]/15 border border-[#FF5E48]/30 px-2.5 py-1 rounded-full cursor-pointer transition-colors"
                     >
@@ -3419,6 +3463,39 @@ export default function HistoryPage() {
                         }`}
                       >
                         {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 4. Tournament Format */}
+              <div>
+                <label className="block text-[11px] uppercase font-black tracking-wider text-white/40 mb-2">
+                  ⚡ Tournament Format
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(
+                    [
+                      { key: "all", label: "🌐 Overall" },
+                      { key: "round-robin", label: "🔄 Round Robin" },
+                      { key: "double-elimination", label: "⚡ Double Elim" },
+                    ] as const
+                  ).map((fmt) => {
+                    const selected = historyFormatFilter === fmt.key;
+
+                    return (
+                      <button
+                        key={fmt.key}
+                        type="button"
+                        onClick={() => setHistoryFormatFilter(fmt.key)}
+                        className={`py-2 px-1 text-center text-xs font-extrabold rounded-xl transition-all cursor-pointer ${
+                          selected
+                            ? "bg-[#FF5E48] text-white shadow-xs"
+                            : "bg-[#16181F] hover:bg-white/10 text-white/70 border border-white/5"
+                        }`}
+                      >
+                        {fmt.label}
                       </button>
                     );
                   })}
