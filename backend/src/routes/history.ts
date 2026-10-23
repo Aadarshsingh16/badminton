@@ -85,6 +85,7 @@ historyRouter.get("/", async (req, res) => {
         m.played,
         m.played_at AS "playedAt",
         t.share_slug AS "shareSlug",
+        t.config AS "config",
         d.date AS "date",
         d.closed AS "dayClosed",
         d.totals AS "dayTotals"
@@ -106,7 +107,7 @@ historyRouter.get("/", async (req, res) => {
         date: string;
         closed: boolean;
         totals: { [playerId: string]: number } | null;
-        tournaments: { [tId: string]: { tournamentId: string; shareSlug: string; matches: any[] } };
+        tournaments: { [tId: string]: { tournamentId: string; shareSlug: string; config?: any; matches: any[] } };
       };
     } = {};
 
@@ -128,6 +129,7 @@ historyRouter.get("/", async (req, res) => {
         daysMap[dateStr].tournaments[r.tournamentId] = {
           tournamentId: r.tournamentId,
           shareSlug: r.shareSlug,
+          config: r.config,
           matches: [],
         };
       }
