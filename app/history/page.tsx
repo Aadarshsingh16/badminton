@@ -3122,6 +3122,116 @@ export default function HistoryPage() {
                 </div>
               </div>
 
+              {/* Double Elimination Stage Breakdown Matrix Table */}
+              {(historyFormatFilter === "double-elimination" || displayedLeaderboard.some(l => (l.ufPlayed ?? 0) > 0 || (l.lfPlayed ?? 0) > 0 || (l.lrPlayed ?? 0) > 0)) && (
+                <div className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-xl bg-[#FF5E48]/15 border border-[#FF5E48]/25 flex items-center justify-center text-sm shadow-2xs">
+                        ⚡
+                      </span>
+                      <div>
+                        <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">
+                          Double Elimination Stage Matrix
+                        </h3>
+                        <p className="text-[10px] text-white/40 font-medium">
+                          Round-by-round record across Grand Final, Upper Final, Lower Final, Semis &amp; Lower Rounds
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-[#FF5E48] bg-[#FF5E48]/10 px-2.5 py-0.5 rounded-full border border-[#FF5E48]/20">
+                      Bracket Breakdown
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto no-scrollbar rounded-2xl border border-white/10">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-[#16181F] border-b border-white/10 text-[10px] font-black uppercase tracking-wider text-white/40">
+                          <th className="py-2.5 pl-3 pr-2">Player</th>
+                          <th className="py-2.5 px-2 text-center text-[#F5BA38]">🏆 GF</th>
+                          <th className="py-2.5 px-2 text-center text-[#FF5E48]">⚡ UF</th>
+                          <th className="py-2.5 px-2 text-center text-[#6C79E0]">🔥 LF</th>
+                          <th className="py-2.5 px-2 text-center text-white/80">🎯 USF</th>
+                          <th className="py-2.5 px-2 text-center text-white/80">🛡️ LR</th>
+                          <th className="py-2.5 pr-3 pl-2 text-right text-[#9EC9A8]">Total Bracket</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {displayedLeaderboard.map((player) => {
+                          const totalBracketMatches = player.leagueMatchesPlayed ?? 0;
+                          const totalBracketWins = player.leagueWins ?? 0;
+                          const bracketLosses = Math.max(0, totalBracketMatches - totalBracketWins);
+                          const bracketWinRate = totalBracketMatches > 0 ? Math.round((totalBracketWins / totalBracketMatches) * 100) : 0;
+
+                          return (
+                            <tr key={player.playerId} className="hover:bg-white/5 transition-colors">
+                              <td className="py-2.5 pl-3 pr-2 flex items-center gap-2 font-bold text-[#F3F4EE]">
+                                <AvatarSVG type={player.avatar} size={22} emoji={player.avatarEmoji} color={player.avatarColor} />
+                                <span>{player.name}</span>
+                              </td>
+                              <td className="py-2.5 px-2 text-center font-mono">
+                                {(player.finalsPlayed ?? 0) > 0 ? (
+                                  <span className="text-[#F5BA38] font-black">
+                                    {player.finalsWon}W - {Math.max(0, (player.finalsPlayed ?? 0) - (player.finalsWon ?? 0))}L
+                                  </span>
+                                ) : (
+                                  <span className="text-white/20">—</span>
+                                )}
+                              </td>
+                              <td className="py-2.5 px-2 text-center font-mono">
+                                {(player.ufPlayed ?? 0) > 0 ? (
+                                  <span className="text-[#FF5E48] font-black">
+                                    {player.ufWins ?? 0}W - {Math.max(0, (player.ufPlayed ?? 0) - (player.ufWins ?? 0))}L
+                                  </span>
+                                ) : (
+                                  <span className="text-white/20">—</span>
+                                )}
+                              </td>
+                              <td className="py-2.5 px-2 text-center font-mono">
+                                {(player.lfPlayed ?? 0) > 0 ? (
+                                  <span className="text-[#6C79E0] font-black">
+                                    {player.lfWins ?? 0}W - {Math.max(0, (player.lfPlayed ?? 0) - (player.lfWins ?? 0))}L
+                                  </span>
+                                ) : (
+                                  <span className="text-white/20">—</span>
+                                )}
+                              </td>
+                              <td className="py-2.5 px-2 text-center font-mono">
+                                {(player.usfPlayed ?? 0) > 0 ? (
+                                  <span className="text-white/90 font-bold">
+                                    {player.usfWins ?? 0}W - {Math.max(0, (player.usfPlayed ?? 0) - (player.usfWins ?? 0))}L
+                                  </span>
+                                ) : (
+                                  <span className="text-white/20">—</span>
+                                )}
+                              </td>
+                              <td className="py-2.5 px-2 text-center font-mono">
+                                {(player.lrPlayed ?? 0) > 0 ? (
+                                  <span className="text-white/90 font-bold">
+                                    {player.lrWins ?? 0}W - {Math.max(0, (player.lrPlayed ?? 0) - (player.lrWins ?? 0))}L
+                                  </span>
+                                ) : (
+                                  <span className="text-white/20">—</span>
+                                )}
+                              </td>
+                              <td className="py-2.5 pr-3 pl-2 text-right font-mono">
+                                <span className="text-[#9EC9A8] font-black">
+                                  {totalBracketWins}W - {bracketLosses}L
+                                </span>
+                                <span className="text-[10px] text-white/40 font-semibold ml-1">
+                                  ({bracketWinRate}%)
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               {/* Row 4: Match Intensity & Scoring Spectrum Hub */}
               {advancedInsights.scoringSpectrum && advancedInsights.scoringSpectrum.totalMatchesCount > 0 && (
                 <div className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-xs space-y-5">
