@@ -201,14 +201,14 @@ export function generateDoubleElimination(
     const [p1, p2, p3, p4, p5, p6] = activePlayers;
 
     const matches: Match[] = [
-      makeDEMatch("de-uq-1", 1, p1, p2, {
+      makeDEMatch("de-uq-1", 1, p1, p3, {
         bracket: "upper",
         bracketRound: "UQ",
         label: "Upper Quarterfinal 1",
         targetScore: winScore,
         matchIndex: 0,
       }),
-      makeDEMatch("de-uq-2", 1, p3, p4, {
+      makeDEMatch("de-uq-2", 1, p2, p4, {
         bracket: "upper",
         bracketRound: "UQ",
         label: "Upper Quarterfinal 2",
