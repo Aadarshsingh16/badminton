@@ -180,86 +180,198 @@ export function getMatchShortform(m: Match): string {
 }
 
 /**
+ * Compute the historical head-to-head match count specifically in Upper Quarterfinals (UQF)
+ * across past double-elimination tournaments.
+ */
+export function computeUpperQuarterfinalH2H(
+  tournaments: Tournament[]
+): { [playerA: string]: { [playerB: string]: number } } {
+  const h2h: { [pA: string]: { [pB: string]: number } } = {};
+
+  const recordPair = (pA: string, pB: string) => {
+    if (!pA || !pB || pA === pB) return;
+    const a = pA.trim().toLowerCase();
+    const b = pB.trim().toLowerCase();
+    if (!h2h[a]) h2h[a] = {};
+    if (!h2h[b]) h2h[b] = {};
+    h2h[a][b] = (h2h[a][b] || 0) + 1;
+    h2h[b][a] = (h2h[b][a] || 0) + 1;
+  };
+
+  const seenTourneyIds = new Set<string>();
+  for (const t of tournaments || []) {
+    if (!t || !t.id || seenTourneyIds.has(t.id)) continue;
+    seenTourneyIds.add(t.id);
+
+    const isDE =
+      t.config?.format === "double-elimination" ||
+      t.matches?.some((m) => m.bracket || m.id.startsWith("de-"));
+    if (!isDE || !t.matches) continue;
+
+    for (const m of t.matches) {
+      const isUQF =
+        m.id.startsWith("de-uq-") ||
+        m.bracketRound === "UQ" ||
+        m.bracketRound?.startsWith("UQF");
+      if (isUQF && m.playerA && m.playerB) {
+        recordPair(m.playerA, m.playerB);
+      }
+    }
+  }
+
+  return h2h;
+}
+
+/**
+ * Exhaustively generate all mathematically possible complete pairings for an even number of players.
+ * For 6 players: 15 complete pairings.
+ * For 8 players: 105 complete pairings.
+ */
+export function generateAllCompletePairings(players: string[]): [string, string][][] {
+  if (players.length === 0) return [[]];
+  if (players.length % 2 !== 0) return [];
+
+  const first = players[0];
+  const rest = players.slice(1);
+  const result: [string, string][][] = [];
+
+  for (let i = 0; i < rest.length; i++) {
+    const partner = rest[i];
+    const remaining = rest.filter((_, idx) => idx !== i);
+    const subPairings = generateAllCompletePairings(remaining);
+    for (const sub of subPairings) {
+      result.push([[first, partner], ...sub]);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Find the most balanced UQF pairings for active players by strictly minimizing past rematch counts.
+ * - Prioritizes 0-count matchups (immediate 1-to-1 round-robin blocking).
+ * - Minimizes sum of squares to distribute pairings evenly across everyone.
+ * - Randomly tie-breaks among all candidate pairings that achieve the minimal score.
+ * - Randomizes match slot assignment and court side assignments.
+ */
+export function findOptimalUQFMatchups(
+  activePlayerIds: string[],
+  uqfH2H: { [pA: string]: { [pB: string]: number } } = {}
+): [string, string][] {
+  const candidatePairings = generateAllCompletePairings(activePlayerIds);
+  if (candidatePairings.length === 0) return [];
+
+  let minMaxCount = Infinity;
+  let minSumSquares = Infinity;
+  let minTotalSum = Infinity;
+
+  const scoredPairings: {
+    pairing: [string, string][];
+    maxCount: number;
+    sumSquares: number;
+    totalSum: number;
+  }[] = [];
+
+  for (const pairing of candidatePairings) {
+    let maxCount = 0;
+    let sumSquares = 0;
+    let totalSum = 0;
+
+    for (const [pA, pB] of pairing) {
+      const a = pA.trim().toLowerCase();
+      const b = pB.trim().toLowerCase();
+      const count = uqfH2H[a]?.[b] || 0;
+      if (count > maxCount) maxCount = count;
+      sumSquares += count * count;
+      totalSum += count;
+    }
+
+    scoredPairings.push({ pairing, maxCount, sumSquares, totalSum });
+
+    if (
+      maxCount < minMaxCount ||
+      (maxCount === minMaxCount && sumSquares < minSumSquares) ||
+      (maxCount === minMaxCount && sumSquares === minSumSquares && totalSum < minTotalSum)
+    ) {
+      minMaxCount = maxCount;
+      minSumSquares = sumSquares;
+      minTotalSum = totalSum;
+    }
+  }
+
+  // Filter to optimal candidate subset
+  const optimal = scoredPairings
+    .filter(
+      (p) =>
+        p.maxCount === minMaxCount &&
+        p.sumSquares === minSumSquares &&
+        p.totalSum === minTotalSum
+    )
+    .map((p) => p.pairing);
+
+  // Uniform random choice among all tied optimal candidates
+  const chosenPairing = optimal[Math.floor(Math.random() * optimal.length)];
+
+  // Shuffle match slots so pairs aren't pinned to particular bracket positions
+  const shuffledPairing = [...chosenPairing].sort(() => Math.random() - 0.5);
+
+  // Randomize playerA / playerB order (court sides) for each match
+  return shuffledPairing.map(([pA, pB]) =>
+    Math.random() > 0.5 ? [pA, pB] : [pB, pA]
+  );
+}
+
+/**
  * Generate the initial matches for a 7 or 8 player Double Elimination tournament.
+ * If past tournaments are provided, balances Upper Quarterfinal matchups fairly
+ * based on historical head-to-head encounter counts.
  */
 export function generateDoubleElimination(
   playerIds: string[],
-  config: TournamentConfig
+  config: TournamentConfig,
+  pastTournaments?: Tournament[]
 ): {
   matches: Match[];
   byes: { [round: number]: string | null };
 } {
   const count = playerIds.length;
   const winScore = config.winScore || 5;
+  const uqfH2H = pastTournaments ? computeUpperQuarterfinalH2H(pastTournaments) : {};
 
   if (count === 8) {
     // 8 players -> 4 Upper Quarterfinal matches
-    const [p1, p2, p3, p4, p5, p6, p7, p8] = playerIds;
-    const matches: Match[] = [
-      makeDEMatch("de-uq-1", 1, p1, p2, {
+    const pairs = findOptimalUQFMatchups(playerIds, uqfH2H);
+    const matches: Match[] = pairs.map(([pA, pB], idx) =>
+      makeDEMatch(`de-uq-${idx + 1}`, 1, pA, pB, {
         bracket: "upper",
-        bracketRound: "UQF1",
-        label: "Upper Quarterfinal 1",
+        bracketRound: `UQF${idx + 1}`,
+        label: `Upper Quarterfinal ${idx + 1}`,
         targetScore: winScore,
-        matchIndex: 0,
-      }),
-      makeDEMatch("de-uq-2", 1, p3, p4, {
-        bracket: "upper",
-        bracketRound: "UQF2",
-        label: "Upper Quarterfinal 2",
-        targetScore: winScore,
-        matchIndex: 1,
-      }),
-      makeDEMatch("de-uq-3", 1, p5, p6, {
-        bracket: "upper",
-        bracketRound: "UQF3",
-        label: "Upper Quarterfinal 3",
-        targetScore: winScore,
-        matchIndex: 2,
-      }),
-      makeDEMatch("de-uq-4", 1, p7, p8, {
-        bracket: "upper",
-        bracketRound: "UQF4",
-        label: "Upper Quarterfinal 4",
-        targetScore: winScore,
-        matchIndex: 3,
-      }),
-    ];
+        matchIndex: idx,
+      })
+    );
     return { matches, byes: {} };
   }
 
   if (count === 7) {
     // 7 players -> 1 player receives the Upper Bye to Upper Semifinal 2
-    const upperByePlayerId = config.upperByePlayerId && playerIds.includes(config.upperByePlayerId)
-      ? config.upperByePlayerId
-      : playerIds[playerIds.length - 1];
+    const upperByePlayerId =
+      config.upperByePlayerId && playerIds.includes(config.upperByePlayerId)
+        ? config.upperByePlayerId
+        : playerIds[playerIds.length - 1];
 
     const activePlayers = playerIds.filter((id) => id !== upperByePlayerId);
-    const [p1, p2, p3, p4, p5, p6] = activePlayers;
+    const pairs = findOptimalUQFMatchups(activePlayers, uqfH2H);
 
-    const matches: Match[] = [
-      makeDEMatch("de-uq-1", 1, p1, p3, {
+    const matches: Match[] = pairs.map(([pA, pB], idx) =>
+      makeDEMatch(`de-uq-${idx + 1}`, 1, pA, pB, {
         bracket: "upper",
-        bracketRound: "UQF1",
-        label: "Upper Quarterfinal 1",
+        bracketRound: `UQF${idx + 1}`,
+        label: `Upper Quarterfinal ${idx + 1}`,
         targetScore: winScore,
-        matchIndex: 0,
-      }),
-      makeDEMatch("de-uq-2", 1, p2, p4, {
-        bracket: "upper",
-        bracketRound: "UQF2",
-        label: "Upper Quarterfinal 2",
-        targetScore: winScore,
-        matchIndex: 1,
-      }),
-      makeDEMatch("de-uq-3", 1, p5, p6, {
-        bracket: "upper",
-        bracketRound: "UQF3",
-        label: "Upper Quarterfinal 3",
-        targetScore: winScore,
-        matchIndex: 2,
-      }),
-    ];
+        matchIndex: idx,
+      })
+    );
 
     return {
       matches,
