@@ -122,6 +122,10 @@ interface LeaderboardEntry {
   lrPlayed?: number;
   qrrWins?: number;
   qrrPlayed?: number;
+  placementRank?: number;
+  placementLabel?: string;
+  placementStage?: string;
+  placementBadge?: string;
 }
 
 interface DayHonors {
@@ -164,7 +168,7 @@ export default function HistoryPage() {
   const [historyFormatFilter, setHistoryFormatFilter] = useState<"all" | "round-robin" | "double-elimination">("all");
   const [playerFilter, setPlayerFilter] = useState<string>("all");
   const [patternFilter, setPatternFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"points" | "wins" | "matches">("points");
+  const [sortBy, setSortBy] = useState<"points" | "wins" | "matches" | "placement" | "bracket_points">("points");
 
   const [loading, setLoading] = useState(false);
   const [historyData, setHistoryData] = useState<HistoryData | null>(null);
@@ -338,7 +342,7 @@ export default function HistoryPage() {
       const params = new URLSearchParams();
       if (rangeFilter !== "all") params.append("range", rangeFilter);
       if (historyFormatFilter !== "all") params.append("format", historyFormatFilter);
-      params.append("sortBy", sortBy);
+      params.append("sortBy", sortBy === "placement" || sortBy === "bracket_points" ? "points" : sortBy);
 
       const dayResultsParams = new URLSearchParams();
       if (historyFormatFilter !== "all") dayResultsParams.append("format", historyFormatFilter);
@@ -953,12 +957,216 @@ export default function HistoryPage() {
     };
   }, [historyData, localHistoryFallback, completedDays, historyFormatFilter]);
 
+  // Compute Double Elimination Stage Stats & Tournament Placement directly from tournament matches
+  const { stageStatsMap, placementMap } = useMemo(() => {
+    const sMap: Record<string, {
+      ufPlayed: number;
+      ufWins: number;
+      lfPlayed: number;
+      lfWins: number;
+      usfPlayed: number;
+      usfWins: number;
+      uqfPlayed: number;
+      uqfWins: number;
+      lrPlayed: number;
+      lrWins: number;
+      qrrPlayed: number;
+      qrrWins: number;
+      gfPlayed: number;
+      gfWins: number;
+      bracketMatches: number;
+      bracketWins: number;
+    }> = {};
+
+    const pMap: Record<string, {
+      placementRank: number;
+      placementLabel: string;
+      stageLabel: string;
+      badge: string;
+    }> = {};
+
+    FIXED_PLAYERS.forEach((p) => {
+      sMap[p.id] = {
+        ufPlayed: 0, ufWins: 0, lfPlayed: 0, lfWins: 0,
+        usfPlayed: 0, usfWins: 0, uqfPlayed: 0, uqfWins: 0,
+        lrPlayed: 0, lrWins: 0, qrrPlayed: 0, qrrWins: 0,
+        gfPlayed: 0, gfWins: 0, bracketMatches: 0, bracketWins: 0,
+      };
+    });
+
+    const activeDays = displayedHistory?.days || localHistoryFallback?.days || [];
+    const allTourneys: any[] = [];
+    activeDays.forEach((d) => {
+      (d.tournaments || []).forEach((t) => allTourneys.push(t));
+    });
+    if (currentTournament && !allTourneys.some((t) => (t.tournamentId || t.id) === currentTournament.id)) {
+      allTourneys.push(currentTournament);
+    }
+
+    const seenTourneyFinals = new Set<string>();
+    const seenMatchKeys = new Set<string>();
+
+    allTourneys.forEach((t) => {
+      const isDE = t.config?.format === "double-elimination" ||
+        t.matches?.some((m: any) => m.bracket || m.bracketRound || m.id?.startsWith("de-"));
+
+      const tId = t.tournamentId || t.id || "t";
+      const matches: any[] = [...(t.matches || [])];
+      if (t.final && t.final.played) {
+        if (!matches.some((m) => m.id === t.final.id || m.id === "de-gf" || m.id === "de-gfr" || (m.isFinal && m.playerA === t.final.playerA && m.playerB === t.final.playerB))) {
+          matches.push({ ...t.final, isFinal: true });
+        }
+      }
+
+      // If Double Elimination, derive placement map
+      if (isDE) {
+        const playedDEMatches = matches.filter((m) => m.played && m.scoreA != null && m.scoreB != null);
+        const gf = playedDEMatches.find((m) => m.id === "de-gf" || m.id === "de-gfr" || (m.isFinal && m.round !== 0) || m.round === -1);
+        if (gf) {
+          const w = normalizePlayerId(gf.scoreA > gf.scoreB ? gf.playerA : gf.playerB);
+          const l = normalizePlayerId(gf.scoreA > gf.scoreB ? gf.playerB : gf.playerA);
+          pMap[w] = { placementRank: 1, placementLabel: "1st Place", stageLabel: "Champion", badge: "🏆" };
+          pMap[l] = { placementRank: 2, placementLabel: "2nd Place", stageLabel: "Runner-up", badge: "🥈" };
+        }
+
+        const lf = playedDEMatches.find((m) => m.id === "de-lf");
+        if (lf) {
+          const l = normalizePlayerId(lf.scoreA > lf.scoreB ? lf.playerB : lf.playerA);
+          if (!pMap[l]) pMap[l] = { placementRank: 3, placementLabel: "3rd Place", stageLabel: "Lower Finalist", badge: "🥉" };
+        }
+
+        const lr3 = playedDEMatches.find((m) => m.id === "de-lr3");
+        if (lr3) {
+          const l = normalizePlayerId(lr3.scoreA > lr3.scoreB ? lr3.playerB : lr3.playerA);
+          if (!pMap[l]) pMap[l] = { placementRank: 4, placementLabel: "4th Place", stageLabel: "Lower R3", badge: "4th" };
+        }
+
+        const p56 = playedDEMatches.find((m) => m.id === "de-p56");
+        if (p56) {
+          const w = normalizePlayerId(p56.scoreA > p56.scoreB ? p56.playerA : p56.playerB);
+          const l = normalizePlayerId(p56.scoreA > p56.scoreB ? p56.playerB : p56.playerA);
+          if (!pMap[w]) pMap[w] = { placementRank: 5, placementLabel: "5th Place", stageLabel: "5th (P56)", badge: "5th" };
+          if (!pMap[l]) pMap[l] = { placementRank: 6, placementLabel: "6th Place", stageLabel: "6th (P56)", badge: "6th" };
+        } else {
+          const lr2Matches = playedDEMatches.filter((m) => m.id?.startsWith("de-lr2"));
+          lr2Matches.forEach((m, idx) => {
+            const l = normalizePlayerId(m.scoreA > m.scoreB ? m.playerB : m.playerA);
+            const rank = 5 + idx;
+            if (!pMap[l]) pMap[l] = { placementRank: rank, placementLabel: `${rank}th Place`, stageLabel: "Lower R2", badge: `${rank}th` };
+          });
+        }
+
+        const p78 = playedDEMatches.find((m) => m.id === "de-p78");
+        if (p78) {
+          const w = normalizePlayerId(p78.scoreA > p78.scoreB ? p78.playerA : p78.playerB);
+          const l = normalizePlayerId(p78.scoreA > p78.scoreB ? p78.playerB : p78.playerA);
+          if (!pMap[w]) pMap[w] = { placementRank: 7, placementLabel: "7th Place", stageLabel: "7th (P78)", badge: "7th" };
+          if (!pMap[l]) pMap[l] = { placementRank: 8, placementLabel: "8th Place", stageLabel: "8th (P78)", badge: "8th" };
+        } else {
+          const lr1 = playedDEMatches.find((m) => m.id === "de-lr1" || m.id === "de-lr1-1");
+          if (lr1) {
+            const l = normalizePlayerId(lr1.scoreA > lr1.scoreB ? lr1.playerB : lr1.playerA);
+            if (!pMap[l]) pMap[l] = { placementRank: 7, placementLabel: "7th Place", stageLabel: "Lower R1", badge: "7th" };
+          }
+        }
+      }
+
+      // Stage stats accumulation
+      matches.forEach((m) => {
+        if (!m.played || m.scoreA == null || m.scoreB == null) return;
+        const sA = m.scoreA;
+        const sB = m.scoreB;
+        if (sA === 0 && sB === 0) return;
+
+        const mId = m.id || "";
+        const isFinal = m.isFinal || m.round === -1 || mId === "de-gf" || mId === "de-gfr" || mId.startsWith("final-");
+
+        if (isFinal) {
+          if (seenTourneyFinals.has(tId)) return;
+          seenTourneyFinals.add(tId);
+        } else {
+          const key = `${tId}_${mId}`;
+          if (seenMatchKeys.has(key)) return;
+          seenMatchKeys.add(key);
+        }
+
+        const pA = normalizePlayerId(m.playerA);
+        const pB = normalizePlayerId(m.playerB);
+        if (!sMap[pA]) {
+          sMap[pA] = {
+            ufPlayed: 0, ufWins: 0, lfPlayed: 0, lfWins: 0,
+            usfPlayed: 0, usfWins: 0, uqfPlayed: 0, uqfWins: 0,
+            lrPlayed: 0, lrWins: 0, qrrPlayed: 0, qrrWins: 0,
+            gfPlayed: 0, gfWins: 0, bracketMatches: 0, bracketWins: 0,
+          };
+        }
+        if (!sMap[pB]) {
+          sMap[pB] = {
+            ufPlayed: 0, ufWins: 0, lfPlayed: 0, lfWins: 0,
+            usfPlayed: 0, usfWins: 0, uqfPlayed: 0, uqfWins: 0,
+            lrPlayed: 0, lrWins: 0, qrrPlayed: 0, qrrWins: 0,
+            gfPlayed: 0, gfWins: 0, bracketMatches: 0, bracketWins: 0,
+          };
+        }
+
+        const aWon = sA > sB;
+        const bWon = sB > sA;
+
+        if (isFinal) {
+          sMap[pA].gfPlayed++;
+          sMap[pB].gfPlayed++;
+          if (aWon) sMap[pA].gfWins++;
+          if (bWon) sMap[pB].gfWins++;
+        } else {
+          sMap[pA].bracketMatches++;
+          sMap[pB].bracketMatches++;
+          if (aWon) sMap[pA].bracketWins++;
+          if (bWon) sMap[pB].bracketWins++;
+
+          if (mId === "de-uf") {
+            sMap[pA].ufPlayed++;
+            sMap[pB].ufPlayed++;
+            if (aWon) sMap[pA].ufWins++;
+            if (bWon) sMap[pB].ufWins++;
+          } else if (mId === "de-lf") {
+            sMap[pA].lfPlayed++;
+            sMap[pB].lfPlayed++;
+            if (aWon) sMap[pA].lfWins++;
+            if (bWon) sMap[pB].lfWins++;
+          } else if (mId.startsWith("de-us")) {
+            sMap[pA].usfPlayed++;
+            sMap[pB].usfPlayed++;
+            if (aWon) sMap[pA].usfWins++;
+            if (bWon) sMap[pB].usfWins++;
+          } else if (mId.startsWith("de-uq")) {
+            sMap[pA].uqfPlayed++;
+            sMap[pB].uqfPlayed++;
+            if (aWon) sMap[pA].uqfWins++;
+            if (bWon) sMap[pB].uqfWins++;
+          } else if (mId.startsWith("de-lr") || mId === "de-p78" || mId === "de-p56") {
+            sMap[pA].lrPlayed++;
+            sMap[pB].lrPlayed++;
+            if (aWon) sMap[pA].lrWins++;
+            if (bWon) sMap[pB].lrWins++;
+          } else if (mId.startsWith("de-q-rr") || mId === "de-q-decider") {
+            sMap[pA].qrrPlayed++;
+            sMap[pB].qrrPlayed++;
+            if (aWon) sMap[pA].qrrWins++;
+            if (bWon) sMap[pB].qrrWins++;
+          }
+        }
+      });
+    });
+
+    return { stageStatsMap: sMap, placementMap: pMap };
+  }, [displayedHistory, localHistoryFallback, currentTournament]);
+
   const baseLeaderboard =
     leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;
 
   const displayedLeaderboard = useMemo(() => {
     if (!baseLeaderboard) return [];
-    const lb = [...baseLeaderboard];
+    const lb = baseLeaderboard.map((entry) => ({ ...entry }));
 
     // Ensure Sajal has correct day points if backend returned 0
     const localSajal = localLeaderboardFallback.find((x) => x.playerId === "sajal");
@@ -968,23 +1176,83 @@ export default function HistoryPage() {
         sajalEntry.dayPointsTotal = localSajal.dayPointsTotal;
       }
     }
+
+    // Enrich with computed stageStats and placement info
+    lb.forEach((entry) => {
+      const normId = normalizePlayerId(entry.playerId);
+      const st = stageStatsMap[normId];
+      if (st) {
+        entry.ufWins = (entry.ufWins ?? 0) > 0 ? entry.ufWins : st.ufWins;
+        entry.ufPlayed = (entry.ufPlayed ?? 0) > 0 ? entry.ufPlayed : st.ufPlayed;
+        entry.lfWins = (entry.lfWins ?? 0) > 0 ? entry.lfWins : st.lfWins;
+        entry.lfPlayed = (entry.lfPlayed ?? 0) > 0 ? entry.lfPlayed : st.lfPlayed;
+        entry.usfWins = (entry.usfWins ?? 0) > 0 ? entry.usfWins : st.usfWins;
+        entry.usfPlayed = (entry.usfPlayed ?? 0) > 0 ? entry.usfPlayed : st.usfPlayed;
+        entry.uqfWins = (entry.uqfWins ?? 0) > 0 ? entry.uqfWins : st.uqfWins;
+        entry.uqfPlayed = (entry.uqfPlayed ?? 0) > 0 ? entry.uqfPlayed : st.uqfPlayed;
+        entry.lrWins = (entry.lrWins ?? 0) > 0 ? entry.lrWins : st.lrWins;
+        entry.lrPlayed = (entry.lrPlayed ?? 0) > 0 ? entry.lrPlayed : st.lrPlayed;
+        entry.qrrWins = (entry.qrrWins ?? 0) > 0 ? entry.qrrWins : st.qrrWins;
+        entry.qrrPlayed = (entry.qrrPlayed ?? 0) > 0 ? entry.qrrPlayed : st.qrrPlayed;
+        if ((entry.finalsPlayed ?? 0) === 0 && st.gfPlayed > 0) {
+          entry.finalsPlayed = st.gfPlayed;
+          entry.finalsWon = st.gfWins;
+        }
+        if (historyFormatFilter === "double-elimination" && st.bracketMatches > 0) {
+          entry.leagueMatchesPlayed = st.bracketMatches;
+          entry.leagueWins = st.bracketWins;
+          entry.leagueWinRate = Number(((st.bracketWins / st.bracketMatches) * 100).toFixed(1));
+        }
+      }
+
+      const pl = placementMap[normId];
+      if (pl) {
+        entry.placementRank = pl.placementRank;
+        entry.placementLabel = pl.placementLabel;
+        entry.placementStage = pl.stageLabel;
+        entry.placementBadge = pl.badge;
+      } else {
+        const fallbackRank = entry.dayPointsTotal >= 7 ? 1 :
+          entry.dayPointsTotal >= 5 ? 2 :
+          entry.dayPointsTotal >= 4 ? 3 :
+          entry.dayPointsTotal >= 3 ? 5 :
+          entry.dayPointsTotal >= 2 ? 6 : 7;
+        entry.placementRank = fallbackRank;
+        entry.placementLabel = `${fallbackRank}${fallbackRank === 1 ? "st" : fallbackRank === 2 ? "nd" : fallbackRank === 3 ? "rd" : "th"} Place`;
+        entry.placementStage = fallbackRank === 1 ? "Champion" : fallbackRank === 2 ? "Runner-up" : `Rank ${fallbackRank}`;
+        entry.placementBadge = fallbackRank === 1 ? "🏆" : fallbackRank === 2 ? "🥈" : fallbackRank === 3 ? "🥉" : `#${fallbackRank}`;
+      }
+    });
     
     if (leaderboardCategory === "day") {
       lb.sort((a, b) => b.dayPointsTotal - a.dayPointsTotal || b.leaguePoints - a.leaguePoints);
     } else if (leaderboardCategory === "finals") {
       lb.sort((a, b) => b.finalsWon - a.finalsWon || b.finalsPlayed - a.finalsPlayed || b.dayPointsTotal - a.dayPointsTotal);
     } else if (leaderboardCategory === "league") {
-      if (sortBy === "wins") {
-        lb.sort((a, b) => b.leagueWins - a.leagueWins || b.leaguePoints - a.leaguePoints);
-      } else if (sortBy === "matches") {
-        lb.sort((a, b) => b.leagueMatchesPlayed - a.leagueMatchesPlayed || b.leaguePoints - a.leaguePoints);
+      if (historyFormatFilter === "double-elimination") {
+        if (sortBy === "wins") {
+          lb.sort((a, b) => b.leagueWins - a.leagueWins || (a.placementRank ?? 99) - (b.placementRank ?? 99));
+        } else if (sortBy === "matches") {
+          lb.sort((a, b) => b.leagueMatchesPlayed - a.leagueMatchesPlayed || (a.placementRank ?? 99) - (b.placementRank ?? 99));
+        } else if (sortBy === "bracket_points") {
+          lb.sort((a, b) => b.leaguePoints - a.leaguePoints || b.leaguePointDiff - a.leaguePointDiff);
+        } else {
+          // Default (Finish): Tournament Placement Rank (lower number = higher finish)
+          lb.sort((a, b) => (a.placementRank ?? 99) - (b.placementRank ?? 99) || b.dayPointsTotal - a.dayPointsTotal || b.finalsWon - a.finalsWon || b.leaguePointDiff - a.leaguePointDiff);
+        }
       } else {
-        lb.sort((a, b) => b.leaguePoints - a.leaguePoints || b.leaguePointDiff - a.leaguePointDiff);
+        if (sortBy === "wins") {
+          lb.sort((a, b) => b.leagueWins - a.leagueWins || b.leaguePoints - a.leaguePoints);
+        } else if (sortBy === "matches") {
+          lb.sort((a, b) => b.leagueMatchesPlayed - a.leagueMatchesPlayed || b.leaguePoints - a.leaguePoints);
+        } else {
+          lb.sort((a, b) => b.leaguePoints - a.leaguePoints || b.leaguePointDiff - a.leaguePointDiff);
+        }
       }
     }
     
     return lb;
-  }, [baseLeaderboard, leaderboardCategory, sortBy]);
+  }, [baseLeaderboard, stageStatsMap, placementMap, historyFormatFilter, leaderboardCategory, sortBy]);
 
   const advancedInsights = useMemo(() => {
     if (!displayedHistory || !displayedHistory.days) return null;
@@ -1786,6 +2054,125 @@ export default function HistoryPage() {
     (playerFilter !== "all" ? 1 : 0) +
     (patternFilter !== "all" ? 1 : 0) +
     (historyFormatFilter !== "all" ? 1 : 0);
+  const renderStageMatrix = () => {
+    return (
+      <div className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="w-8 h-8 rounded-xl bg-[#FF5E48]/15 border border-[#FF5E48]/25 flex items-center justify-center text-sm shadow-2xs">
+              ⚡
+            </span>
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">
+                Double Elimination Stage Matrix
+              </h3>
+              <p className="text-[10px] text-white/40 font-medium">
+                Round-by-round record across Grand Final, Upper Final, Lower Final, Semis &amp; Lower Rounds
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono font-bold text-[#FF5E48] bg-[#FF5E48]/10 px-2.5 py-0.5 rounded-full border border-[#FF5E48]/20">
+            Bracket Breakdown
+          </span>
+        </div>
+
+        <div className="overflow-x-auto no-scrollbar rounded-2xl border border-white/10">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-[#16181F] border-b border-white/10 text-[10px] font-black uppercase tracking-wider text-white/40">
+                <th className="py-2.5 pl-3 pr-2">Player</th>
+                <th className="py-2.5 px-2 text-center text-[#F5BA38]">🏆 GF</th>
+                <th className="py-2.5 px-2 text-center text-[#FF5E48]">⚡ UF</th>
+                <th className="py-2.5 px-2 text-center text-[#6C79E0]">🔥 LF</th>
+                <th className="py-2.5 px-2 text-center text-white/80">🎯 USF</th>
+                <th className="py-2.5 px-2 text-center text-white/80">🛡️ LR</th>
+                <th className="py-2.5 pr-3 pl-2 text-right text-[#9EC9A8]">Total Bracket</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {displayedLeaderboard.map((player, idx) => {
+                const totalBracketMatches = player.leagueMatchesPlayed ?? 0;
+                const totalBracketWins = player.leagueWins ?? 0;
+                const bracketLosses = Math.max(0, totalBracketMatches - totalBracketWins);
+                const bracketWinRate = totalBracketMatches > 0 ? Math.round((totalBracketWins / totalBracketMatches) * 100) : 0;
+
+                return (
+                  <tr key={player.playerId} className="hover:bg-white/5 transition-colors">
+                    <td className="py-2.5 pl-3 pr-2 flex items-center gap-2 font-bold text-[#F3F4EE]">
+                      <span className="w-5 text-center font-mono font-black text-xs text-white/50">
+                        {player.placementBadge || (idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`)}
+                      </span>
+                      <AvatarSVG type={player.avatar} size={22} emoji={player.avatarEmoji} color={player.avatarColor} />
+                      <div className="flex flex-col min-w-0">
+                        <span className="truncate leading-tight">{player.name}</span>
+                        {player.placementStage && (
+                          <span className="text-[9px] font-normal text-white/40">{player.placementStage}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-2 text-center font-mono">
+                      {(player.finalsPlayed ?? 0) > 0 ? (
+                        <span className="text-[#F5BA38] font-black">
+                          {player.finalsWon}W - {Math.max(0, (player.finalsPlayed ?? 0) - (player.finalsWon ?? 0))}L
+                        </span>
+                      ) : (
+                        <span className="text-white/20">—</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-2 text-center font-mono">
+                      {(player.ufPlayed ?? 0) > 0 ? (
+                        <span className="text-[#FF5E48] font-black">
+                          {player.ufWins ?? 0}W - {Math.max(0, (player.ufPlayed ?? 0) - (player.ufWins ?? 0))}L
+                        </span>
+                      ) : (
+                        <span className="text-white/20">—</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-2 text-center font-mono">
+                      {(player.lfPlayed ?? 0) > 0 ? (
+                        <span className="text-[#6C79E0] font-black">
+                          {player.lfWins ?? 0}W - {Math.max(0, (player.lfPlayed ?? 0) - (player.lfWins ?? 0))}L
+                        </span>
+                      ) : (
+                        <span className="text-white/20">—</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-2 text-center font-mono">
+                      {(player.usfPlayed ?? 0) > 0 ? (
+                        <span className="text-white/90 font-bold">
+                          {player.usfWins ?? 0}W - {Math.max(0, (player.usfPlayed ?? 0) - (player.usfWins ?? 0))}L
+                        </span>
+                      ) : (
+                        <span className="text-white/20">—</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-2 text-center font-mono">
+                      {(player.lrPlayed ?? 0) > 0 ? (
+                        <span className="text-white/90 font-bold">
+                          {player.lrWins ?? 0}W - {Math.max(0, (player.lrPlayed ?? 0) - (player.lrWins ?? 0))}L
+                        </span>
+                      ) : (
+                        <span className="text-white/20">—</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-3 pl-2 text-right font-mono">
+                      <span className="text-[#9EC9A8] font-black">
+                        {totalBracketWins}W - {bracketLosses}L
+                      </span>
+                      <span className="text-[10px] text-white/40 font-semibold ml-1">
+                        ({bracketWinRate}%)
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   if (!isMounted) {
     return <div className="min-h-full bg-[#14161B] text-[#F3F4EE]"></div>;
   }
@@ -2543,30 +2930,47 @@ export default function HistoryPage() {
               <div className="p-1 bg-[#1A1D24] border border-white/10 rounded-full flex gap-1 items-center">
                 <span className="text-[10px] font-black text-white/40 pl-2 pr-0.5 uppercase">Rank:</span>
                 {(
-                  [
-                    { key: "points", label: "Points" },
-                    { key: "wins", label: "Wins" },
-                    { key: "matches", label: "Matches" },
-                  ] as const
-                ).map((m) => (
-                  <button
-                    key={m.key}
-                    onClick={() => setSortBy(m.key)}
-                    className={`py-1 px-2.5 text-xs font-black rounded-full transition-all cursor-pointer ${
-                      sortBy === m.key
-                        ? "bg-[#FF5E48] text-white shadow-xs"
-                        : "text-white/60 hover:text-white"
-                    }`}
-                  >
-                    {m.label}
-                  </button>
-                ))}
+                  historyFormatFilter === "double-elimination"
+                    ? [
+                        { key: "placement", label: "Finish" },
+                        { key: "wins", label: "Wins" },
+                        { key: "matches", label: "Matches" },
+                        { key: "bracket_points", label: "Points" },
+                      ]
+                    : [
+                        { key: "points", label: "Points" },
+                        { key: "wins", label: "Wins" },
+                        { key: "matches", label: "Matches" },
+                      ]
+                ).map((m) => {
+                  const isSelected = historyFormatFilter === "double-elimination"
+                    ? (m.key === "placement" && (sortBy === "points" || sortBy === "placement")) || sortBy === m.key
+                    : (m.key === "points" && (sortBy === "placement" || sortBy === "points")) || sortBy === m.key;
+
+                  return (
+                    <button
+                      key={m.key}
+                      onClick={() => setSortBy(m.key as any)}
+                      className={`py-1 px-2.5 text-xs font-black rounded-full transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-[#FF5E48] text-white shadow-xs"
+                          : "text-white/60 hover:text-white"
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {leaderboardCategory !== "analytics" && (
-            <div className="bg-[#1E2128] border border-white/10 rounded-[28px] overflow-hidden shadow-xs">
+            <div className="space-y-4">
+              {historyFormatFilter === "double-elimination" && leaderboardCategory === "league" && (
+                renderStageMatrix()
+              )}
+              <div className="bg-[#1E2128] border border-white/10 rounded-[28px] overflow-hidden shadow-xs">
               <div className="p-3.5 border-b border-white/10 flex items-center justify-between bg-[#16181F]">
                 <div className="text-xs font-black text-[#F3F4EE] flex items-center gap-1.5 uppercase tracking-wider">
                   {leaderboardCategory === "day" && <span>🏆 Overall Day Leaderboard</span>}
@@ -2687,21 +3091,33 @@ export default function HistoryPage() {
                           <div className="text-sm font-black text-[#F3F4EE] leading-tight">
                             {leaderboardCategory === "day" && `${entry.dayPointsTotal} pts`}
                             {leaderboardCategory === "league" && (
-                              sortBy === "points" ? `${entry.leaguePoints} pts` :
-                              sortBy === "wins" ? `${entry.leagueWins} wins` :
-                              `${entry.leagueMatchesPlayed} matches`
+                              historyFormatFilter === "double-elimination" && sortBy !== "bracket_points" && sortBy !== "wins" && sortBy !== "matches" ? (
+                                <span className="flex items-center justify-end gap-1">
+                                  <span>{entry.placementBadge || (index === 0 ? "🏆" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`)}</span>
+                                  <span className="text-xs font-black text-[#F3F4EE]">{entry.placementLabel || `${index + 1}${index === 0 ? "st" : index === 1 ? "nd" : index === 2 ? "rd" : "th"}`}</span>
+                                </span>
+                              ) : sortBy === "wins" ? `${entry.leagueWins} wins` :
+                              sortBy === "matches" ? `${entry.leagueMatchesPlayed} matches` :
+                              `${entry.leaguePoints} pts`
                             )}
                             {leaderboardCategory === "finals" && `${entry.finalsWon} wins`}
                           </div>
                           <div className="text-[10px] text-white/40 font-semibold mt-0.5">
                             {leaderboardCategory === "day" && `Total Day Points`}
                             {leaderboardCategory === "league" && (
-                              <>
-                                Diff:{" "}
-                                <span className={entry.leaguePointDiff > 0 ? "text-[#9EC9A8] font-black" : entry.leaguePointDiff < 0 ? "text-[#FF5E48] font-black" : "text-white/40"}>
-                                  {entry.leaguePointDiff > 0 ? `+${entry.leaguePointDiff}` : entry.leaguePointDiff}
+                              historyFormatFilter === "double-elimination" ? (
+                                <span className="font-mono text-white/60">
+                                  <strong className="text-[#9EC9A8]">{entry.leagueWins}W</strong> - <strong className="text-white/40">{Math.max(0, entry.leagueMatchesPlayed - entry.leagueWins)}L</strong>
+                                  <span className="text-white/30 text-[9px] ml-1">({entry.dayPointsTotal} day pts)</span>
                                 </span>
-                              </>
+                              ) : (
+                                <>
+                                  Diff:{" "}
+                                  <span className={entry.leaguePointDiff > 0 ? "text-[#9EC9A8] font-black" : entry.leaguePointDiff < 0 ? "text-[#FF5E48] font-black" : "text-white/40"}>
+                                    {entry.leaguePointDiff > 0 ? `+${entry.leaguePointDiff}` : entry.leaguePointDiff}
+                                  </span>
+                                </>
+                              )
                             )}
                             {leaderboardCategory === "finals" && `${entry.finalsPlayed} appearances`}
                           </div>
@@ -2711,6 +3127,7 @@ export default function HistoryPage() {
                   })}
                 </div>
               )}
+            </div>
             </div>
           )}
 
@@ -3124,112 +3541,7 @@ export default function HistoryPage() {
 
               {/* Double Elimination Stage Breakdown Matrix Table */}
               {(historyFormatFilter === "double-elimination" || displayedLeaderboard.some(l => (l.ufPlayed ?? 0) > 0 || (l.lfPlayed ?? 0) > 0 || (l.lrPlayed ?? 0) > 0)) && (
-                <div className="bg-[#1E2128] border border-white/10 rounded-[28px] p-5 shadow-xs space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-xl bg-[#FF5E48]/15 border border-[#FF5E48]/25 flex items-center justify-center text-sm shadow-2xs">
-                        ⚡
-                      </span>
-                      <div>
-                        <h3 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">
-                          Double Elimination Stage Matrix
-                        </h3>
-                        <p className="text-[10px] text-white/40 font-medium">
-                          Round-by-round record across Grand Final, Upper Final, Lower Final, Semis &amp; Lower Rounds
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono font-bold text-[#FF5E48] bg-[#FF5E48]/10 px-2.5 py-0.5 rounded-full border border-[#FF5E48]/20">
-                      Bracket Breakdown
-                    </span>
-                  </div>
-
-                  <div className="overflow-x-auto no-scrollbar rounded-2xl border border-white/10">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead>
-                        <tr className="bg-[#16181F] border-b border-white/10 text-[10px] font-black uppercase tracking-wider text-white/40">
-                          <th className="py-2.5 pl-3 pr-2">Player</th>
-                          <th className="py-2.5 px-2 text-center text-[#F5BA38]">🏆 GF</th>
-                          <th className="py-2.5 px-2 text-center text-[#FF5E48]">⚡ UF</th>
-                          <th className="py-2.5 px-2 text-center text-[#6C79E0]">🔥 LF</th>
-                          <th className="py-2.5 px-2 text-center text-white/80">🎯 USF</th>
-                          <th className="py-2.5 px-2 text-center text-white/80">🛡️ LR</th>
-                          <th className="py-2.5 pr-3 pl-2 text-right text-[#9EC9A8]">Total Bracket</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {displayedLeaderboard.map((player) => {
-                          const totalBracketMatches = player.leagueMatchesPlayed ?? 0;
-                          const totalBracketWins = player.leagueWins ?? 0;
-                          const bracketLosses = Math.max(0, totalBracketMatches - totalBracketWins);
-                          const bracketWinRate = totalBracketMatches > 0 ? Math.round((totalBracketWins / totalBracketMatches) * 100) : 0;
-
-                          return (
-                            <tr key={player.playerId} className="hover:bg-white/5 transition-colors">
-                              <td className="py-2.5 pl-3 pr-2 flex items-center gap-2 font-bold text-[#F3F4EE]">
-                                <AvatarSVG type={player.avatar} size={22} emoji={player.avatarEmoji} color={player.avatarColor} />
-                                <span>{player.name}</span>
-                              </td>
-                              <td className="py-2.5 px-2 text-center font-mono">
-                                {(player.finalsPlayed ?? 0) > 0 ? (
-                                  <span className="text-[#F5BA38] font-black">
-                                    {player.finalsWon}W - {Math.max(0, (player.finalsPlayed ?? 0) - (player.finalsWon ?? 0))}L
-                                  </span>
-                                ) : (
-                                  <span className="text-white/20">—</span>
-                                )}
-                              </td>
-                              <td className="py-2.5 px-2 text-center font-mono">
-                                {(player.ufPlayed ?? 0) > 0 ? (
-                                  <span className="text-[#FF5E48] font-black">
-                                    {player.ufWins ?? 0}W - {Math.max(0, (player.ufPlayed ?? 0) - (player.ufWins ?? 0))}L
-                                  </span>
-                                ) : (
-                                  <span className="text-white/20">—</span>
-                                )}
-                              </td>
-                              <td className="py-2.5 px-2 text-center font-mono">
-                                {(player.lfPlayed ?? 0) > 0 ? (
-                                  <span className="text-[#6C79E0] font-black">
-                                    {player.lfWins ?? 0}W - {Math.max(0, (player.lfPlayed ?? 0) - (player.lfWins ?? 0))}L
-                                  </span>
-                                ) : (
-                                  <span className="text-white/20">—</span>
-                                )}
-                              </td>
-                              <td className="py-2.5 px-2 text-center font-mono">
-                                {(player.usfPlayed ?? 0) > 0 ? (
-                                  <span className="text-white/90 font-bold">
-                                    {player.usfWins ?? 0}W - {Math.max(0, (player.usfPlayed ?? 0) - (player.usfWins ?? 0))}L
-                                  </span>
-                                ) : (
-                                  <span className="text-white/20">—</span>
-                                )}
-                              </td>
-                              <td className="py-2.5 px-2 text-center font-mono">
-                                {(player.lrPlayed ?? 0) > 0 ? (
-                                  <span className="text-white/90 font-bold">
-                                    {player.lrWins ?? 0}W - {Math.max(0, (player.lrPlayed ?? 0) - (player.lrWins ?? 0))}L
-                                  </span>
-                                ) : (
-                                  <span className="text-white/20">—</span>
-                                )}
-                              </td>
-                              <td className="py-2.5 pr-3 pl-2 text-right font-mono">
-                                <span className="text-[#9EC9A8] font-black">
-                                  {totalBracketWins}W - {bracketLosses}L
-                                </span>
-                                <span className="text-[10px] text-white/40 font-semibold ml-1">
-                                  ({bracketWinRate}%)
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                renderStageMatrix()
               )}
 
               {/* Row 4: Match Intensity & Scoring Spectrum Hub */}
