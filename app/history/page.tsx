@@ -1038,21 +1038,21 @@ export default function HistoryPage() {
         const lr3 = playedDEMatches.find((m) => m.id === "de-lr3");
         if (lr3) {
           const l = normalizePlayerId(lr3.scoreA > lr3.scoreB ? lr3.playerB : lr3.playerA);
-          if (!pMap[l]) pMap[l] = { placementRank: 4, placementLabel: "4th Place", stageLabel: "Lower R3", badge: "4th" };
+          if (!pMap[l]) pMap[l] = { placementRank: 4, placementLabel: "4th Place", stageLabel: "Lower R3", badge: "" };
         }
 
         const p56 = playedDEMatches.find((m) => m.id === "de-p56");
         if (p56) {
           const w = normalizePlayerId(p56.scoreA > p56.scoreB ? p56.playerA : p56.playerB);
           const l = normalizePlayerId(p56.scoreA > p56.scoreB ? p56.playerB : p56.playerA);
-          if (!pMap[w]) pMap[w] = { placementRank: 5, placementLabel: "5th Place", stageLabel: "5th (P56)", badge: "5th" };
-          if (!pMap[l]) pMap[l] = { placementRank: 6, placementLabel: "6th Place", stageLabel: "6th (P56)", badge: "6th" };
+          if (!pMap[w]) pMap[w] = { placementRank: 5, placementLabel: "5th Place", stageLabel: "5th (P56)", badge: "" };
+          if (!pMap[l]) pMap[l] = { placementRank: 6, placementLabel: "6th Place", stageLabel: "6th (P56)", badge: "" };
         } else {
           const lr2Matches = playedDEMatches.filter((m) => m.id?.startsWith("de-lr2"));
           lr2Matches.forEach((m, idx) => {
             const l = normalizePlayerId(m.scoreA > m.scoreB ? m.playerB : m.playerA);
             const rank = 5 + idx;
-            if (!pMap[l]) pMap[l] = { placementRank: rank, placementLabel: `${rank}th Place`, stageLabel: "Lower R2", badge: `${rank}th` };
+            if (!pMap[l]) pMap[l] = { placementRank: rank, placementLabel: `${rank}th Place`, stageLabel: "Lower R2", badge: "" };
           });
         }
 
@@ -1060,13 +1060,13 @@ export default function HistoryPage() {
         if (p78) {
           const w = normalizePlayerId(p78.scoreA > p78.scoreB ? p78.playerA : p78.playerB);
           const l = normalizePlayerId(p78.scoreA > p78.scoreB ? p78.playerB : p78.playerA);
-          if (!pMap[w]) pMap[w] = { placementRank: 7, placementLabel: "7th Place", stageLabel: "7th (P78)", badge: "7th" };
-          if (!pMap[l]) pMap[l] = { placementRank: 8, placementLabel: "8th Place", stageLabel: "8th (P78)", badge: "8th" };
+          if (!pMap[w]) pMap[w] = { placementRank: 7, placementLabel: "7th Place", stageLabel: "7th (P78)", badge: "" };
+          if (!pMap[l]) pMap[l] = { placementRank: 8, placementLabel: "8th Place", stageLabel: "8th (P78)", badge: "" };
         } else {
           const lr1 = playedDEMatches.find((m) => m.id === "de-lr1" || m.id === "de-lr1-1");
           if (lr1) {
             const l = normalizePlayerId(lr1.scoreA > lr1.scoreB ? lr1.playerB : lr1.playerA);
-            if (!pMap[l]) pMap[l] = { placementRank: 7, placementLabel: "7th Place", stageLabel: "Lower R1", badge: "7th" };
+            if (!pMap[l]) pMap[l] = { placementRank: 7, placementLabel: "7th Place", stageLabel: "Lower R1", badge: "" };
           }
         }
       }
@@ -1220,7 +1220,7 @@ export default function HistoryPage() {
         entry.placementRank = fallbackRank;
         entry.placementLabel = `${fallbackRank}${fallbackRank === 1 ? "st" : fallbackRank === 2 ? "nd" : fallbackRank === 3 ? "rd" : "th"} Place`;
         entry.placementStage = fallbackRank === 1 ? "Champion" : fallbackRank === 2 ? "Runner-up" : `Rank ${fallbackRank}`;
-        entry.placementBadge = fallbackRank === 1 ? "🏆" : fallbackRank === 2 ? "🥈" : fallbackRank === 3 ? "🥉" : `#${fallbackRank}`;
+        entry.placementBadge = fallbackRank === 1 ? "🏆" : fallbackRank === 2 ? "🥈" : fallbackRank === 3 ? "🥉" : "";
       }
     });
     
@@ -3093,8 +3093,8 @@ export default function HistoryPage() {
                             {leaderboardCategory === "league" && (
                               historyFormatFilter === "double-elimination" && sortBy !== "bracket_points" && sortBy !== "wins" && sortBy !== "matches" ? (
                                 <span className="flex items-center justify-end gap-1">
-                                  <span>{entry.placementBadge || (index === 0 ? "🏆" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`)}</span>
-                                  <span className="text-xs font-black text-[#F3F4EE]">{entry.placementLabel || `${index + 1}${index === 0 ? "st" : index === 1 ? "nd" : index === 2 ? "rd" : "th"}`}</span>
+                                  {entry.placementBadge && <span>{entry.placementBadge}</span>}
+                                  <span className="text-xs font-black text-[#F3F4EE]">{entry.placementLabel || `${index + 1}${index === 0 ? "st" : index === 1 ? "nd" : index === 2 ? "rd" : "th"} Place`}</span>
                                 </span>
                               ) : sortBy === "wins" ? `${entry.leagueWins} wins` :
                               sortBy === "matches" ? `${entry.leagueMatchesPlayed} matches` :
