@@ -263,6 +263,7 @@ export default function ProfilesPage() {
   const [shutoutModalType, setShutoutModalType] = useState<"delivered" | "received" | null>(null);
   const [selectedOpponentH2H, setSelectedOpponentH2H] = useState<string | null>(null);
   const [h2hDisplayMode, setH2hDisplayMode] = useState<"cards" | "table">("cards");
+  const [statsFormatFilter, setStatsFormatFilter] = useState<"all" | "round-robin" | "double-elimination">("all");
   const [compareOpponentId, setCompareOpponentId] = useState<string>(
     FIXED_PLAYERS.find((p) => p.id !== (FIXED_PLAYERS[0]?.id || "adarsh"))?.id || "gautam"
   );
@@ -284,10 +285,12 @@ export default function ProfilesPage() {
       setCloudLoading(true);
       try {
         const backendUrl = getBackendUrl();
+        const queryFormat = statsFormatFilter !== "all" ? `&format=${statsFormatFilter}` : "";
+        const lbFormat = statsFormatFilter !== "all" ? `?format=${statsFormatFilter}` : "";
         const [resHist, resDays, resLb] = await Promise.all([
-          fetch(`${backendUrl}/history?range=all`),
+          fetch(`${backendUrl}/history?range=all${queryFormat}`),
           fetch(`${backendUrl}/day-results`),
-          fetch(`${backendUrl}/leaderboard`),
+          fetch(`${backendUrl}/leaderboard${lbFormat}`),
         ]);
         if (resHist.ok) {
           const hData = await resHist.json();
@@ -309,7 +312,7 @@ export default function ProfilesPage() {
     };
 
     fetchCloudData();
-  }, [currentTournament]);
+  }, [currentTournament, statsFormatFilter]);
 
   // Auto-recovery if tournaments were wiped
   useEffect(() => {
@@ -459,6 +462,27 @@ export default function ProfilesPage() {
     return list;
   }, [pastTournaments, currentTournament, cloudHistory]);
 
+  const isDoubleEliminationTournament = (t: any): boolean => {
+    if (t?.config?.format === "double-elimination") return true;
+    if (t?.isDoubleElimination) return true;
+    if (t?.id?.startsWith("de-")) return true;
+    const allMatches = [...(t?.matches || []), ...(t?.final ? [t.final] : [])];
+    return allMatches.some(
+      (m: any) => m?.bracket || m?.bracketRound || m?.id?.startsWith("de-") || m?.shortform
+    );
+  };
+
+  // Filter tournaments by format (all = untouched overall stats)
+  const filteredTourneys = useMemo(() => {
+    if (statsFormatFilter === "double-elimination") {
+      return allTourneys.filter((t) => isDoubleEliminationTournament(t));
+    }
+    if (statsFormatFilter === "round-robin") {
+      return allTourneys.filter((t) => !isDoubleEliminationTournament(t));
+    }
+    return allTourneys;
+  }, [allTourneys, statsFormatFilter]);
+
   // Overall career stats for all squad players
   const playerStatsMap = useMemo(() => {
     const stats: {
@@ -555,7 +579,7 @@ export default function ProfilesPage() {
       });
     });
 
-    allTourneys.forEach((t) => {
+    filteredTourneys.forEach((t) => {
       // Tournament Winner (Champion)
       if (t.final && t.final.played && t.final.scoreA !== undefined && t.final.scoreB !== undefined) {
         const winnerId = normalizePlayerId(t.final.scoreA > t.final.scoreB ? t.final.playerA : t.final.playerB);
@@ -669,11 +693,18 @@ export default function ProfilesPage() {
         stats[pB].h2h[pA].pointsFor += scoreB;
         stats[pB].h2h[pA].pointsAgainst += scoreA;
 
-        const isFinalMatch = !!m.isFinal || m.round === -1;
+        const isFinalMatch = !!m.isFinal || m.round === -1 || m.bracket === "grand_final" || m.shortform === "GF";
+        const isDEMatch = !!(
+          m.bracket ||
+          m.bracketRound ||
+          m.id?.startsWith("de-") ||
+          m.shortform ||
+          isDoubleEliminationTournament(t)
+        );
         const diff = Math.abs(scoreA - scoreB);
 
-        // Match Points (2 pts win, 3 pts shutout / bonus) — strictly for round-robin matches (not finals)
-        if (!isFinalMatch) {
+        // Match Points (2 pts win, 3 pts shutout / bonus) — strictly for round-robin matches (not finals or double elimination)
+        if (!isFinalMatch && !isDEMatch) {
           const rrBonusMargin = t.config?.bonusMargin ?? 4;
           const rrWinPts = t.config?.winPoints ?? 2;
           const rrBonusPts = t.config?.bonusPoints ?? 1;
@@ -813,8 +844,8 @@ export default function ProfilesPage() {
       stats[p.id].totalPoints = stats[p.id].dayPointsTotal;
     });
 
-    // Cloud Leaderboard Reconcile & Fallback
-    if (cloudLeaderboard && cloudLeaderboard.length > 0) {
+    // Cloud Leaderboard Reconcile & Fallback (Applied in Overall mode)
+    if (statsFormatFilter === "all" && cloudLeaderboard && cloudLeaderboard.length > 0) {
       cloudLeaderboard.forEach((entry: any) => {
         const normId = normalizePlayerId(entry.playerId);
         if (stats[normId]) {
@@ -840,52 +871,54 @@ export default function ProfilesPage() {
       });
     }
 
-    // 1. Calculate Day Champions & Wooden Spoons from completedDays
-    if (completedDays && completedDays.length > 0) {
-      completedDays.forEach((cd) => {
-        let spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
-        let topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
-        if (cd.date === "2026-10-10") {
-          topId = "akshat";
-          spoonId = "udbhaw";
-        } else if (cd.date === "2026-10-11") {
-          topId = "akshat";
-          spoonId = "sajal";
-        } else if ((!topId || !spoonId) && cd.totals) {
-          const sorted = Object.entries(cd.totals).sort(([, a], [, b]) => b - a);
-          if (!topId && sorted.length > 0 && sorted[0][1] > 0) topId = normalizePlayerId(sorted[0][0]);
-          if (!spoonId && sorted.length > 1) spoonId = normalizePlayerId(sorted[sorted.length - 1][0]);
-        }
-        if (spoonId && stats[spoonId]) {
-          stats[spoonId].woodenSpoons += 1;
-        }
-        if (topId && stats[topId]) {
-          stats[topId].dayWins += 1;
-        }
-      });
-    }
+    if (statsFormatFilter === "all") {
+      // 1. Calculate Day Champions & Wooden Spoons from completedDays
+      if (completedDays && completedDays.length > 0) {
+        completedDays.forEach((cd) => {
+          let spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
+          let topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
+          if (cd.date === "2026-10-10") {
+            topId = "akshat";
+            spoonId = "udbhaw";
+          } else if (cd.date === "2026-10-11") {
+            topId = "akshat";
+            spoonId = "sajal";
+          } else if ((!topId || !spoonId) && cd.totals) {
+            const sorted = Object.entries(cd.totals).sort(([, a], [, b]) => b - a);
+            if (!topId && sorted.length > 0 && sorted[0][1] > 0) topId = normalizePlayerId(sorted[0][0]);
+            if (!spoonId && sorted.length > 1) spoonId = normalizePlayerId(sorted[sorted.length - 1][0]);
+          }
+          if (spoonId && stats[spoonId]) {
+            stats[spoonId].woodenSpoons += 1;
+          }
+          if (topId && stats[topId]) {
+            stats[topId].dayWins += 1;
+          }
+        });
+      }
 
-    // 2. Fallback / Merge with cloudDayHonors
-    if (cloudDayHonors?.dayLastPlaces && cloudDayHonors.dayLastPlaces.length > 0) {
-      cloudDayHonors.dayLastPlaces.forEach((s: any) => {
-        const spoonId = normalizePlayerId(s.playerId);
-        if (stats[spoonId]) {
-          stats[spoonId].woodenSpoons = Math.max(stats[spoonId].woodenSpoons, s.count || 0);
-        }
-      });
-    }
+      // 2. Fallback / Merge with cloudDayHonors
+      if (cloudDayHonors?.dayLastPlaces && cloudDayHonors.dayLastPlaces.length > 0) {
+        cloudDayHonors.dayLastPlaces.forEach((s: any) => {
+          const spoonId = normalizePlayerId(s.playerId);
+          if (stats[spoonId]) {
+            stats[spoonId].woodenSpoons = Math.max(stats[spoonId].woodenSpoons, s.count || 0);
+          }
+        });
+      }
 
-    if (cloudDayHonors?.dayChampions && cloudDayHonors.dayChampions.length > 0) {
-      cloudDayHonors.dayChampions.forEach((c: any) => {
-        const champId = normalizePlayerId(c.playerId);
-        if (stats[champId]) {
-          stats[champId].dayWins = Math.max(stats[champId].dayWins, c.count || 0);
-        }
-      });
+      if (cloudDayHonors?.dayChampions && cloudDayHonors.dayChampions.length > 0) {
+        cloudDayHonors.dayChampions.forEach((c: any) => {
+          const champId = normalizePlayerId(c.playerId);
+          if (stats[champId]) {
+            stats[champId].dayWins = Math.max(stats[champId].dayWins, c.count || 0);
+          }
+        });
+      }
     }
 
     return stats;
-  }, [allTourneys, completedDays, cloudDayHonors, cloudLeaderboard]);
+  }, [filteredTourneys, completedDays, cloudDayHonors, cloudLeaderboard, statsFormatFilter]);
 
   // Overall Standings Ranking (Ranked primarily by Day Points, tie-broken by wins & match points)
   const rankingList = useMemo(() => {
@@ -1693,6 +1726,35 @@ export default function ProfilesPage() {
               transition={{ duration: 0.2 }}
               className="space-y-3.5"
             >
+              {/* Format Filter Bar: Overall (default) | Round Robin | Double Elim */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-1.5 bg-[#1E2128] border border-white/10 rounded-2xl shadow-xs">
+                <div className="flex items-center gap-2 pl-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-white/40">Stats Format:</span>
+                </div>
+                <div className="flex bg-[#14161B] border border-white/10 p-1 rounded-xl gap-1 w-full sm:w-auto">
+                  {(
+                    [
+                      { key: "all", label: "Overall", icon: "🌐" },
+                      { key: "round-robin", label: "Round Robin", icon: "🔄" },
+                      { key: "double-elimination", label: "Double Elim", icon: "⚡" },
+                    ] as const
+                  ).map((fmt) => (
+                    <button
+                      key={fmt.key}
+                      type="button"
+                      onClick={() => setStatsFormatFilter(fmt.key)}
+                      className={`flex-1 sm:flex-initial py-1.5 px-3 flex items-center justify-center gap-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                        statsFormatFilter === fmt.key
+                          ? "bg-[#FF5E48] text-white shadow-xs"
+                          : "text-white/60 hover:text-white"
+                      }`}
+                    >
+                      <span className="text-xs">{fmt.icon}</span>
+                      <span>{fmt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               {/* Career Performance Grid Card */}
               <div className="rounded-[30px] bg-[#1E2128] border border-white/10 p-5 shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
@@ -2047,9 +2109,34 @@ export default function ProfilesPage() {
                       Direct head-to-head split-screen comparison
                     </p>
                   </div>
-                  <span className="text-[10px] text-[#6C79E0] bg-[#6C79E0]/10 border border-[#6C79E0]/20 px-2.5 py-0.5 rounded-full font-bold">
-                    Select Opponent
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {/* Compact Format Switcher */}
+                    <div className="flex bg-[#14161B] border border-white/10 p-0.5 rounded-lg gap-0.5">
+                      {(
+                        [
+                          { key: "all", label: "Overall" },
+                          { key: "round-robin", label: "RR" },
+                          { key: "double-elimination", label: "DE" },
+                        ] as const
+                      ).map((fmt) => (
+                        <button
+                          key={fmt.key}
+                          type="button"
+                          onClick={() => setStatsFormatFilter(fmt.key)}
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-black transition-all cursor-pointer ${
+                            statsFormatFilter === fmt.key
+                              ? "bg-[#FF5E48] text-white"
+                              : "text-white/40 hover:text-white"
+                          }`}
+                        >
+                          {fmt.label}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-[10px] text-[#6C79E0] bg-[#6C79E0]/10 border border-[#6C79E0]/20 px-2.5 py-0.5 rounded-full font-bold">
+                      Select Opponent
+                    </span>
+                  </div>
                 </div>
 
                 {/* Opponent Selector Chips */}
@@ -2234,8 +2321,34 @@ export default function ProfilesPage() {
                     </p>
                   </div>
 
-                  {/* View Switcher: Cards vs Table */}
-                  <div className="flex items-center gap-1 bg-[#16181F] p-1 rounded-xl self-start sm:self-auto border border-white/10">
+                  <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                    {/* Format Switcher Pills */}
+                    <div className="flex items-center gap-1 bg-[#14161B] p-1 rounded-xl border border-white/10">
+                      {(
+                        [
+                          { key: "all", label: "Overall", icon: "🌐" },
+                          { key: "round-robin", label: "Round Robin", icon: "🔄" },
+                          { key: "double-elimination", label: "Double Elim", icon: "⚡" },
+                        ] as const
+                      ).map((fmt) => (
+                        <button
+                          key={fmt.key}
+                          type="button"
+                          onClick={() => setStatsFormatFilter(fmt.key)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all flex items-center gap-1 cursor-pointer ${
+                            statsFormatFilter === fmt.key
+                              ? "bg-[#FF5E48] text-white shadow-xs"
+                              : "text-white/50 hover:text-white"
+                          }`}
+                        >
+                          <span className="text-xs">{fmt.icon}</span>
+                          <span className="hidden xs:inline">{fmt.label}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* View Switcher: Cards vs Table */}
+                    <div className="flex items-center gap-1 bg-[#16181F] p-1 rounded-xl border border-white/10">
                     <button
                       type="button"
                       onClick={() => setH2hDisplayMode("cards")}
