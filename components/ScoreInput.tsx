@@ -128,7 +128,7 @@ export function ScoreInput({
   currentScores,
   onScoresChange,
 }: ScoreInputProps) {
-  const maxScore = isFinal ? config.finalWinScore : config.winScore;
+  const maxScore = match.targetScore ?? (isFinal ? config.finalWinScore : config.winScore);
 
   const [scoreA, setScoreA] = useState(() => currentScores?.scoreA ?? match.scoreA ?? 0);
   const [scoreB, setScoreB] = useState(() => currentScores?.scoreB ?? match.scoreB ?? 0);
@@ -247,7 +247,9 @@ export function ScoreInput({
 
             {/* Match label */}
             <p className="text-center text-[#8E95A5] text-xs uppercase tracking-wider font-black mb-1">
-              {isFinal
+              {match.label
+                ? `${match.label} — First to ${maxScore}`
+                : isFinal
                 ? `🏆 Grand Final — First to ${maxScore}`
                 : `Round ${match.round + 1} — First to ${maxScore}`}
             </p>

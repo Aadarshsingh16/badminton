@@ -44,10 +44,15 @@ export function MatchCard({ match, playerA, playerB, isUpNext, index, onTap, rea
     >
       {/* Top Banner Row */}
       <div className="flex items-center justify-between px-4 pt-3.5 pb-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black uppercase tracking-wider text-[#8E95A5]">
-            Match #{index + 1}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-black uppercase tracking-wider text-[#FF5E48]">
+            {match.label || `Match #${index + 1}`}
           </span>
+          {match.targetScore && (
+            <span className="text-[9px] font-mono font-bold text-[#8E95A5] bg-white/5 px-2 py-0.5 rounded-full">
+              To {match.targetScore}
+            </span>
+          )}
           {isUpNext && !played && (
             <span className="bg-[#FF5E48] text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
