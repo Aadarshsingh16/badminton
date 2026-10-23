@@ -599,10 +599,7 @@ export const useStore = create<AppState>()(
           [randomized[i], randomized[j]] = [randomized[j], randomized[i]];
         }
 
-        const allPastTournaments = [
-          ...(pastTournaments || []),
-          ...(dayTable?.tournaments || []),
-        ];
+        const allPastTournaments: Tournament[] = pastTournaments || [];
 
         const effectiveDate = appDate || dayTable.date || today();
         const { matches, byes } = isDE
@@ -648,7 +645,7 @@ export const useStore = create<AppState>()(
       },
 
       shuffleFixtures: () => {
-        const { currentTournament, pastTournaments, dayTable } = get();
+        const { currentTournament, pastTournaments } = get();
         if (!currentTournament) return;
 
         const isDE = currentTournament.config?.format === "double-elimination";
@@ -658,10 +655,7 @@ export const useStore = create<AppState>()(
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
 
-        const allPastTournaments = [
-          ...(pastTournaments || []),
-          ...(dayTable?.tournaments || []),
-        ];
+        const allPastTournaments: Tournament[] = pastTournaments || [];
 
         const { matches, byes } = isDE
           ? generateDoubleElimination(shuffled, currentTournament.config, allPastTournaments)
