@@ -713,7 +713,7 @@ export const useStore = create<AppState>()(
 
         const match = currentTournament.matches[matchIdx];
         const config = currentTournament.config;
-        const pointsAwarded = computeMatchPoints({ ...match, scoreA, scoreB }, config);
+        const pointsAwarded = isDE ? undefined : computeMatchPoints({ ...match, scoreA, scoreB }, config);
 
         const updatedMatches = [...currentTournament.matches];
         updatedMatches[matchIdx] = { ...match, scoreA, scoreB, played: true, pointsAwarded };
@@ -818,7 +818,7 @@ export const useStore = create<AppState>()(
 
         const match = currentTournament.matches[matchIdx];
         const config = currentTournament.config;
-        const pointsAwarded = computeMatchPoints({ ...match, scoreA, scoreB }, config);
+        const pointsAwarded = isDE ? undefined : computeMatchPoints({ ...match, scoreA, scoreB }, config);
 
         const updatedMatches = [...currentTournament.matches];
         updatedMatches[matchIdx] = { ...match, scoreA, scoreB, played: true, pointsAwarded };
