@@ -305,7 +305,10 @@ export function AvatarSVG({ type, size = 64, emoji, color, className }: AvatarSV
       case "nerd": return <NerdAvatar />;
       case "bigfoot": return <BigfootAvatar />;
       case "fighter": return <FighterAvatar />;
-      case "chinese": return <ChineseAvatar />;
+      case "chinese": return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/avatars/gautam.webp" alt="Gautam" width={size} height={size} decoding="async" className="w-full h-full rounded-full object-cover" />
+      );
       default: return <CustomAvatar emoji={emoji} color={color} />;
     }
   })();
