@@ -75,6 +75,7 @@ interface MatchHistoryItem {
 interface TournamentGroup {
   tournamentId: string;
   shareSlug?: string;
+  config?: any;
   matches: MatchHistoryItem[];
 }
 

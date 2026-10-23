@@ -2375,6 +2375,7 @@ export default function ProfilesPage() {
                     </button>
                   </div>
                 </div>
+              </div>
 
                 {/* Bunny & Nemesis Highlights */}
                 <div className="grid grid-cols-2 gap-2.5">
