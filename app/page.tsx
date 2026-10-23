@@ -641,25 +641,39 @@ export default function PlayPage() {
 
           {/* Segmented control */}
           <div className="flex gap-1.5 bg-[#181B22] rounded-full p-1 border border-white/10 shadow-xs mb-2.5">
-            {(["fixtures", "table"] as FixtureTab[]).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setFixtureTab(tab)}
-                className={`flex-1 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
-                  fixtureTab === tab
-                    ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
-                    : "text-[#8E95A5] hover:text-[#F3F4EE]"
-                }`}
-              >
-                <span>{tab === "fixtures" ? "📋" : "📊"}</span>
-                <span>{tab === "fixtures" ? "Fixtures" : "Standings"}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                  fixtureTab === tab ? "bg-[#14161B] text-[#F3F4EE]" : "bg-white/10 text-[#8E95A5]"
-                }`}>
-                  {tab === "fixtures" ? currentTournament.matches.length : table.length}
-                </span>
-              </button>
-            ))}
+            {(["fixtures", "table"] as FixtureTab[]).map((tab) => {
+              const isDE = currentTournament.config?.format === "double-elimination";
+              const label = tab === "fixtures" ? "Fixtures" : isDE ? "Bracket Tree" : "Standings";
+              const icon = tab === "fixtures" ? "📋" : isDE ? "⚔️" : "📊";
+              const countBadge =
+                tab === "fixtures"
+                  ? currentTournament.matches.length
+                  : isDE
+                  ? `${playedMatches.length}/${currentTournament.matches.length}`
+                  : table.length;
+
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setFixtureTab(tab)}
+                  className={`flex-1 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+                    fixtureTab === tab
+                      ? "bg-[#F3F4EE] text-[#14161B] shadow-sm"
+                      : "text-[#8E95A5] hover:text-[#F3F4EE]"
+                  }`}
+                >
+                  <span>{icon}</span>
+                  <span>{label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                      fixtureTab === tab ? "bg-[#14161B] text-[#F3F4EE]" : "bg-white/10 text-[#8E95A5]"
+                    }`}
+                  >
+                    {countBadge}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -713,6 +727,24 @@ export default function PlayPage() {
                     />
                   );
                 })}
+              </motion.div>
+            ) : currentTournament.config?.format === "double-elimination" ? (
+              <motion.div
+                key="bracket"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <DoubleEliminationBracket
+                  tournament={currentTournament}
+                  players={players}
+                  onSelectMatch={(mId) => {
+                    setActiveMatchId(mId);
+                    const mObj = currentTournament.matches.find((m) => m.id === mId);
+                    setIsEditingMatch(!!mObj?.played);
+                  }}
+                />
               </motion.div>
             ) : (
               <motion.div
