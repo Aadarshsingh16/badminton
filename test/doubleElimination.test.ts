@@ -462,4 +462,184 @@ console.log("--- TEST 4: Bye Counts Tracking ---");
   console.log("✓ TEST 4 PASSED!\n");
 }
 
+// ============================================================================
+// TEST 5: Immediate 1-to-1 Blocking in UQF Pairings
+// ============================================================================
+console.log("--- TEST 5: Immediate 1-to-1 Blocking in UQF Pairings ---");
+{
+  const players = ["akshat", "adarsh", "harsh", "sajal", "gautam", "anirudh", "udbhaw"];
+  const config: TournamentConfig = {
+    ...DEFAULT_CONFIG,
+    format: "double-elimination",
+    upperByePlayerId: "udbhaw",
+  };
+
+  // Past tournament where akshat played adarsh in UQF
+  const pastT: Tournament[] = [
+    {
+      id: "t1-past",
+      createdAt: 1,
+      playerIds: players,
+      matches: [
+        {
+          id: "de-uq-1",
+          round: 1,
+          playerA: "akshat",
+          playerB: "adarsh",
+          bracket: "upper",
+          bracketRound: "UQF1",
+          courtSide: { akshat: 1, adarsh: 2 },
+          played: true,
+        },
+        {
+          id: "de-uq-2",
+          round: 1,
+          playerA: "harsh",
+          playerB: "sajal",
+          bracket: "upper",
+          bracketRound: "UQF2",
+          courtSide: { harsh: 1, sajal: 2 },
+          played: true,
+        },
+        {
+          id: "de-uq-3",
+          round: 1,
+          playerA: "gautam",
+          playerB: "anirudh",
+          bracket: "upper",
+          bracketRound: "UQF3",
+          courtSide: { gautam: 1, anirudh: 2 },
+          played: true,
+        },
+      ],
+      byes: { 1: "udbhaw" },
+      closed: true,
+      config,
+    },
+  ];
+
+  // Run 50 iterations: akshat vs adarsh MUST be blocked because akshat has 0 matches against harsh, sajal, gautam, anirudh
+  for (let i = 0; i < 50; i++) {
+    const { matches } = generateDoubleElimination(players, config, pastT);
+    for (const m of matches) {
+      const pair = [m.playerA, m.playerB];
+      const isAkshatAdarsh =
+        (m.playerA === "akshat" && m.playerB === "adarsh") ||
+        (m.playerA === "adarsh" && m.playerB === "akshat");
+      assert(!isAkshatAdarsh, `Run ${i + 1}: akshat vs adarsh was paired, but should be strictly blocked!`);
+    }
+  }
+
+  console.log("✓ TEST 5 PASSED: akshat vs adarsh was 100% blocked across 50 runs while 0-match opponents existed!\n");
+}
+
+// ============================================================================
+// TEST 6: Deadlock-Free Active Scoping when Bye Player is the Only Unplayed Opponent
+// ============================================================================
+console.log("--- TEST 6: Deadlock-Free Active Scoping with Bye Player ---");
+{
+  const players = ["akshat", "adarsh", "harsh", "sajal", "gautam", "anirudh", "udbhaw"];
+  // Mock history: akshat has already played adarsh, harsh, sajal, gautam, anirudh 1 time each in UQF.
+  // The only player akshat has NOT played yet is udbhaw (0 times).
+  // BUT in this tournament, udbhaw is the one receiving the Upper Bye!
+  const pastT: Tournament[] = [
+    {
+      id: "t-hist",
+      createdAt: 1,
+      playerIds: players,
+      matches: [
+        { id: "de-uq-1", round: 1, playerA: "akshat", playerB: "adarsh", bracketRound: "UQF1", courtSide: { akshat: 1, adarsh: 2 }, played: true },
+        { id: "de-uq-2", round: 1, playerA: "akshat", playerB: "harsh", bracketRound: "UQF2", courtSide: { akshat: 1, harsh: 2 }, played: true },
+        { id: "de-uq-3", round: 1, playerA: "akshat", playerB: "sajal", bracketRound: "UQF3", courtSide: { akshat: 1, sajal: 2 }, played: true },
+        { id: "de-uq-4", round: 1, playerA: "akshat", playerB: "gautam", bracketRound: "UQF4", courtSide: { akshat: 1, gautam: 2 }, played: true },
+        { id: "de-uq-5", round: 1, playerA: "akshat", playerB: "anirudh", bracketRound: "UQF1", courtSide: { akshat: 1, anirudh: 2 }, played: true },
+      ],
+      byes: {},
+      closed: true,
+      config: { ...DEFAULT_CONFIG, format: "double-elimination" },
+    },
+  ];
+
+  const config: TournamentConfig = {
+    ...DEFAULT_CONFIG,
+    format: "double-elimination",
+    upperByePlayerId: "udbhaw",
+  };
+
+  // Run 30 times: must NEVER throw or deadlock, and must cleanly pair active players
+  for (let i = 0; i < 30; i++) {
+    const { matches, byes } = generateDoubleElimination(players, config, pastT);
+    assert(byes[1] === "udbhaw", "udbhaw must receive the bye");
+    assert(matches.length === 3, "3 UQF matches must be generated for the 6 active players");
+    for (const m of matches) {
+      assert(m.playerA !== "udbhaw" && m.playerB !== "udbhaw", "Bye player cannot be in UQF");
+    }
+  }
+
+  console.log("✓ TEST 6 PASSED: Active scoping prevents deadlocks seamlessly when bye player is unplayed!\n");
+}
+
+// ============================================================================
+// TEST 7: 10-Tournament Simulation Balance
+// ============================================================================
+console.log("--- TEST 7: 10-Tournament Simulation Balance ---");
+{
+  const players = ["akshat", "adarsh", "harsh", "sajal", "gautam", "anirudh", "udbhaw"];
+  const pastTournaments: Tournament[] = [];
+
+  for (let t = 0; t < 10; t++) {
+    const byeCounts = computePlayerByeCounts(pastTournaments, players);
+    let minByeId = players[0];
+    let minCount = byeCounts[minByeId];
+    for (const p of players) {
+      if (byeCounts[p] < minCount) {
+        minCount = byeCounts[p];
+        minByeId = p;
+      }
+    }
+
+    const config: TournamentConfig = {
+      ...DEFAULT_CONFIG,
+      format: "double-elimination",
+      upperByePlayerId: minByeId,
+    };
+
+    const { matches, byes } = generateDoubleElimination(players, config, pastTournaments);
+    pastTournaments.push({
+      id: `tourney-${t + 1}`,
+      createdAt: t + 1,
+      playerIds: players,
+      matches,
+      byes,
+      closed: true,
+      config,
+    });
+  }
+
+  // Verify head-to-head UQF distribution
+  const h2hCounts: { [k: string]: number } = {};
+  for (const t of pastTournaments) {
+    for (const m of t.matches) {
+      const key = [m.playerA, m.playerB].sort().join(" vs ");
+      h2hCounts[key] = (h2hCounts[key] || 0) + 1;
+    }
+  }
+
+  console.log("UQF Matchup Distribution over 10 Double-Elim Tournaments:");
+  const countsArr = Object.values(h2hCounts);
+  const maxCount = Math.max(...countsArr);
+  const minCount = Math.min(...countsArr);
+  for (const [pair, cnt] of Object.entries(h2hCounts)) {
+    console.log(`  ${pair}: ${cnt} times`);
+  }
+  console.log(`\nMax matches between any pair: ${maxCount}, Min: ${minCount}`);
+
+  // Out of 10 tournaments (3 UQF matches each = 30 pairs total across 21 possible pairings):
+  // Average is 30/21 ≈ 1.43 matches per pair.
+  // It is mathematically impossible for anyone to have 5+ matches against one person.
+  assert(maxCount <= 3, `Max matches (${maxCount}) should be <= 3, preventing repeated matchups!`);
+  console.log("✓ TEST 7 PASSED: Matchups remain evenly balanced across all 10 tournaments!\n");
+}
+
 console.log("🎉 ALL TESTS PASSED SUCCESSFULLY! Double Elimination logic is 100% verified.");
+

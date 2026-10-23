@@ -313,6 +313,17 @@ export function TournamentSetup({
           </p>
         </div>
 
+        {/* Fair UQF Balancing Status */}
+        {isDE && (
+          <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium">
+            <span className="text-base shrink-0">⚖️</span>
+            <span className="leading-snug">
+              <strong className="text-white font-black uppercase text-[10px] tracking-wider block mb-0.5">Fair UQF Balancing Active</strong>
+              Upper Quarterfinals automatically block repeated matchups until all active opponents have been faced.
+            </span>
+          </div>
+        )}
+
         {/* 7-Player Double Elimination: Upper Bye Selector */}
         {isDE && playerCount === 7 && (
           <motion.div

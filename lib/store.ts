@@ -584,7 +584,7 @@ export const useStore = create<AppState>()(
 
       setPendingConfig: (config) => set({ pendingConfig: config }),
       startTournament: () => {
-        const { selectedPlayerIds, pendingConfig, dayTable, appDate } = get();
+        const { selectedPlayerIds, pendingConfig, dayTable, appDate, pastTournaments } = get();
         if (selectedPlayerIds.length < 2) return;
 
         const isPractice = !!pendingConfig.isPractice;
@@ -599,9 +599,14 @@ export const useStore = create<AppState>()(
           [randomized[i], randomized[j]] = [randomized[j], randomized[i]];
         }
 
+        const allPastTournaments = [
+          ...(pastTournaments || []),
+          ...(dayTable?.tournaments || []),
+        ];
+
         const effectiveDate = appDate || dayTable.date || today();
         const { matches, byes } = isDE
-          ? generateDoubleElimination(randomized, pendingConfig)
+          ? generateDoubleElimination(randomized, pendingConfig, allPastTournaments)
           : generateRoundRobin(randomized);
 
         const tournament: Tournament = {
@@ -643,7 +648,7 @@ export const useStore = create<AppState>()(
       },
 
       shuffleFixtures: () => {
-        const { currentTournament } = get();
+        const { currentTournament, pastTournaments, dayTable } = get();
         if (!currentTournament) return;
 
         const isDE = currentTournament.config?.format === "double-elimination";
@@ -653,8 +658,13 @@ export const useStore = create<AppState>()(
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
 
+        const allPastTournaments = [
+          ...(pastTournaments || []),
+          ...(dayTable?.tournaments || []),
+        ];
+
         const { matches, byes } = isDE
-          ? generateDoubleElimination(shuffled, currentTournament.config)
+          ? generateDoubleElimination(shuffled, currentTournament.config, allPastTournaments)
           : generateRoundRobin(shuffled);
 
         set({
