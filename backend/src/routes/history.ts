@@ -5,18 +5,26 @@ export const historyRouter = Router();
 
 // GET /history — filterable match history
 historyRouter.get("/", async (req, res) => {
-  const { range, from, to, playerId, scorePattern } = req.query as {
+  const { range, from, to, playerId, scorePattern, format } = req.query as {
     range?: string;
     from?: string;
     to?: string;
     playerId?: string;
     scorePattern?: string;
+    format?: string;
   };
 
   try {
     let whereClauses: string[] = ["m.played = true"];
     let params: any[] = [];
     let pIdx = 1;
+
+    // Format filter
+    if (format === "double-elimination") {
+      whereClauses.push("t.config->>'format' = 'double-elimination'");
+    } else if (format === "round-robin") {
+      whereClauses.push("(t.config->>'format' IS NULL OR t.config->>'format' = 'round-robin')");
+    }
 
     // Date range filter
     if (from && to) {
