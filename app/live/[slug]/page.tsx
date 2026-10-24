@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { io as socketIo, Socket } from "socket.io-client";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { TournamentTable } from "@/components/TournamentTable";
+import { DoubleEliminationBracket } from "@/components/DoubleEliminationBracket";
 import { MatchCard } from "@/components/MatchCard";
 import { Player, Match, Tournament, TournamentRow } from "@/lib/types";
 import { useStore, getLocalDateString } from "@/lib/store";
@@ -644,6 +645,42 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
   const playedMatches = currentMatches.filter((m) => m.played);
   const isTournamentCompleted = activeTournament?.status === "completed" || (currentFinal?.played ?? false);
 
+  const isDE =
+    activeTournament?.config?.format === "double-elimination" ||
+    currentMatches.some((m) => !!(m.bracket || m.bracketRound || m.id?.startsWith("de-")));
+
+  const activeTournamentObj: Tournament | null = useMemo(() => {
+    if (!activeTournament) return null;
+    const pIds =
+      (activeTournament as any).playerIds ||
+      (activeTournament as any).player_ids ||
+      Array.from(
+        new Set([
+          ...currentMatches.flatMap((m) => [m.playerA, m.playerB]),
+          ...(currentFinal ? [currentFinal.playerA, currentFinal.playerB] : []),
+        ])
+      ).filter(Boolean);
+
+    return {
+      id: activeTournament.id,
+      shareSlug: activeTournament.shareSlug,
+      playerIds: pIds,
+      matches: currentMatches,
+      byes:
+        (activeTournament as any).byes ||
+        (activeTournament.config?.upperByePlayerId
+          ? { 1: activeTournament.config.upperByePlayerId }
+          : {}),
+      final: currentFinal ?? undefined,
+      closed: activeTournament.status === "completed",
+      config: activeTournament.config || {},
+      createdAt:
+        typeof activeTournament.createdAt === "number"
+          ? activeTournament.createdAt
+          : Date.now(),
+    };
+  }, [activeTournament, currentMatches, currentFinal]);
+
   const computedStandings = useMemo<TournamentRow[]>(() => {
     if (!activeTournament) return [];
     if (!activeTournament.standings || activeTournament.standings.length === 0 || isTournamentCompleted) {
@@ -869,7 +906,11 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                       Tournament #{tournamentDisplayNumber}
                     </span>
                     <h3 className="text-[#F3F4EE] font-black text-sm uppercase tracking-tight">
-                      {isTournamentCompleted ? "Tournament Concluded 🏆" : "Round-Robin in Progress"}
+                      {isTournamentCompleted
+                        ? "Tournament Concluded 🏆"
+                        : isDE
+                        ? "Double Elimination in Progress"
+                        : "Round-Robin in Progress"}
                     </h3>
                   </div>
                   <div className="text-right">
@@ -953,7 +994,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                   </div>
                 )}
 
-                {/* Sub-tab Switcher: Fixtures vs Current Standings */}
+                {/* Sub-tab Switcher: Fixtures vs Current Standings / Bracket */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex gap-1 bg-[#181B22] p-1 rounded-full border border-white/10 shadow-xs">
                     <button
@@ -974,7 +1015,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                           : "text-[#8E95A5] hover:text-[#F3F4EE]"
                       }`}
                     >
-                      📊 Table
+                      {isDE ? "⚔️ Bracket Tree" : "📊 Table"}
                     </button>
                   </div>
 
@@ -986,7 +1027,7 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                   )}
                 </div>
 
-                {/* Fixtures List */}
+                {/* Fixtures List or Bracket/Table */}
                 {courtSubTab === "fixtures" ? (
                   <div className="space-y-3">
                     {currentMatches.map((match, idx) => {
@@ -1007,6 +1048,14 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                         />
                       );
                     })}
+                  </div>
+                ) : isDE && activeTournamentObj ? (
+                  <div className="w-full">
+                    <DoubleEliminationBracket
+                      tournament={activeTournamentObj}
+                      players={allPlayers}
+                      readOnly={true}
+                    />
                   </div>
                 ) : (
                   <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-2 overflow-hidden shadow-sm">
@@ -1239,17 +1288,68 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
                             </span>
                           </div>
                         )}
-                        <TournamentTable
-                          rows={t.standings && t.standings.length > 0 && t.standings[0]?.dayPoints !== undefined ? t.standings : computeTournamentTable({
-                            id: t.id,
-                            playerIds: Array.from(new Set([...(t.matches || []).flatMap((m: any) => [m.playerA, m.playerB]), ...(t.final ? [t.final.playerA, t.final.playerB] : [])])).filter(Boolean),
-                            matches: t.matches,
-                            final: t.final,
-                            config: t.config,
-                          } as any)}
-                          players={allPlayers}
-                          showFinalLabel={t.status === "completed"}
-                        />
+                        {(() => {
+                          const isTourneyDE =
+                            t.config?.format === "double-elimination" ||
+                            (t.matches || []).some((m: any) => !!(m.bracket || m.bracketRound || m.id?.startsWith("de-")));
+
+                          if (isTourneyDE) {
+                            const pIds =
+                              (t as any).playerIds ||
+                              (t as any).player_ids ||
+                              Array.from(
+                                new Set([
+                                  ...(t.matches || []).flatMap((m: any) => [m.playerA, m.playerB]),
+                                  ...(t.final ? [t.final.playerA, t.final.playerB] : []),
+                                ])
+                              ).filter(Boolean);
+
+                            const tTourney: Tournament = {
+                              id: t.id,
+                              shareSlug: t.shareSlug,
+                              playerIds: pIds,
+                              matches: t.matches || [],
+                              byes: (t as any).byes || (t.config?.upperByePlayerId ? { 1: t.config.upperByePlayerId } : {}),
+                              final: t.final ?? undefined,
+                              closed: t.status === "completed",
+                              config: t.config || {},
+                              createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now(),
+                            };
+
+                            return (
+                              <div className="py-2 w-full">
+                                <DoubleEliminationBracket
+                                  tournament={tTourney}
+                                  players={allPlayers}
+                                  readOnly={true}
+                                />
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <TournamentTable
+                              rows={
+                                t.standings && t.standings.length > 0 && t.standings[0]?.dayPoints !== undefined
+                                  ? t.standings
+                                  : computeTournamentTable({
+                                      id: t.id,
+                                      playerIds: Array.from(
+                                        new Set([
+                                          ...(t.matches || []).flatMap((m: any) => [m.playerA, m.playerB]),
+                                          ...(t.final ? [t.final.playerA, t.final.playerB] : []),
+                                        ])
+                                      ).filter(Boolean),
+                                      matches: t.matches,
+                                      final: t.final,
+                                      config: t.config,
+                                    } as any)
+                              }
+                              players={allPlayers}
+                              showFinalLabel={t.status === "completed"}
+                            />
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
