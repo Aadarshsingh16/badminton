@@ -401,6 +401,33 @@ export default function DayPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {!isViewer && hasTournaments && (
+              <button
+                onClick={handleManualSyncToCloud}
+                disabled={syncState === "syncing"}
+                title="Sync all tournaments, matches and standings to Spectators"
+                className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-xs ${
+                  syncState === "success"
+                    ? "bg-[#9EC9A8]/20 text-[#9EC9A8] border-[#9EC9A8]/40"
+                    : syncState === "syncing"
+                    ? "bg-[#F5BA38]/20 text-[#F5BA38] border-[#F5BA38]/40 animate-pulse"
+                    : syncState === "error"
+                    ? "bg-[#FF5E48]/20 text-[#FF5E48] border-[#FF5E48]/40"
+                    : "bg-[#1E2128] hover:bg-[#252932] text-[#9EC9A8] border-[#9EC9A8]/30"
+                }`}
+              >
+                <span>{syncState === "syncing" ? "⏳" : syncState === "success" ? "✅" : syncState === "error" ? "⚠️" : "☁️"}</span>
+                <span>
+                  {syncState === "syncing"
+                    ? "Syncing..."
+                    : syncState === "success"
+                    ? "Synced ✓"
+                    : syncState === "error"
+                    ? "Retry Sync"
+                    : "Sync Cloud"}
+                </span>
+              </button>
+            )}
             {appRole === "admin" && (
               <button
                 onClick={() => {
@@ -441,6 +468,20 @@ export default function DayPage() {
             )}
           </div>
         </div>
+
+        {syncMessage && (
+          <div
+            className={`mt-2 py-1 px-3 rounded-lg text-[10px] font-bold text-center transition-all ${
+              syncState === "success"
+                ? "bg-[#9EC9A8]/15 text-[#9EC9A8] border border-[#9EC9A8]/30"
+                : syncState === "error"
+                ? "bg-[#FF5E48]/15 text-[#FF5E48] border border-[#FF5E48]/30"
+                : "bg-[#F5BA38]/15 text-[#F5BA38] border border-[#F5BA38]/30"
+            }`}
+          >
+            {syncMessage}
+          </div>
+        )}
       </div>
 
       {/* Finish Day Celebration Modal */}
