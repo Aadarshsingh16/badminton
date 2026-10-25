@@ -14,7 +14,8 @@ export function requireScorekeeper(req: Request, res: Response, next: NextFuncti
       return next();
     }
     // Allow day-tables sync endpoints from scorekeeper app
-    if (req.path.includes("sync-full-day") || req.path.includes("/sync")) {
+    const url = req.originalUrl || req.url || req.path || "";
+    if (url.includes("sync-full-day") || url.includes("/sync")) {
       return next();
     }
     return res.status(401).json({
@@ -25,3 +26,4 @@ export function requireScorekeeper(req: Request, res: Response, next: NextFuncti
 
   next();
 }
+
