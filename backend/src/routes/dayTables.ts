@@ -331,7 +331,7 @@ dayTablesRouter.post("/sync-full-day", requireScorekeeper, async (req, res) => {
              share_slug = $2,
              player_ids = $4,
              config = $6,
-             status = CASE WHEN tournaments.status = 'completed' THEN 'completed' ELSE $5 END,
+             status = CASE WHEN $5 = 'completed' THEN 'completed' ELSE tournaments.status END,
              completed_at = CASE WHEN tournaments.completed_at IS NOT NULL THEN tournaments.completed_at ELSE $7 END`,
           [t.id, shareSlug, dayId, pIds, status, JSON.stringify(cfg), status === "completed" ? (t.completedAt || new Date()) : null]
         );
@@ -349,6 +349,16 @@ dayTablesRouter.post("/sync-full-day", requireScorekeeper, async (req, res) => {
           const played = !!m.played;
           const ptsA = typeof m.pointsA === "number" ? m.pointsA : (m.pointsAwarded && m.pointsAwarded[m.playerA || m.player_a]) ?? null;
           const ptsB = typeof m.pointsB === "number" ? m.pointsB : (m.pointsAwarded && m.pointsAwarded[m.playerB || m.player_b]) ?? null;
+
+          const courtSidePayload = {
+            ...(typeof m.courtSide === "object" ? m.courtSide : {}),
+            ...(typeof m.court_side === "object" ? m.court_side : {}),
+            ...(m.bracket ? { bracket: m.bracket } : {}),
+            ...(m.bracketRound || m.bracket_round ? { bracketRound: m.bracketRound || m.bracket_round } : {}),
+            ...(m.label ? { label: m.label } : {}),
+            ...(m.targetScore || m.target_score ? { targetScore: m.targetScore || m.target_score } : {}),
+            ...(m.matchIndex || m.match_index ? { matchIndex: m.matchIndex || m.match_index } : {}),
+          };
 
           await pool.query(
             `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, court_side, score_a, score_b, points_a, points_b, played, played_at)
@@ -372,7 +382,7 @@ dayTablesRouter.post("/sync-full-day", requireScorekeeper, async (req, res) => {
               !!m.isFinal,
               m.playerA || m.player_a,
               m.playerB || m.player_b,
-              JSON.stringify(m.courtSide ?? {}),
+              JSON.stringify(courtSidePayload),
               scoreA,
               scoreB,
               ptsA,

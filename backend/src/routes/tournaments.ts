@@ -444,7 +444,17 @@ tournamentsRouter.get("/:slug", async (req, res) => {
       [tournament.player_ids]
     );
 
-    const matches = mRes.rows;
+    const matches = mRes.rows.map((m: any) => {
+      const cs = m.courtSide || {};
+      return {
+        ...m,
+        bracket: cs.bracket || m.bracket,
+        bracketRound: cs.bracketRound || m.bracketRound,
+        label: cs.label || m.label,
+        targetScore: cs.targetScore || m.targetScore,
+        matchIndex: cs.matchIndex || m.matchIndex,
+      };
+    });
     const tournamentConfig = typeof tournament.config === "string" ? JSON.parse(tournament.config) : (tournament.config || DEFAULT_CONFIG);
     const table = computeTable(matches, tournament.player_ids, tournamentConfig);
 
