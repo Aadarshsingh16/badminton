@@ -306,7 +306,7 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
         const mRes = await pool.query(
           `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, court_side, score_a, score_b, points_a, points_b, played)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-           ON CONFLICT (id) DO UPDATE SET
+           ON CONFLICT (tournament_id, id) DO UPDATE SET
              round = EXCLUDED.round,
              court_side = EXCLUDED.court_side,
              score_a = EXCLUDED.score_a,
@@ -341,7 +341,7 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
       await pool.query(
         `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, court_side, score_a, score_b, points_a, points_b, played)
          VALUES ($1, $2, -1, true, $3, $4, $5, $6, $7, $8, $9, $10)
-         ON CONFLICT (id) DO UPDATE SET
+         ON CONFLICT (tournament_id, id) DO UPDATE SET
            score_a = EXCLUDED.score_a,
            score_b = EXCLUDED.score_b,
            points_a = EXCLUDED.points_a,
@@ -589,7 +589,7 @@ tournamentsRouter.patch("/:id/final", requireScorekeeper, async (req, res) => {
     const mRes = await pool.query(
       `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, score_a, score_b, points_a, points_b, played, played_at)
        VALUES ($1, $2, -1, true, $3, $4, $5, $6, $7, $8, true, now())
-       ON CONFLICT (id) DO UPDATE SET score_a = $5, score_b = $6, points_a = $7, points_b = $8, played = true, played_at = now()
+       ON CONFLICT (tournament_id, id) DO UPDATE SET score_a = $5, score_b = $6, points_a = $7, points_b = $8, played = true, played_at = now()
        RETURNING id, round, is_final AS "isFinal", player_a AS "playerA", player_b AS "playerB", score_a AS "scoreA", score_b AS "scoreB", points_a AS "pointsA", points_b AS "pointsB", played`,
       [finalMatchId, tournamentId, playerA, playerB, scoreA, scoreB, ptsA, ptsB]
     );
