@@ -140,9 +140,17 @@ export function computeDoubleEliminationTable(tournament: Tournament): Tournamen
   const rankMap: { [pid: string]: number } = {};
   const dayPointsMap: { [pid: string]: number } = {};
 
-  const findM = (roundKey: string) => matches.find((m) => m.bracketRound === roundKey && m.played);
+  const findM = (roundKey: string) =>
+    matches.find(
+      (m) =>
+        (m.bracketRound === roundKey ||
+          (m as any).bracket_round === roundKey ||
+          m.id === `de-${roundKey.toLowerCase()}` ||
+          (roundKey === "GF" && (m.id === "de-gf" || m.id === "de-gfr" || m.isFinal))) &&
+        m.played
+    );
 
-  const gf = findM("GF") || (tournament.final?.played && tournament.final.bracketRound === "GF" ? tournament.final : undefined);
+  const gf = findM("GF") || (tournament.final?.played && (tournament.final.bracketRound === "GF" || tournament.final.id === "de-gf" || tournament.final.isFinal) ? tournament.final : undefined);
   const lf = findM("LF");
   const lr3 = findM("LR3");
   const p56 = findM("P56");
