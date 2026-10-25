@@ -97,7 +97,18 @@ dayTablesRouter.get("/:date", async (req, res) => {
         [t.id]
       );
 
-      const tMatches = mRes.rows;
+      const tMatches = mRes.rows.map((m: any) => {
+        const cs = m.courtSide || {};
+        return {
+          ...m,
+          bracket: cs.bracket || m.bracket,
+          bracketRound: cs.bracketRound || m.bracketRound,
+          label: cs.label || m.label,
+          targetScore: cs.targetScore || m.targetScore,
+          matchIndex: cs.matchIndex || m.matchIndex,
+        };
+      });
+
       tMatches.forEach((m: any) => {
         if (m.playerA) allPlayerIds.add(m.playerA);
         if (m.playerB) allPlayerIds.add(m.playerB);
