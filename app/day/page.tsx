@@ -1,7 +1,7 @@
 "use client";
 // app/day/page.tsx — Day Table tab: cumulative standings + per-player tournament history
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStore, recoverTournamentsFromSyncQueue, getDeletedTournamentIds, normalizePlayerId } from "@/lib/store";
@@ -49,8 +49,10 @@ export default function DayPage() {
     dayStandings: any[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [syncState, setSyncState] = useState<"idle" | "syncing" | "success" | "error">("idle");
+  const [syncMessage, setSyncMessage] = useState<string>("");
 
-  const fetchCloudDay = async () => {
+  const fetchCloudDay = useCallback(async () => {
     setLoading(true);
     try {
       const backendUrl = getBackendUrl();
@@ -69,11 +71,11 @@ export default function DayPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dayTable.date]);
 
   useEffect(() => {
     fetchCloudDay();
-  }, [currentTournament, dayTable.date]);
+  }, [currentTournament, fetchCloudDay]);
 
   const getPlayer = (id: string): Player => {
     const targetId = normalizePlayerId(id);
