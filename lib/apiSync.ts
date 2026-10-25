@@ -123,11 +123,7 @@ class ApiSyncService {
   }
 
   public hasPin(): boolean {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("scorekeeper_pin");
-      return !!(stored && stored.trim());
-    }
-    return false;
+    return !!this.getPin();
   }
 
   /**
