@@ -265,6 +265,137 @@ dayTablesRouter.post("/sync", requireScorekeeper, async (req, res) => {
   }
 });
 
+// POST /day-tables/sync-full-day — bulk upload authoritative day session (totals, completed tournaments, matches, players)
+dayTablesRouter.post("/sync-full-day", requireScorekeeper, async (req, res) => {
+  const { date, totals, tournaments, players } = req.body;
+
+  if (!date || !totals || typeof totals !== "object") {
+    return res.status(400).json({ error: "date and totals object are required" });
+  }
+
+  try {
+    await pool.query("BEGIN");
+
+    // 1. Upsert day_tables
+    const dayRes = await pool.query(
+      `INSERT INTO day_tables (date, totals)
+       VALUES ($1, $2)
+       ON CONFLICT (date) DO UPDATE
+       SET totals = $2
+       RETURNING id, date, closed, totals`,
+      [date, JSON.stringify(totals)]
+    );
+    const dayId = dayRes.rows[0].id;
+
+    // 2. Upsert players if provided
+    if (Array.isArray(players) && players.length > 0) {
+      for (const p of players) {
+        if (!p.id || !p.name) continue;
+        await pool.query(
+          `INSERT INTO players (id, name, avatar_type, avatar_emoji, avatar_color)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (id) DO UPDATE SET
+             name = EXCLUDED.name,
+             avatar_type = EXCLUDED.avatar_type,
+             avatar_emoji = EXCLUDED.avatar_emoji,
+             avatar_color = EXCLUDED.avatar_color`,
+          [p.id, p.name, p.avatar || p.avatar_type || "clumsy", p.avatarEmoji || p.avatar_emoji || null, p.avatarColor || p.avatar_color || null]
+        );
+      }
+    }
+
+    // 3. Upsert each tournament and its matches
+    if (Array.isArray(tournaments) && tournaments.length > 0) {
+      for (const t of tournaments) {
+        if (!t.id) continue;
+        const pIds = t.playerIds || t.player_ids || [];
+        const status = t.closed ? "completed" : (t.status || "active");
+        const cfg = t.config || {};
+        const shareSlug = t.shareSlug || t.share_slug || t.id.slice(0, 8);
+
+        await pool.query(
+          `INSERT INTO tournaments (id, share_slug, day_id, player_ids, status, config, completed_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (id) DO UPDATE SET
+             share_slug = $2,
+             player_ids = $4,
+             config = $6,
+             status = CASE WHEN tournaments.status = 'completed' THEN 'completed' ELSE $5 END,
+             completed_at = CASE WHEN tournaments.completed_at IS NOT NULL THEN tournaments.completed_at ELSE $7 END`,
+          [t.id, shareSlug, dayId, pIds, status, JSON.stringify(cfg), status === "completed" ? (t.completedAt || new Date()) : null]
+        );
+
+        // Upsert all tournament matches
+        const allMatches = Array.isArray(t.matches) ? [...t.matches] : [];
+        if (t.final && !allMatches.some((m) => m.id === t.final.id)) {
+          allMatches.push(t.final);
+        }
+
+        for (const m of allMatches) {
+          if (!m.id) continue;
+          const scoreA = typeof m.scoreA === "number" ? m.scoreA : (typeof m.score_a === "number" ? m.score_a : null);
+          const scoreB = typeof m.scoreB === "number" ? m.scoreB : (typeof m.score_b === "number" ? m.score_b : null);
+          const played = !!m.played;
+          const ptsA = typeof m.pointsA === "number" ? m.pointsA : (m.pointsAwarded && m.pointsAwarded[m.playerA || m.player_a]) ?? null;
+          const ptsB = typeof m.pointsB === "number" ? m.pointsB : (m.pointsAwarded && m.pointsAwarded[m.playerB || m.player_b]) ?? null;
+
+          await pool.query(
+            `INSERT INTO matches (id, tournament_id, round, is_final, player_a, player_b, court_side, score_a, score_b, points_a, points_b, played, played_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+             ON CONFLICT (tournament_id, id) DO UPDATE SET
+               round = EXCLUDED.round,
+               is_final = EXCLUDED.is_final,
+               player_a = EXCLUDED.player_a,
+               player_b = EXCLUDED.player_b,
+               court_side = EXCLUDED.court_side,
+               score_a = EXCLUDED.score_a,
+               score_b = EXCLUDED.score_b,
+               points_a = EXCLUDED.points_a,
+               points_b = EXCLUDED.points_b,
+               played = EXCLUDED.played,
+               played_at = EXCLUDED.played_at`,
+            [
+              m.id,
+              t.id,
+              m.round ?? (m.isFinal ? -1 : 0),
+              !!m.isFinal,
+              m.playerA || m.player_a,
+              m.playerB || m.player_b,
+              JSON.stringify(m.courtSide ?? {}),
+              scoreA,
+              scoreB,
+              ptsA,
+              ptsB,
+              played,
+              played ? (m.playedAt || new Date()) : null,
+            ]
+          );
+        }
+      }
+    }
+
+    await pool.query("COMMIT");
+
+    io.to(`day:${date}`).emit("day:update", {
+      type: "day:full_sync",
+      date,
+      totals,
+    });
+
+    io.emit("live:update", {
+      type: "day:full_sync",
+      date,
+      totals,
+    });
+
+    res.json({ ok: true, message: "Day session fully synced", date, tournamentCount: tournaments?.length ?? 0 });
+  } catch (err: any) {
+    await pool.query("ROLLBACK");
+    console.error("POST /day-tables/sync-full-day error:", err);
+    res.status(500).json({ error: "Failed to sync full day session", details: err.message });
+  }
+});
+
 // POST /day-tables/close — close a day and record Day Champion and Last Place in day_results
 dayTablesRouter.post("/close", requireScorekeeper, async (req, res) => {
   const { date, totals } = req.body;

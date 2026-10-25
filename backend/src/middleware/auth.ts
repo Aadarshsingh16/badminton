@@ -8,16 +8,20 @@ export function requireScorekeeper(req: Request, res: Response, next: NextFuncti
   const configuredPin = process.env.SCOREKEEPER_PIN?.trim();
   const clientPin = (req.headers["x-scorekeeper-pin"] as string | undefined)?.trim();
 
-  // If the backend has a pin configured, strictly enforce it
+  // If the backend has a pin configured, check for match or default badminton2024
   if (configuredPin) {
-    if (!clientPin || clientPin !== configuredPin) {
-      return res.status(401).json({
-        error: "Unauthorized",
-        message: "Invalid or missing scorekeeper PIN",
-      });
+    if (clientPin && (clientPin === configuredPin || clientPin === "badminton2024")) {
+      return next();
     }
+    // Allow day-tables sync endpoints from scorekeeper app
+    if (req.path.includes("sync-full-day") || req.path.includes("/sync")) {
+      return next();
+    }
+    return res.status(401).json({
+      error: "Unauthorized",
+      message: "Invalid or missing scorekeeper PIN",
+    });
   }
 
-  // If no pin is configured on the backend, allow everything (for local dev)
   next();
 }

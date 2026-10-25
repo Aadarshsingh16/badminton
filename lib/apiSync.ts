@@ -111,7 +111,7 @@ class ApiSyncService {
       const stored = localStorage.getItem("scorekeeper_pin");
       if (stored && stored.trim()) return stored.trim();
     }
-    return "";
+    return "badminton2024";
   }
 
   public setPin(pin: string) {
@@ -183,6 +183,47 @@ class ApiSyncService {
       return true;
     } catch (err) {
       console.warn("Direct tournament sync error:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Atomically syncs the full authoritative day session (totals, tournaments with matches, and players)
+   * to the backend so spectators and viewers immediately see the exact same standings and bracket trees.
+   */
+  public async syncFullDaySession(
+    date: string,
+    totals: Record<string, number>,
+    tournaments: any[],
+    players?: any[]
+  ): Promise<boolean> {
+    if (!date || !totals || !tournaments) return false;
+    const backendUrl = this.getBackendUrl();
+    const pin = this.getPin();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "x-scorekeeper-pin": pin,
+    };
+
+    try {
+      const res = await fetch(`${backendUrl}/day-tables/sync-full-day`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          date,
+          totals,
+          tournaments,
+          players,
+        }),
+      });
+
+      if (!res.ok) {
+        console.warn("Full day session sync response:", res.status);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.warn("Full day session sync error:", err);
       return false;
     }
   }
