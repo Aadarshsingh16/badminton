@@ -43,7 +43,7 @@ leaderboardRouter.get("/", async (req, res) => {
       date_filtered_days AS (
         SELECT d.id, d.date, d.totals FROM day_tables d
         WHERE 1=1 ${dateFilter}
-        ${format && format !== "all" ? `AND d.id IN (SELECT day_id FROM format_filtered_tournaments)` : ""}
+        AND d.id IN (SELECT day_id FROM format_filtered_tournaments WHERE day_id IS NOT NULL)
       ),
       day_points AS (
         SELECT

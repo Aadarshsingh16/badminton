@@ -233,7 +233,11 @@ export default function DayPage() {
       });
     }
 
-    const targetDate = dayTable.date || new Date().toISOString().split("T")[0];
+    const tourneyDate = effectiveTournaments[0]?.date ||
+      (effectiveTournaments[0]?.createdAt
+        ? new Date(effectiveTournaments[0].createdAt).toISOString().split("T")[0]
+        : null);
+    const targetDate = tourneyDate || dayTable.date || new Date().toISOString().split("T")[0];
     const success = await apiSync.syncFullDaySession(targetDate, computedTotals, effectiveTournaments, players);
 
     if (success) {
@@ -277,7 +281,11 @@ export default function DayPage() {
         Object.keys(computedTotals).length !== Object.keys(backendTotals).length;
 
       if (isMismatch && Object.keys(computedTotals).length > 0) {
-        const targetDate = dayTable.date || new Date().toISOString().split("T")[0];
+        const tourneyDate = effectiveTournaments[0]?.date ||
+          (effectiveTournaments[0]?.createdAt
+            ? new Date(effectiveTournaments[0].createdAt).toISOString().split("T")[0]
+            : null);
+        const targetDate = tourneyDate || dayTable.date || new Date().toISOString().split("T")[0];
         apiSync.syncFullDaySession(targetDate, computedTotals, effectiveTournaments, players).then((ok) => {
           if (ok) {
             fetchCloudDay();
