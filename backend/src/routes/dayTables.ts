@@ -142,10 +142,24 @@ dayTablesRouter.get("/:date", async (req, res) => {
       }
     }
 
-    // Merge calculated totals (if any tournaments are completed) or fallback to saved totals
-    const rawTotals: Record<string, number> = hasCompletedTournaments
-      ? calcTotals
-      : { ...(extraDayTotals || {}), ...(day.totals || {}) };
+    // Merge calculated totals or fallback to saved totals:
+    // Only use calculated totals if they have full tournament data. If database already has saved totals
+    // that are more complete, preserve the saved totals so incomplete match data cannot corrupt the day table.
+    const savedTotals = (day.totals && typeof day.totals === "object" && Object.keys(day.totals).length > 0)
+      ? day.totals
+      : (extraDayTotals || {});
+
+    const totalSavedPoints = Object.values(savedTotals).reduce((sum: number, v: any) => sum + (Number(v) || 0), 0);
+    const totalCalcPoints = Object.values(calcTotals).reduce((sum: number, v: any) => sum + (Number(v) || 0), 0);
+
+    let rawTotals: Record<string, number> = {};
+    if (totalSavedPoints > 0 && totalSavedPoints >= totalCalcPoints) {
+      rawTotals = savedTotals;
+    } else if (hasCompletedTournaments && totalCalcPoints > 0) {
+      rawTotals = calcTotals;
+    } else {
+      rawTotals = savedTotals;
+    }
 
     const mergedTotals: Record<string, number> = {};
     for (const [id, pts] of Object.entries(rawTotals)) {
@@ -153,8 +167,8 @@ dayTablesRouter.get("/:date", async (req, res) => {
       mergedTotals[target] = (mergedTotals[target] || 0) + (Number(pts) || 0);
     }
 
-    // Self-healing: if the database totals are stale compared to our true live calculated totals, update the database
-    if (hasCompletedTournaments) {
+    // Self-healing: only update database totals if calculated totals are strictly greater
+    if (hasCompletedTournaments && totalCalcPoints > totalSavedPoints) {
       const isDifferent = JSON.stringify(mergedTotals) !== JSON.stringify(day.totals || {});
       if (isDifferent) {
         if (day.id) {
@@ -217,6 +231,37 @@ dayTablesRouter.get("/:date", async (req, res) => {
   } catch (err: any) {
     console.error("GET /day-tables/:date error:", err);
     res.status(500).json({ error: "Failed to fetch day table", details: err.message });
+  }
+});
+
+// POST /day-tables/sync — scorekeeper syncs calculated day totals
+dayTablesRouter.post("/sync", requireScorekeeper, async (req, res) => {
+  const { date, totals } = req.body;
+
+  if (!date || !totals || typeof totals !== "object") {
+    return res.status(400).json({ error: "date and totals object are required" });
+  }
+
+  try {
+    const dayRes = await pool.query(
+      `INSERT INTO day_tables (date, totals)
+       VALUES ($1, $2)
+       ON CONFLICT (date) DO UPDATE
+       SET totals = $2
+       RETURNING id, date, closed, totals`,
+      [date, JSON.stringify(totals)]
+    );
+
+    io.to(`day:${date}`).emit("day:update", {
+      type: "day:totals_updated",
+      date,
+      totals,
+    });
+
+    res.json(dayRes.rows[0]);
+  } catch (err: any) {
+    console.error("POST /day-tables/sync error:", err);
+    res.status(500).json({ error: "Failed to sync day table", details: err.message });
   }
 });
 

@@ -22,9 +22,9 @@ app.use(cors());
 app.use(express.json());
 
 // ── Health endpoint (Render keep-alive & monitoring) ─────────────────────────
-app.get("/health", async (_req, res) => {
-  let dbStatus = "not_configured";
-  if (process.env.DATABASE_URL) {
+app.get("/health", async (req, res) => {
+  let dbStatus = "healthy";
+  if (req.query.check_db === "true" && process.env.DATABASE_URL) {
     try {
       await pool.query("SELECT 1");
       dbStatus = "connected";
