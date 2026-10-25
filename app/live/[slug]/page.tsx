@@ -83,21 +83,29 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
     };
 
   // Helper to normalize match object from backend (snake_case and camelCase compatibility)
-  const normalizeMatch = (m: any): Match => ({
-    id: m.id,
-    round: m.round ?? 0,
-    isFinal: !!(m.isFinal || m.is_final || m.round === -1),
-    playerA: m.playerA || m.player_a,
-    playerB: m.playerB || m.player_b,
-    courtSide: m.courtSide || m.court_side || { [m.playerA || m.player_a]: 1, [m.playerB || m.player_b]: 2 },
-    scoreA: typeof m.scoreA === "number" ? m.scoreA : (typeof m.score_a === "number" ? m.score_a : undefined),
-    scoreB: typeof m.scoreB === "number" ? m.scoreB : (typeof m.score_b === "number" ? m.score_b : undefined),
-    pointsAwarded: m.pointsAwarded || {
-      [m.playerA || m.player_a]: typeof m.pointsA === "number" ? m.pointsA : (typeof m.points_a === "number" ? m.points_a : 0),
-      [m.playerB || m.player_b]: typeof m.pointsB === "number" ? m.pointsB : (typeof m.points_b === "number" ? m.points_b : 0),
-    },
-    played: !!m.played,
-  });
+  const normalizeMatch = (m: any): Match => {
+    const cs = m.courtSide || m.court_side || {};
+    return {
+      id: m.id,
+      round: m.round ?? 0,
+      isFinal: !!(m.isFinal || m.is_final || m.round === -1 || m.id === "de-gf" || m.id === "de-gfr"),
+      playerA: m.playerA || m.player_a,
+      playerB: m.playerB || m.player_b,
+      courtSide: cs,
+      scoreA: typeof m.scoreA === "number" ? m.scoreA : (typeof m.score_a === "number" ? m.score_a : undefined),
+      scoreB: typeof m.scoreB === "number" ? m.scoreB : (typeof m.score_b === "number" ? m.score_b : undefined),
+      pointsAwarded: m.pointsAwarded || {
+        [m.playerA || m.player_a]: typeof m.pointsA === "number" ? m.pointsA : (typeof m.points_a === "number" ? m.points_a : 0),
+        [m.playerB || m.player_b]: typeof m.pointsB === "number" ? m.pointsB : (typeof m.points_b === "number" ? m.points_b : 0),
+      },
+      played: !!m.played,
+      bracket: m.bracket || cs.bracket,
+      bracketRound: m.bracketRound || m.bracket_round || cs.bracketRound,
+      label: m.label || cs.label,
+      targetScore: m.targetScore || m.target_score || cs.targetScore,
+      matchIndex: m.matchIndex || m.match_index || cs.matchIndex,
+    };
+  };
 
   // 1. Fetch Day Session data
   const fetchDaySession = async (targetDate: string) => {
@@ -332,10 +340,41 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
           }
         }
 
+        // Derive live day totals and standings from tournaments if they provide more complete data
+        const calcDayTotals: Record<string, number> = {};
+        for (const t of fullyResolvedTournaments) {
+          const tTable = (t.standings && t.standings.length > 0) ? t.standings : computeTournamentTable(t);
+          tTable.forEach((row: any, rowIdx: number) => {
+            const pid = row.playerId;
+            const pts = row.dayPoints ?? Math.max(1, tTable.length - rowIdx);
+            calcDayTotals[pid] = (calcDayTotals[pid] || 0) + pts;
+          });
+        }
+        const totalCalcPts = Object.values(calcDayTotals).reduce((sum, v) => sum + v, 0);
+        const totalSavedPts = Object.values(resolvedTotals).reduce((sum, v: any) => sum + (Number(v) || 0), 0);
+
+        const finalTotals = (totalCalcPts > totalSavedPts && totalCalcPts > 0) ? calcDayTotals : resolvedTotals;
+
+        if (totalCalcPts > totalSavedPts || resolvedStandings.length === 0) {
+          resolvedStandings = Object.entries(finalTotals)
+            .map(([playerId, points]) => {
+              const p = resolvedPlayers.find((x) => x.id === playerId) || getPlayer(playerId, resolvedPlayers);
+              return {
+                playerId,
+                name: p.name || playerId,
+                avatar: p.avatar || "custom",
+                avatarEmoji: p.avatarEmoji,
+                avatarColor: p.avatarColor,
+                points: points as number,
+              };
+            })
+            .sort((a, b) => b.points - a.points);
+        }
+
         setDayData({
           date: fetchDate,
           closed: !!json.closed,
-          totals: resolvedTotals,
+          totals: finalTotals,
           activeTournament: resolvedActiveT,
           tournaments: fullyResolvedTournaments,
           players: resolvedPlayers,
