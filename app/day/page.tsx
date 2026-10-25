@@ -216,10 +216,47 @@ export default function DayPage() {
     return [];
   }, [effectiveTournaments, dayTable.totals, cloudDayData, playerDayStats]);
 
+  // Manual sync triggered by scorekeeper to push all local tournaments & Day Table to cloud
+  const handleManualSyncToCloud = async () => {
+    if (effectiveTournaments.length === 0) return;
+    setSyncState("syncing");
+    setSyncMessage("Syncing tournaments and day table to spectators...");
+
+    const computedTotals: { [playerId: string]: number } = {};
+    for (const t of effectiveTournaments) {
+      const tTable = computeTournamentTable(t);
+      const ptsMap = t.dayPointsAwarded || {};
+      tTable.forEach((row, rowIdx) => {
+        const targetId = normalizePlayerId(row.playerId);
+        const pts = ptsMap[row.playerId] ?? ptsMap[targetId] ?? row.dayPoints ?? Math.max(1, tTable.length - rowIdx);
+        computedTotals[targetId] = (computedTotals[targetId] ?? 0) + pts;
+      });
+    }
+
+    const targetDate = dayTable.date || new Date().toISOString().split("T")[0];
+    const success = await apiSync.syncFullDaySession(targetDate, computedTotals, effectiveTournaments, players);
+
+    if (success) {
+      setSyncState("success");
+      setSyncMessage("All tournaments & Day Table synced to spectators! ✓");
+      await fetchCloudDay();
+      setTimeout(() => {
+        setSyncState("idle");
+        setSyncMessage("");
+      }, 4000);
+    } else {
+      setSyncState("error");
+      setSyncMessage("Sync failed. Check connection & retry.");
+      setTimeout(() => {
+        setSyncState("idle");
+      }, 5000);
+    }
+  };
+
   // Self-healing: If scorekeeper has complete effectiveTournaments but cloud day data has stale or mismatched totals,
-  // sync the true computed totals and re-upload the completed tournaments.
+  // sync the true computed totals and all tournaments atomically to the cloud.
   useEffect(() => {
-    if (effectiveTournaments.length > 0 && !isViewer && apiSync.hasPin() && cloudDayData) {
+    if (effectiveTournaments.length > 0 && !isViewer) {
       const computedTotals: { [playerId: string]: number } = {};
       for (const t of effectiveTournaments) {
         const tTable = computeTournamentTable(t);
@@ -231,25 +268,24 @@ export default function DayPage() {
         });
       }
 
-      const backendTotals = cloudDayData.totals || {};
+      const backendTotals = cloudDayData?.totals || {};
+      const cloudTourneysCount = cloudDayData?.tournaments?.length ?? 0;
       const isMismatch =
+        !cloudDayData ||
+        cloudTourneysCount < effectiveTournaments.length ||
         Object.keys(computedTotals).some((id) => (backendTotals[id] ?? 0) !== computedTotals[id]) ||
         Object.keys(computedTotals).length !== Object.keys(backendTotals).length;
 
       if (isMismatch && Object.keys(computedTotals).length > 0) {
         const targetDate = dayTable.date || new Date().toISOString().split("T")[0];
-        apiSync.enqueue("/day-tables/sync", "POST", {
-          date: targetDate,
-          totals: computedTotals,
-        });
-
-        // Sync completed tournaments directly to ensure backend matches table has full records
-        effectiveTournaments.forEach((t) => {
-          apiSync.syncTournamentDirectly(t, players);
+        apiSync.syncFullDaySession(targetDate, computedTotals, effectiveTournaments, players).then((ok) => {
+          if (ok) {
+            fetchCloudDay();
+          }
         });
       }
     }
-  }, [effectiveTournaments, cloudDayData, isViewer, dayTable.date, players]);
+  }, [effectiveTournaments, cloudDayData, isViewer, dayTable.date, players, fetchCloudDay]);
 
   const hasTournaments = effectiveTournaments.length > 0;
   const hasData = sortedPlayers.length > 0;
