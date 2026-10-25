@@ -25,6 +25,7 @@ export interface Match {
   bracketRound?: string; // e.g. "UQ1", "US1", "UF", "LR1", "LR2", "LR3", "LF", "GF", "P56", "P78", "Q-RR", "Q-DECIDER"
   label?: string;        // e.g. "Upper Quarterfinal 1", "3-Point Bye Qualifier", "5th/6th Placement"
   targetScore?: number;  // score to win this match (e.g. 5, 3, 6)
+  matchIndex?: number;
 }
 
 export type TournamentFormat = "round-robin" | "double-elimination";

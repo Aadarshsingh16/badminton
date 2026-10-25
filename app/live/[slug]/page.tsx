@@ -350,8 +350,8 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
             calcDayTotals[pid] = (calcDayTotals[pid] || 0) + pts;
           });
         }
-        const totalCalcPts = Object.values(calcDayTotals).reduce((sum, v) => sum + v, 0);
-        const totalSavedPts = Object.values(resolvedTotals).reduce((sum, v: any) => sum + (Number(v) || 0), 0);
+        const totalCalcPts: number = Object.values(calcDayTotals).reduce<number>((sum, v) => sum + (Number(v) || 0), 0);
+        const totalSavedPts: number = Object.values(resolvedTotals).reduce<number>((sum, v) => sum + (Number(v) || 0), 0);
 
         const finalTotals = (totalCalcPts > totalSavedPts && totalCalcPts > 0) ? calcDayTotals : resolvedTotals;
 
