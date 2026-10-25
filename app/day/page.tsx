@@ -168,20 +168,8 @@ export default function DayPage() {
       return sB.pointDiff - sA.pointDiff;
     };
 
-    // 1. Backend is the true source of truth. If we have cloud totals, use them directly.
-    const backendTotals = cloudDayData?.totals || {};
-    if (Object.keys(backendTotals).length > 0) {
-      const merged: Record<string, number> = {};
-      for (const [id, pts] of Object.entries(backendTotals)) {
-        const targetId = normalizePlayerId(id);
-        merged[targetId] = (merged[targetId] || 0) + (pts as number);
-      }
-      return Object.entries(merged)
-        .sort(([idA, a], [idB, b]) => tiebreakCompare(idA, a as number, idB, b as number))
-        .map(([id, pts], idx) => ({ id, pts: pts as number, rank: idx + 1 }));
-    }
-
-    // 2. Fallback to local recalculation (e.g. offline mode or before first sync)
+    // 1. Authoritative source for scorekeeper: if local effectiveTournaments exist,
+    // compute totals directly from them so the Day Table strictly matches the Tournaments tab.
     if (effectiveTournaments.length > 0) {
       const computedTotals: { [playerId: string]: number } = {};
       for (const t of effectiveTournaments) {
@@ -198,6 +186,19 @@ export default function DayPage() {
         .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
     }
 
+    // 2. Viewer / Remote fallback: If no local tournaments on this device (e.g. spectator view), use backend cloud totals
+    const backendTotals = cloudDayData?.totals || {};
+    if (Object.keys(backendTotals).length > 0) {
+      const merged: Record<string, number> = {};
+      for (const [id, pts] of Object.entries(backendTotals)) {
+        const targetId = normalizePlayerId(id);
+        merged[targetId] = (merged[targetId] || 0) + (pts as number);
+      }
+      return Object.entries(merged)
+        .sort(([idA, a], [idB, b]) => tiebreakCompare(idA, a as number, idB, b as number))
+        .map(([id, pts], idx) => ({ id, pts: pts as number, rank: idx + 1 }));
+    }
+
     // 3. Absolute fallback to persisted day table state
     if (Object.keys(dayTable.totals).length > 0) {
       const merged: Record<string, number> = {};
@@ -212,6 +213,41 @@ export default function DayPage() {
 
     return [];
   }, [effectiveTournaments, dayTable.totals, cloudDayData, playerDayStats]);
+
+  // Self-healing: If scorekeeper has complete effectiveTournaments but cloud day data has stale or mismatched totals,
+  // sync the true computed totals and re-upload the completed tournaments.
+  useEffect(() => {
+    if (effectiveTournaments.length > 0 && !isViewer && apiSync.hasPin() && cloudDayData) {
+      const computedTotals: { [playerId: string]: number } = {};
+      for (const t of effectiveTournaments) {
+        const tTable = computeTournamentTable(t);
+        const ptsMap = t.dayPointsAwarded || {};
+        tTable.forEach((row, rowIdx) => {
+          const targetId = normalizePlayerId(row.playerId);
+          const pts = ptsMap[row.playerId] ?? ptsMap[targetId] ?? row.dayPoints ?? Math.max(1, tTable.length - rowIdx);
+          computedTotals[targetId] = (computedTotals[targetId] ?? 0) + pts;
+        });
+      }
+
+      const backendTotals = cloudDayData.totals || {};
+      const isMismatch =
+        Object.keys(computedTotals).some((id) => (backendTotals[id] ?? 0) !== computedTotals[id]) ||
+        Object.keys(computedTotals).length !== Object.keys(backendTotals).length;
+
+      if (isMismatch && Object.keys(computedTotals).length > 0) {
+        const targetDate = dayTable.date || new Date().toISOString().split("T")[0];
+        apiSync.enqueue("/day-tables/sync", "POST", {
+          date: targetDate,
+          totals: computedTotals,
+        });
+
+        // Sync completed tournaments directly to ensure backend matches table has full records
+        effectiveTournaments.forEach((t) => {
+          apiSync.syncTournamentDirectly(t, players);
+        });
+      }
+    }
+  }, [effectiveTournaments, cloudDayData, isViewer, dayTable.date, players]);
 
   const hasTournaments = effectiveTournaments.length > 0;
   const hasData = sortedPlayers.length > 0;

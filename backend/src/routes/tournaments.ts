@@ -283,12 +283,18 @@ tournamentsRouter.post("/", requireScorekeeper, async (req, res) => {
     }
 
     // Insert or update tournament
+    const tourneyStatus = req.body.status || (req.body.closed ? "completed" : "active");
     const tourneyRes = await pool.query(
-      `INSERT INTO tournaments (id, share_slug, day_id, player_ids, status, config)
-       VALUES ($1, $2, $3, $4, 'active', $5)
-       ON CONFLICT (id) DO UPDATE SET share_slug = $2, player_ids = $4, config = $5
+      `INSERT INTO tournaments (id, share_slug, day_id, player_ids, status, config, completed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (id) DO UPDATE SET
+         share_slug = $2,
+         player_ids = $4,
+         config = $6,
+         status = CASE WHEN tournaments.status = 'completed' THEN 'completed' ELSE $5 END,
+         completed_at = CASE WHEN tournaments.completed_at IS NOT NULL THEN tournaments.completed_at ELSE $7 END
        RETURNING id, share_slug, day_id, player_ids, status, config, created_at`,
-      [tourneyId, slug, dayId, playerIds, JSON.stringify(tournamentConfig)]
+      [tourneyId, slug, dayId, playerIds, tourneyStatus, JSON.stringify(tournamentConfig), tourneyStatus === "completed" ? new Date() : null]
     );
     const tournament = tourneyRes.rows[0];
 

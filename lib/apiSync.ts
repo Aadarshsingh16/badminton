@@ -168,6 +168,8 @@ class ApiSyncService {
           final: tournament.final,
           config: tournament.config,
           date: tournament.date,
+          status: tournament.closed ? "completed" : (tournament.status || "active"),
+          closed: !!tournament.closed,
         }),
       });
 
