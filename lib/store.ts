@@ -1161,6 +1161,7 @@ export const useStore = create<AppState>()(
         const tourneysToRemove = pastTournaments.filter(
           (t) =>
             dayTourneyIds.has(t.id) ||
+            t.date === dateToReset ||
             (t.createdAt && new Date(t.createdAt).toISOString().split("T")[0] === dateToReset)
         );
 
@@ -1173,6 +1174,7 @@ export const useStore = create<AppState>()(
         const updatedPast = pastTournaments.filter(
           (t) =>
             !dayTourneyIds.has(t.id) &&
+            t.date !== dateToReset &&
             !(t.createdAt && new Date(t.createdAt).toISOString().split("T")[0] === dateToReset)
         );
 
@@ -1270,19 +1272,26 @@ export const useStore = create<AppState>()(
           }
 
           // Migrate completedDays
-          // Note: 18th Oct is explicitly not finished yet by the user, so remove any premature 18th Oct entry
           if (state.completedDays && state.completedDays.length > 0) {
             state.completedDays = state.completedDays
-              .filter((cd) => cd.date !== "2026-10-18")
               .map((cd) => {
                 const mig = migrateCompletedDayData(cd);
                 if (mig.date === "2026-10-11") {
                   return {
                     ...mig,
-                    totals: { akshat: 12, harsh: 10, adarsh: 9, gautam: 9, sajal: 5 },
+                    totals: mig.totals && Object.keys(mig.totals).length > 0 ? mig.totals : { akshat: 12, harsh: 10, adarsh: 9, gautam: 9, sajal: 5 },
                     topPlayerId: "akshat",
                     spoonPlayerId: "sajal",
-                    tournamentIds: ["cvn6q9vimv3q3d9v", "jmvuh9gsmv3rfkru", "5h4w6113mv3sa2qu"],
+                    tournamentIds: mig.tournamentIds?.length ? mig.tournamentIds : ["cvn6q9vimv3q3d9v", "jmvuh9gsmv3rfkru", "5h4w6113mv3sa2qu"],
+                  };
+                }
+                if (mig.date === "2026-10-18") {
+                  return {
+                    ...mig,
+                    totals: mig.totals && Object.keys(mig.totals).length > 0 ? mig.totals : { gautam: 14, akshat: 10, harsh: 10, adarsh: 8, anirudh: 5, sajal: 4, udbhaw: 4 },
+                    topPlayerId: "gautam",
+                    spoonPlayerId: "sajal",
+                    tournamentIds: mig.tournamentIds?.length ? mig.tournamentIds : ["pphuektzmvdq6x52", "3prxyal7mvdsckif"],
                   };
                 }
                 return mig;
@@ -1294,15 +1303,23 @@ export const useStore = create<AppState>()(
             const recoveredDays = recoverCompletedDaysFromSyncQueue();
             if (recoveredDays.length > 0) {
               state.completedDays = recoveredDays
-                .filter((cd) => cd.date !== "2026-10-18")
                 .map((cd) => {
                   if (cd.date === "2026-10-11") {
                     return {
                       ...cd,
-                      totals: { akshat: 12, harsh: 10, adarsh: 9, gautam: 9, sajal: 5 },
+                      totals: cd.totals && Object.keys(cd.totals).length > 0 ? cd.totals : { akshat: 12, harsh: 10, adarsh: 9, gautam: 9, sajal: 5 },
                       topPlayerId: "akshat",
                       spoonPlayerId: "sajal",
-                      tournamentIds: ["cvn6q9vimv3q3d9v", "jmvuh9gsmv3rfkru", "5h4w6113mv3sa2qu"],
+                      tournamentIds: cd.tournamentIds?.length ? cd.tournamentIds : ["cvn6q9vimv3q3d9v", "jmvuh9gsmv3rfkru", "5h4w6113mv3sa2qu"],
+                    };
+                  }
+                  if (cd.date === "2026-10-18") {
+                    return {
+                      ...cd,
+                      totals: cd.totals && Object.keys(cd.totals).length > 0 ? cd.totals : { gautam: 14, akshat: 10, harsh: 10, adarsh: 8, anirudh: 5, sajal: 4, udbhaw: 4 },
+                      topPlayerId: "gautam",
+                      spoonPlayerId: "sajal",
+                      tournamentIds: cd.tournamentIds?.length ? cd.tournamentIds : ["pphuektzmvdq6x52", "3prxyal7mvdsckif"],
                     };
                   }
                   return cd;
@@ -1313,23 +1330,6 @@ export const useStore = create<AppState>()(
           // Migrate dayTable
           if (state.dayTable) {
             state.dayTable = migrateDayTableData(state.dayTable);
-            if (state.dayTable.date === "2026-10-11") {
-              state.dayTable.tournaments = (state.dayTable.tournaments || []).filter(
-                (id) => !oct18TourneyIds.has(id)
-              );
-              state.dayTable.totals = { akshat: 12, harsh: 10, adarsh: 9, gautam: 9, sajal: 5 };
-            } else if (state.dayTable.date === "2026-10-18") {
-              state.dayTable.tournaments = ["pphuektzmvdq6x52", "3prxyal7mvdsckif"];
-              state.dayTable.totals = {
-                gautam: 14,
-                akshat: 10,
-                harsh: 10,
-                adarsh: 8,
-                anirudh: 5,
-                sajal: 4,
-                udbhaw: 4,
-              };
-            }
           }
 
           // Migrate currentTournament if active

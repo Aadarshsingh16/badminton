@@ -13,6 +13,8 @@ import { Player, Tournament } from "@/lib/types";
 import { PinModal } from "@/components/PinModal";
 import { ShareModal } from "@/components/ShareModal";
 import { apiSync } from "@/lib/apiSync";
+import { firestoreSync } from "@/lib/firestoreSync";
+import { isFirebaseConfigured } from "@/lib/firebase";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
 import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
@@ -257,6 +259,52 @@ export default function DayPage() {
     }
   };
 
+  const handleExportBackup = () => {
+    try {
+      const data = firestoreSync.exportAllLocalData();
+      const jsonString = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `badminton-backup-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setSyncState("success");
+      setSyncMessage(`Backup exported (${data.tournaments.length} tournaments)! ✓`);
+      setTimeout(() => {
+        setSyncState("idle");
+        setSyncMessage("");
+      }, 4000);
+    } catch (err: any) {
+      setSyncState("error");
+      setSyncMessage("Export failed: " + (err.message || "Unknown error"));
+    }
+  };
+
+  const handleUploadAllToFirebase = async () => {
+    setSyncState("syncing");
+    setSyncMessage("Pushing all local tournaments & days to Firebase...");
+    const res = await firestoreSync.uploadAllLocalDataToFirestore();
+    if (res.success) {
+      setSyncState("success");
+      setSyncMessage(`Uploaded ${res.count} tournaments to Firebase! ✓`);
+      await fetchCloudDay();
+      setTimeout(() => {
+        setSyncState("idle");
+        setSyncMessage("");
+      }, 5000);
+    } else {
+      setSyncState("error");
+      setSyncMessage(res.error || "Firebase upload failed");
+      setTimeout(() => {
+        setSyncState("idle");
+      }, 6000);
+    }
+  };
+
   // Self-healing: If scorekeeper has complete effectiveTournaments but cloud day data has stale or mismatched totals,
   // sync the true computed totals and all tournaments atomically to the cloud.
   useEffect(() => {
@@ -409,6 +457,26 @@ export default function DayPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {!isViewer && (
+              <button
+                onClick={handleExportBackup}
+                title="Download JSON backup of all tournaments & days from device"
+                className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#252932] text-[#8E95A5] hover:text-[#F3F4EE] border border-white/10 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-xs"
+              >
+                <span>💾</span>
+                <span>Backup</span>
+              </button>
+            )}
+            {!isViewer && isFirebaseConfigured() && (
+              <button
+                onClick={handleUploadAllToFirebase}
+                title="Upload all tournaments & days to Firebase Firestore"
+                className="px-2.5 py-1.5 rounded-full bg-[#FF5E48]/20 hover:bg-[#FF5E48]/30 text-[#FF5E48] border border-[#FF5E48]/30 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-xs"
+              >
+                <span>🔥</span>
+                <span>Push to Firebase</span>
+              </button>
+            )}
             {!isViewer && hasTournaments && (
               <button
                 onClick={handleManualSyncToCloud}

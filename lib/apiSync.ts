@@ -1,6 +1,7 @@
 // lib/apiSync.ts — Optimistic background sync queue with offline / waking-backend retry
 
 import { getBackendUrl } from "@/lib/backend";
+import { firestoreSync } from "@/lib/firestoreSync";
 
 type SyncStatusListener = (status: { isSyncing: boolean; pendingCount: number; error: boolean }) => void;
 
@@ -132,6 +133,10 @@ class ApiSyncService {
    */
   public async syncTournamentDirectly(tournament: any, players?: any[]): Promise<boolean> {
     if (!tournament || tournament.isPractice) return false;
+
+    // Concurrently sync to Firebase Firestore if configured
+    firestoreSync.syncTournament(tournament, players).catch(() => {});
+
     const backendUrl = this.getBackendUrl();
     const pin = this.getPin();
     const headers: Record<string, string> = {
@@ -194,6 +199,15 @@ class ApiSyncService {
     players?: any[]
   ): Promise<boolean> {
     if (!date || !totals || !tournaments) return false;
+
+    // Concurrently sync day and its tournaments to Firebase Firestore
+    try {
+      firestoreSync.syncDaySession(date, totals, tournaments.map((t) => t.id)).catch(() => {});
+      for (const t of tournaments) {
+        firestoreSync.syncTournament(t, players).catch(() => {});
+      }
+    } catch {}
+
     const backendUrl = this.getBackendUrl();
     const pin = this.getPin();
     const headers: Record<string, string> = {

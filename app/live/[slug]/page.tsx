@@ -14,6 +14,8 @@ import { computeTournamentTable } from "@/lib/ranking";
 import { setViewerSlug, clearViewerMode } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
 import { formatDateDDMMYY } from "@/lib/dateUtils";
+import { firestoreSync } from "@/lib/firestoreSync";
+import { isFirebaseConfigured } from "@/lib/firebase";
 import Link from "next/link";
 
 interface DayStandingItem {
@@ -654,8 +656,23 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       }
     }, 3000);
 
+    // Direct Firestore real-time listener if configured
+    let firestoreUnsub: (() => void) | null = null;
+    if (isFirebaseConfigured()) {
+      if (isDateSlug) {
+        firestoreUnsub = firestoreSync.subscribeToDay(slug, (data) => {
+          if (data) fetchDaySession(slug);
+        });
+      } else {
+        firestoreUnsub = firestoreSync.subscribeToTournament(slug, (data) => {
+          if (data) fetchSingleTournament(slug);
+        });
+      }
+    }
+
     return () => {
       clearInterval(interval);
+      if (firestoreUnsub) firestoreUnsub();
       if (socket) {
         if (isDateSlug) socket.emit("leave:day", slug);
         else socket.emit("leave:tournament", slug);

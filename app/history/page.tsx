@@ -414,9 +414,9 @@ export default function HistoryPage() {
 
     allTourneys.forEach((t) => {
       const tourneyMatches: MatchHistoryItem[] = [];
-      const tourneyDate = t.createdAt
-        ? new Date(t.createdAt).toISOString().split("T")[0]
-        : dayTable.date;
+      const tourneyDate =
+        t.date ||
+        (t.createdAt ? new Date(t.createdAt).toISOString().split("T")[0] : dayTable.date);
 
       t.matches
         .filter((m) => m.played)
