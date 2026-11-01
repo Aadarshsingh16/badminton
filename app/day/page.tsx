@@ -57,8 +57,24 @@ export default function DayPage() {
   const fetchCloudDay = useCallback(async () => {
     setLoading(true);
     try {
-      const backendUrl = getBackendUrl();
       const dateParam = dayTable.date || new Date().toISOString().split("T")[0];
+
+      // 1. Try Firebase Firestore first if configured
+      if (isFirebaseConfigured()) {
+        const firestoreData = await firestoreSync.getDaySession(dateParam);
+        if (firestoreData && (firestoreData.tournaments.length > 0 || Object.keys(firestoreData.totals).length > 0)) {
+          setCloudDayData({
+            totals: firestoreData.totals,
+            tournaments: firestoreData.tournaments,
+            dayStandings: firestoreData.dayStandings,
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2. Fallback to Render backend API
+      const backendUrl = getBackendUrl();
       const res = await fetch(`${backendUrl}/day-tables/${dateParam}`);
       if (res.ok) {
         const json = await res.json();
@@ -284,6 +300,43 @@ export default function DayPage() {
     }
   };
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setSyncState("syncing");
+      setSyncMessage("Reading backup file...");
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const res = await firestoreSync.importAndSyncBackup(parsed);
+      if (res.success) {
+        setSyncState("success");
+        setSyncMessage(`Restored & synced ${res.tourneyCount} tournaments to Firebase! ✓`);
+        if (parsed.tournaments && Array.isArray(parsed.tournaments)) {
+          useStore.setState({ pastTournaments: parsed.tournaments });
+        }
+        if (parsed.completedDays && Array.isArray(parsed.completedDays)) {
+          useStore.setState({ completedDays: parsed.completedDays });
+        }
+        await fetchCloudDay();
+        setTimeout(() => {
+          setSyncState("idle");
+          setSyncMessage("");
+        }, 5000);
+      } else {
+        setSyncState("error");
+        setSyncMessage(res.error || "Failed to restore backup");
+      }
+    } catch (err: any) {
+      setSyncState("error");
+      setSyncMessage("Invalid backup file: " + (err.message || "Parse error"));
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleUploadAllToFirebase = async () => {
     setSyncState("syncing");
     setSyncMessage("Pushing all local tournaments & days to Firebase...");
@@ -458,14 +511,31 @@ export default function DayPage() {
 
           <div className="flex items-center gap-2">
             {!isViewer && (
-              <button
-                onClick={handleExportBackup}
-                title="Download JSON backup of all tournaments & days from device"
-                className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#252932] text-[#8E95A5] hover:text-[#F3F4EE] border border-white/10 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-xs"
-              >
-                <span>💾</span>
-                <span>Backup</span>
-              </button>
+              <>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept=".json,application/json"
+                  className="hidden"
+                />
+                <button
+                  onClick={handleExportBackup}
+                  title="Download JSON backup of all tournaments & days from device"
+                  className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#252932] text-[#8E95A5] hover:text-[#F3F4EE] border border-white/10 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-xs"
+                >
+                  <span>💾</span>
+                  <span>Backup</span>
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Import and upload JSON backup to Firebase"
+                  className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#252932] text-[#8E95A5] hover:text-[#9EC9A8] border border-white/10 hover:border-[#9EC9A8]/30 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-xs"
+                >
+                  <span>📥</span>
+                  <span>Import JSON</span>
+                </button>
+              </>
             )}
             {!isViewer && isFirebaseConfigured() && (
               <button

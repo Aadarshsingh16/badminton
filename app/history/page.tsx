@@ -19,6 +19,8 @@ import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
 import { PinModal } from "@/components/PinModal";
 import { apiSync } from "@/lib/apiSync";
+import { firestoreSync } from "@/lib/firestoreSync";
+import { isFirebaseConfigured } from "@/lib/firebase";
 import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
 import { getBackendUrl } from "@/lib/backend";
 import { formatDateDDMMYY } from "@/lib/dateUtils";
@@ -369,6 +371,22 @@ export default function HistoryPage() {
 
   // Automatic data recovery if pastTournaments or completedDays was lost from state
   useEffect(() => {
+    if (isFirebaseConfigured()) {
+      firestoreSync.loadAllFromFirestore().then((fbData) => {
+        if (fbData && fbData.tournaments.length > 0) {
+          const currentPast = useStore.getState().pastTournaments || [];
+          const existingIds = new Set(currentPast.map((t) => t.id));
+          const toAdd = fbData.tournaments.filter((t) => !existingIds.has(t.id));
+          if (toAdd.length > 0 || currentPast.length === 0) {
+            useStore.setState({
+              pastTournaments: [...currentPast, ...toAdd],
+              completedDays: fbData.completedDays.length > 0 ? fbData.completedDays : useStore.getState().completedDays,
+            });
+          }
+        }
+      });
+    }
+
     if (pastTournaments.length === 0) {
       const recovered = recoverTournamentsFromSyncQueue();
       if (recovered.length > 0) {

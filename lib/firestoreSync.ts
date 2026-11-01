@@ -3,10 +3,13 @@ import { db, isFirebaseConfigured } from "./firebase";
 import {
   doc,
   setDoc,
+  getDoc,
+  getDocs,
+  collection,
   onSnapshot,
   Unsubscribe,
 } from "firebase/firestore";
-import { Tournament, Player } from "./types";
+import { Tournament, Player, CompletedDaySummary } from "./types";
 import { apiSync } from "./apiSync";
 
 export interface FirestoreDaySession {
@@ -131,6 +134,70 @@ class FirestoreSyncService {
   }
 
   /**
+   * Fetch full day session and its tournaments from Firestore
+   */
+  public async getDaySession(date: string): Promise<{ totals: Record<string, number>; tournaments: any[]; dayStandings: any[] } | null> {
+    if (!isFirebaseConfigured() || !db || !date) return null;
+    try {
+      const dayRef = doc(db, "days", date);
+      const daySnap = await getDoc(dayRef);
+      if (!daySnap.exists()) return null;
+      const data = daySnap.data();
+      const tourneyIds: string[] = data.tournamentIds || [];
+      const tournaments: any[] = [];
+      for (const tId of tourneyIds) {
+        const tSnap = await getDoc(doc(db, "tournaments", tId));
+        if (tSnap.exists()) tournaments.push(tSnap.data());
+      }
+      return {
+        totals: data.totals || {},
+        tournaments,
+        dayStandings: [],
+      };
+    } catch (err) {
+      console.warn("Firestore getDaySession error:", err);
+      return null;
+    }
+  }
+
+  /**
+   * Fetches all tournaments and completed days from Firestore
+   */
+  public async loadAllFromFirestore(): Promise<{
+    tournaments: Tournament[];
+    completedDays: CompletedDaySummary[];
+  } | null> {
+    if (!isFirebaseConfigured() || !db) return null;
+    try {
+      const tourneysSnap = await getDocs(collection(db, "tournaments"));
+      const tournaments: Tournament[] = [];
+      tourneysSnap.forEach((d) => {
+        tournaments.push(d.data() as Tournament);
+      });
+
+      const daysSnap = await getDocs(collection(db, "days"));
+      const completedDays: CompletedDaySummary[] = [];
+      daysSnap.forEach((d) => {
+        const data = d.data();
+        if (data.closed) {
+          completedDays.push({
+            date: data.date,
+            totals: data.totals || {},
+            topPlayerId: data.topPlayerId || undefined,
+            spoonPlayerId: data.spoonPlayerId || undefined,
+            tournamentIds: data.tournamentIds || [],
+          });
+        }
+      });
+
+      return { tournaments, completedDays };
+    } catch (err) {
+      console.warn("Firestore loadAllFromFirestore error:", err);
+      return null;
+    }
+  }
+
+  /**
    * Deep backup: dumps all data from local storage into an exportable JSON object
    */
   public exportAllLocalData(): {
@@ -219,6 +286,92 @@ class FirestoreSyncService {
     } catch (err: any) {
       return { success: false, count: 0, error: err.message || "Failed uploading to Firestore" };
     }
+  }
+
+  /**
+   * Imports a parsed backup JSON object, stores in local storage, and pushes to Firestore
+   */
+  public async importAndSyncBackup(data: any): Promise<{ success: boolean; tourneyCount: number; dayCount: number; error?: string }> {
+    if (!data || typeof data !== "object") {
+      return { success: false, tourneyCount: 0, dayCount: 0, error: "Invalid backup JSON file" };
+    }
+
+    let tourneyCount = 0;
+    let dayCount = 0;
+
+    // 1. Merge into local storage
+    if (typeof window !== "undefined") {
+      try {
+        if (Array.isArray(data.tournaments) && data.tournaments.length > 0) {
+          const rawExisting = localStorage.getItem("badminton_archived_tournaments_v1");
+          const existing = rawExisting ? JSON.parse(rawExisting) : [];
+          const existingMap: Record<string, any> = {};
+          if (Array.isArray(existing)) {
+            for (const t of existing) if (t?.id) existingMap[t.id] = t;
+          }
+          for (const t of data.tournaments) {
+            if (t?.id) existingMap[t.id] = t;
+          }
+          localStorage.setItem("badminton_archived_tournaments_v1", JSON.stringify(Object.values(existingMap)));
+        }
+
+        if (Array.isArray(data.completedDays) && data.completedDays.length > 0) {
+          const rawDays = localStorage.getItem("badminton_completed_days_v1");
+          const existingDays = rawDays ? JSON.parse(rawDays) : [];
+          const daysMap: Record<string, any> = {};
+          if (Array.isArray(existingDays)) {
+            for (const d of existingDays) if (d?.date) daysMap[d.date] = d;
+          }
+          for (const d of data.completedDays) {
+            if (d?.date) daysMap[d.date] = d;
+          }
+          localStorage.setItem("badminton_completed_days_v1", JSON.stringify(Object.values(daysMap)));
+        }
+      } catch (e) {
+        console.warn("Error merging into local storage:", e);
+      }
+    }
+
+    // 2. Upload to Firestore if configured
+    if (isFirebaseConfigured() && db) {
+      try {
+        if (Array.isArray(data.tournaments)) {
+          for (const t of data.tournaments) {
+            if (t?.id) {
+              const tRef = doc(db, "tournaments", t.id);
+              await setDoc(tRef, { ...t, updatedAt: Date.now() }, { merge: true });
+              tourneyCount++;
+            }
+          }
+        }
+
+        if (Array.isArray(data.completedDays)) {
+          for (const cd of data.completedDays) {
+            if (cd?.date) {
+              const dRef = doc(db, "days", cd.date);
+              await setDoc(dRef, { ...cd, closed: true, updatedAt: Date.now() }, { merge: true });
+              dayCount++;
+            }
+          }
+        }
+
+        if (data.dayTable?.date) {
+          const dRef = doc(db, "days", data.dayTable.date);
+          await setDoc(dRef, {
+            date: data.dayTable.date,
+            totals: data.dayTable.totals || {},
+            tournamentIds: data.dayTable.tournaments || [],
+            closed: false,
+            updatedAt: Date.now(),
+          }, { merge: true });
+          dayCount++;
+        }
+      } catch (err: any) {
+        return { success: false, tourneyCount, dayCount, error: err.message };
+      }
+    }
+
+    return { success: true, tourneyCount, dayCount };
   }
 }
 

@@ -12,10 +12,12 @@
     "backend:start": "npm --prefix backend run start"
   },
   "dependencies": {
+    "@types/pg": "^8.23.1",
     "@upstash/redis": "^1.39.0",
     "firebase": "^13.1.0",
     "framer-motion": "^13.4.4",
     "next": "16.3.6",
+    "pg": "^8.23.1",
     "qrcode.react": "^4.2.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",

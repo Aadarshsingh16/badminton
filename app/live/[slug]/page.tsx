@@ -167,11 +167,28 @@ export default function LiveViewerPage({ params }: { params: Promise<{ slug: str
       setLastUpdated(new Date().toLocaleTimeString());
     }
 
-    // Always fetch latest authoritative data from backend
+    // Always fetch latest authoritative data from Firestore or backend
     try {
       let fetchDate = targetDate;
-      let res = await fetch(`${backendUrl}/day-tables/${fetchDate}`);
-      let json: any = res.ok ? await res.json() : null;
+      let json: any = null;
+
+      // 1. Check Firestore directly if configured
+      if (isFirebaseConfigured()) {
+        try {
+          const fDay = await firestoreSync.getDaySession(fetchDate);
+          if (fDay && (fDay.tournaments.length > 0 || Object.keys(fDay.totals).length > 0)) {
+            json = fDay;
+          }
+        } catch {}
+      }
+
+      // 2. Fallback to backend API
+      if (!json) {
+        try {
+          let res = await fetch(`${backendUrl}/day-tables/${fetchDate}`);
+          json = res.ok ? await res.json() : null;
+        } catch {}
+      }
 
       // If requested date has 0 tournaments or no active tournament, check candidate dates!
       const hasTourneys = json && Array.isArray(json.tournaments) && json.tournaments.length > 0;
