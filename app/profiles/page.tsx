@@ -580,8 +580,20 @@ export default function ProfilesPage() {
 
     filteredTourneys.forEach((t) => {
       // Tournament Winner (Champion)
-      if (t.final && t.final.played && t.final.scoreA !== undefined && t.final.scoreB !== undefined) {
-        const winnerId = normalizePlayerId(t.final.scoreA > t.final.scoreB ? t.final.playerA : t.final.playerB);
+      const gfMatch = (t.matches || []).find(
+        (m: any) => (m.bracketRound === "GF" || m.id === "de-gf" || m.id === "de-gfr") && m.played
+      );
+      const effectiveFinal =
+        t.final && t.final.played && t.final.scoreA !== undefined && t.final.scoreB !== undefined
+          ? t.final
+          : gfMatch && gfMatch.scoreA !== undefined && gfMatch.scoreB !== undefined
+          ? gfMatch
+          : null;
+
+      if (effectiveFinal) {
+        const winnerId = normalizePlayerId(
+          effectiveFinal.scoreA > effectiveFinal.scoreB ? effectiveFinal.playerA : effectiveFinal.playerB
+        );
         if (stats[winnerId]) {
           stats[winnerId].tournamentsWon += 1;
         }

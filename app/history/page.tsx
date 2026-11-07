@@ -40,6 +40,15 @@ const KNOWN_DAY_TOTALS: Record<string, Record<string, number>> = {
   "2026-10-10": { akshat: 11, gautam: 11, harsh: 11, sajal: 8, adarsh: 7, anirudh: 6, udbhaw: 2 },
 };
 
+export const isDoubleEliminationTournament = (t: any): boolean => {
+  if (!t) return false;
+  if (t.config?.format === "double-elimination") return true;
+  if (t.isDoubleElimination) return true;
+  return !!t.matches?.some(
+    (m: any) => m?.bracket || m?.bracketRound || m?.id?.startsWith("de-") || m?.shortform
+  );
+};
+
 interface MiniLeaderboardEntry {
   playerId: string;
   name: string;
@@ -349,9 +358,9 @@ export default function HistoryPage() {
     }
 
     if (historyFormatFilter === "double-elimination") {
-      allTourneys = allTourneys.filter((t) => t.config?.format === "double-elimination" || t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
+      allTourneys = allTourneys.filter((t) => isDoubleEliminationTournament(t));
     } else if (historyFormatFilter === "round-robin") {
-      allTourneys = allTourneys.filter((t) => t.config?.format !== "double-elimination" && !t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
+      allTourneys = allTourneys.filter((t) => !isDoubleEliminationTournament(t));
     }
 
     if (rangeFilter !== "all") {
@@ -511,10 +520,38 @@ export default function HistoryPage() {
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([date, tournaments]) => {
         const cd = (completedDays || []).find((d) => d.date === date);
+
+        let dayTotals: Record<string, number> | null = null;
+        if (historyFormatFilter === "all") {
+          dayTotals = cd?.totals ?? KNOWN_DAY_TOTALS[date] ?? null;
+        } else {
+          // Format-specific totals: sum points only from tournaments matching this format on this date
+          const fTotals: Record<string, number> = {};
+          tournaments.forEach((gt) => {
+            const tObj = allTourneys.find((t) => t.id === gt.tournamentId);
+            if (tObj) {
+              const ptsMap =
+                tObj.dayPointsAwarded && Object.keys(tObj.dayPointsAwarded).length > 0
+                  ? tObj.dayPointsAwarded
+                  : computeDayPoints(tObj);
+              if (ptsMap) {
+                for (const [pid, pts] of Object.entries(ptsMap)) {
+                  fTotals[pid] = (fTotals[pid] || 0) + Number(pts);
+                }
+              }
+            }
+          });
+          if (Object.keys(fTotals).length > 0) {
+            dayTotals = fTotals;
+          } else if (historyFormatFilter === "round-robin" && KNOWN_DAY_TOTALS[date]) {
+            dayTotals = KNOWN_DAY_TOTALS[date];
+          }
+        }
+
         return {
           date,
           closed: !!cd,
-          totals: cd?.totals ?? KNOWN_DAY_TOTALS[date] ?? null,
+          totals: dayTotals,
           tournaments: [...tournaments].sort((t1, t2) => {
             const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
             const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
@@ -528,20 +565,19 @@ export default function HistoryPage() {
       .map((p) => {
         let points = 0;
         allTourneys.forEach((t) => {
-          if (t.dayPointsAwarded && t.dayPointsAwarded[p.id] !== undefined) {
-            points += t.dayPointsAwarded[p.id];
-          } else {
-            t.matches.filter((m) => m.played).forEach((m) => {
-              points += m.pointsAwarded?.[p.id] || 0;
-            });
-            if (t.final?.played) {
-              points += t.final.pointsAwarded?.[p.id] || 0;
+          const ptsMap =
+            t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
+              ? t.dayPointsAwarded
+              : computeDayPoints(t);
+          if (ptsMap) {
+            if (ptsMap[p.id] !== undefined) points += ptsMap[p.id];
+            if (p.id === "sajal") {
+              for (const alias of SAJAL_ALIASES) {
+                if (ptsMap[alias] !== undefined) points += ptsMap[alias];
+              }
             }
           }
         });
-        if (points === 0 && dayTable.totals[p.id]) {
-          points = dayTable.totals[p.id];
-        }
 
         const pMatches = allMatches.filter((m) => m.playerA === p.id || m.playerB === p.id);
         const wins = pMatches.filter(
@@ -578,9 +614,9 @@ export default function HistoryPage() {
     if (currentTournament) allTourneys.push(currentTournament);
 
     if (historyFormatFilter === "double-elimination") {
-      allTourneys = allTourneys.filter((t) => t.config?.format === "double-elimination" || t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
+      allTourneys = allTourneys.filter((t) => isDoubleEliminationTournament(t));
     } else if (historyFormatFilter === "round-robin") {
-      allTourneys = allTourneys.filter((t) => t.config?.format !== "double-elimination" && !t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
+      allTourneys = allTourneys.filter((t) => !isDoubleEliminationTournament(t));
     }
 
     if (rangeFilter !== "all") {
@@ -711,14 +747,8 @@ export default function HistoryPage() {
         }
       });
 
-      // If day points were not in tournaments, check completedDays and KNOWN_DAY_TOTALS
-      const isCurrentDayDE =
-        currentTournament?.config?.format === "double-elimination" ||
-        (dayTable?.tournaments || []).some(
-          (t: any) => t.config?.format === "double-elimination" || t.isDoubleElimination
-        );
-
-      if (dayPointsTotal === 0) {
+      // Fallback only if absolutely no tournaments exist in database
+      if (allTourneys.length === 0 && rangeFilter === "all") {
         if (historyFormatFilter !== "double-elimination") {
           // Add known round-robin completed days (Oct 10, 11, 18)
           if (completedDays && completedDays.length > 0) {
@@ -737,27 +767,6 @@ export default function HistoryPage() {
             Object.entries(KNOWN_DAY_TOTALS).forEach(([_, totals]) => {
               if (totals[p.id]) dayPointsTotal += totals[p.id];
             });
-          }
-        }
-
-        // Active dayTable totals
-        if (dayTable.totals) {
-          const includeActiveDay =
-            historyFormatFilter === "all" ||
-            (historyFormatFilter === "double-elimination" && isCurrentDayDE) ||
-            (historyFormatFilter === "round-robin" && !isCurrentDayDE);
-
-          if (includeActiveDay) {
-            if (dayTable.totals[p.id]) {
-              dayPointsTotal += dayTable.totals[p.id];
-            }
-            if (p.id === "sajal") {
-              for (const alias of SAJAL_ALIASES) {
-                if (dayTable.totals[alias]) {
-                  dayPointsTotal += dayTable.totals[alias];
-                }
-              }
-            }
           }
         }
       }
@@ -905,30 +914,65 @@ export default function HistoryPage() {
     const source = localHistoryFallback;
     if (!source || !source.days) return source;
 
+    let allTourneys = [...pastTournaments];
+    if (allTourneys.length === 0) allTourneys = recoverTournamentsFromSyncQueue();
+    if (currentTournament) allTourneys.push(currentTournament);
+
     const filteredDays = source.days
       .map((day) => {
         const cd = (completedDays || []).find((d) => d.date === day.date);
+        const filteredTournaments = day.tournaments
+          .filter((t) => {
+            if (deletedIds.has(t.tournamentId)) return false;
+            if (historyFormatFilter === "double-elimination") {
+              return isDoubleEliminationTournament(t);
+            }
+            if (historyFormatFilter === "round-robin") {
+              return !isDoubleEliminationTournament(t);
+            }
+            return true;
+          })
+          .sort((t1, t2) => {
+            const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
+            const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
+            if (idx1 !== -1 && idx2 !== -1) return idx2 - idx1;
+            return 0;
+          });
+
+        let dayTotals: Record<string, number> | null = null;
+        if (historyFormatFilter === "all") {
+          dayTotals = day.totals ?? cd?.totals ?? KNOWN_DAY_TOTALS[day.date] ?? null;
+        } else {
+          // Dynamically compute points only from the format-filtered tournaments
+          const fTotals: Record<string, number> = {};
+          filteredTournaments.forEach((gt) => {
+            const tObj = allTourneys.find((t) => t.id === gt.tournamentId);
+            if (tObj) {
+              const ptsMap =
+                tObj.dayPointsAwarded && Object.keys(tObj.dayPointsAwarded).length > 0
+                  ? tObj.dayPointsAwarded
+                  : computeDayPoints(tObj);
+              if (ptsMap) {
+                for (const [pid, pts] of Object.entries(ptsMap)) {
+                  fTotals[pid] = (fTotals[pid] || 0) + Number(pts);
+                }
+              }
+            }
+          });
+          if (Object.keys(fTotals).length > 0) {
+            dayTotals = fTotals;
+          } else if (historyFormatFilter === "round-robin" && KNOWN_DAY_TOTALS[day.date]) {
+            dayTotals = KNOWN_DAY_TOTALS[day.date];
+          } else {
+            dayTotals = day.totals ?? null;
+          }
+        }
+
         return {
           ...day,
           closed: day.closed ?? !!cd,
-          totals: day.totals ?? cd?.totals ?? KNOWN_DAY_TOTALS[day.date] ?? null,
-          tournaments: day.tournaments
-            .filter((t) => {
-              if (deletedIds.has(t.tournamentId)) return false;
-              if (historyFormatFilter === "double-elimination") {
-                return t.config?.format === "double-elimination" || (t as any).matches?.some((m: any) => m.bracket || m.bracketRound || m.id?.startsWith("de-"));
-              }
-              if (historyFormatFilter === "round-robin") {
-                return t.config?.format !== "double-elimination" && !(t as any).matches?.some((m: any) => m.bracket || m.bracketRound || m.id?.startsWith("de-"));
-              }
-              return true;
-            })
-            .sort((t1, t2) => {
-              const idx1 = KNOWN_TOURNEY_ORDER.indexOf(t1.tournamentId);
-              const idx2 = KNOWN_TOURNEY_ORDER.indexOf(t2.tournamentId);
-              if (idx1 !== -1 && idx2 !== -1) return idx2 - idx1;
-              return 0;
-            }),
+          totals: dayTotals,
+          tournaments: filteredTournaments,
         };
       })
       .filter((day) => day.tournaments.length > 0);
@@ -941,7 +985,7 @@ export default function HistoryPage() {
       totalMatches: filteredMatches.length,
       totalPoints: filteredMatches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
     };
-  }, [localHistoryFallback, completedDays, historyFormatFilter]);
+  }, [localHistoryFallback, completedDays, historyFormatFilter, pastTournaments, currentTournament]);
 
   // Compute Double Elimination Stage Stats & Tournament Placement directly from tournament matches
   const { stageStatsMap, placementMap } = useMemo(() => {
@@ -986,15 +1030,21 @@ export default function HistoryPage() {
       (d.tournaments || []).forEach((t) => allTourneys.push(t));
     });
     if (currentTournament && !allTourneys.some((t) => (t.tournamentId || t.id) === currentTournament.id)) {
-      allTourneys.push(currentTournament);
+      const isCurDE = isDoubleEliminationTournament(currentTournament);
+      if (
+        historyFormatFilter === "all" ||
+        (historyFormatFilter === "double-elimination" && isCurDE) ||
+        (historyFormatFilter === "round-robin" && !isCurDE)
+      ) {
+        allTourneys.push(currentTournament);
+      }
     }
 
     const seenTourneyFinals = new Set<string>();
     const seenMatchKeys = new Set<string>();
 
     allTourneys.forEach((t) => {
-      const isDE = t.config?.format === "double-elimination" ||
-        t.matches?.some((m: any) => m.bracket || m.bracketRound || m.id?.startsWith("de-"));
+      const isDE = isDoubleEliminationTournament(t);
 
       const tId = t.tournamentId || t.id || "t";
       const matches: any[] = [...(t.matches || [])];
@@ -1868,33 +1918,59 @@ export default function HistoryPage() {
   const getDayTally = (dayGroup: DayGroup) => {
     let rawTotals: Record<string, number> = {};
 
-    if (dayGroup.totals && Object.keys(dayGroup.totals).length > 0) {
-      rawTotals = { ...dayGroup.totals };
-    } else {
-      const cd = (completedDays || []).find((d) => d.date === dayGroup.date);
-      if (cd?.totals && Object.keys(cd.totals).length > 0) {
-        rawTotals = { ...cd.totals };
-      } else if (KNOWN_DAY_TOTALS[dayGroup.date]) {
-        rawTotals = { ...KNOWN_DAY_TOTALS[dayGroup.date] };
-      } else {
-        let allTourneys = [...pastTournaments];
-        if (allTourneys.length === 0) allTourneys = recoverTournamentsFromSyncQueue();
-        if (currentTournament) allTourneys.push(currentTournament);
+    let allTourneys = [...pastTournaments];
+    if (allTourneys.length === 0) allTourneys = recoverTournamentsFromSyncQueue();
+    if (currentTournament) allTourneys.push(currentTournament);
 
-        dayGroup.tournaments.forEach((gt) => {
-          const tObj = allTourneys.find((t) => t.id === gt.tournamentId);
-          if (tObj) {
-            const ptsMap =
-              tObj.dayPointsAwarded && Object.keys(tObj.dayPointsAwarded).length > 0
-                ? tObj.dayPointsAwarded
-                : computeDayPoints(tObj);
-            if (ptsMap) {
-              for (const [pid, pts] of Object.entries(ptsMap)) {
-                rawTotals[pid] = (rawTotals[pid] || 0) + (pts as number);
-              }
+    if (historyFormatFilter !== "all") {
+      // In format-specific view, calculate points ONLY from dayGroup.tournaments (which are already filtered to that format)
+      dayGroup.tournaments.forEach((gt) => {
+        const tObj = allTourneys.find((t) => t.id === gt.tournamentId);
+        if (tObj) {
+          const ptsMap =
+            tObj.dayPointsAwarded && Object.keys(tObj.dayPointsAwarded).length > 0
+              ? tObj.dayPointsAwarded
+              : computeDayPoints(tObj);
+          if (ptsMap) {
+            for (const [pid, pts] of Object.entries(ptsMap)) {
+              rawTotals[pid] = (rawTotals[pid] || 0) + Number(pts);
             }
           }
-        });
+        }
+      });
+      // Fallback for historical round-robin days if no tournament objects loaded
+      if (Object.keys(rawTotals).length === 0 && historyFormatFilter === "round-robin") {
+        if (KNOWN_DAY_TOTALS[dayGroup.date]) {
+          rawTotals = { ...KNOWN_DAY_TOTALS[dayGroup.date] };
+        } else if (dayGroup.totals) {
+          rawTotals = { ...dayGroup.totals };
+        }
+      }
+    } else {
+      if (dayGroup.totals && Object.keys(dayGroup.totals).length > 0) {
+        rawTotals = { ...dayGroup.totals };
+      } else {
+        const cd = (completedDays || []).find((d) => d.date === dayGroup.date);
+        if (cd?.totals && Object.keys(cd.totals).length > 0) {
+          rawTotals = { ...cd.totals };
+        } else if (KNOWN_DAY_TOTALS[dayGroup.date]) {
+          rawTotals = { ...KNOWN_DAY_TOTALS[dayGroup.date] };
+        } else {
+          dayGroup.tournaments.forEach((gt) => {
+            const tObj = allTourneys.find((t) => t.id === gt.tournamentId);
+            if (tObj) {
+              const ptsMap =
+                tObj.dayPointsAwarded && Object.keys(tObj.dayPointsAwarded).length > 0
+                  ? tObj.dayPointsAwarded
+                  : computeDayPoints(tObj);
+              if (ptsMap) {
+                for (const [pid, pts] of Object.entries(ptsMap)) {
+                  rawTotals[pid] = (rawTotals[pid] || 0) + (pts as number);
+                }
+              }
+            }
+          });
+        }
       }
     }
 
@@ -1908,17 +1984,19 @@ export default function HistoryPage() {
 
     let topId: string | undefined;
     let spoonId: string | undefined;
-    if (dayGroup.date === "2026-10-10") {
-      topId = "akshat";
-      spoonId = "udbhaw";
-    } else if (dayGroup.date === "2026-10-11") {
-      topId = "akshat";
-      spoonId = "sajal";
-    } else {
-      const cd = (completedDays || []).find((d) => d.date === dayGroup.date);
-      if (cd) {
-        topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
-        spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
+    if (historyFormatFilter === "all") {
+      if (dayGroup.date === "2026-10-10") {
+        topId = "akshat";
+        spoonId = "udbhaw";
+      } else if (dayGroup.date === "2026-10-11") {
+        topId = "akshat";
+        spoonId = "sajal";
+      } else {
+        const cd = (completedDays || []).find((d) => d.date === dayGroup.date);
+        if (cd) {
+          topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
+          spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
+        }
       }
     }
 
