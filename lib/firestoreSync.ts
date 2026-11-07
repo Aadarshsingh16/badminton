@@ -255,11 +255,18 @@ class FirestoreSyncService {
       daysSnap.forEach((d) => {
         const data = d.data();
         if (data.closed) {
+          let topPlayerId = data.topPlayerId || undefined;
+          let spoonPlayerId = data.spoonPlayerId || undefined;
+          if ((!topPlayerId || !spoonPlayerId) && data.totals) {
+            const sorted = Object.entries(data.totals).sort(([, a]: any, [, b]: any) => (b as number) - (a as number));
+            if (!topPlayerId && sorted.length > 0) topPlayerId = sorted[0][0];
+            if (!spoonPlayerId && sorted.length > 1) spoonPlayerId = sorted[sorted.length - 1][0];
+          }
           completedDays.push({
-            date: data.date,
+            date: data.date || d.id,
             totals: data.totals || {},
-            topPlayerId: data.topPlayerId || undefined,
-            spoonPlayerId: data.spoonPlayerId || undefined,
+            topPlayerId,
+            spoonPlayerId,
             tournamentIds: data.tournamentIds || [],
           });
         }

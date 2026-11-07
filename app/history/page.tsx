@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area, Legend, Cell } from "recharts";
@@ -22,7 +22,6 @@ import { apiSync } from "@/lib/apiSync";
 import { firestoreSync } from "@/lib/firestoreSync";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
-import { getBackendUrl } from "@/lib/backend";
 import { formatDateDDMMYY } from "@/lib/dateUtils";
 
 const KNOWN_TOURNEY_ORDER = [
