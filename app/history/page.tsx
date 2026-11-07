@@ -199,8 +199,6 @@ export default function HistoryPage() {
     setViewerSlugState(getViewerSlug());
   }, [appRole, currentTournament]);
 
-  const backendUrl = getBackendUrl();
-
   const handleDeleteTournament = async (tId: string) => {
     if (!apiSync.hasPin()) {
       setPinAction("tournament");
@@ -236,23 +234,11 @@ export default function HistoryPage() {
 
     setTournamentToDelete(null);
 
-    // 3. Delete from backend database
+    // 3. Delete directly from Firebase Firestore
     try {
-      const res = await fetch(`${backendUrl}/tournaments/${tId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "x-scorekeeper-pin": apiSync.getPin(),
-        },
-      });
-
-      if (res.status === 401) {
-        setShowPinModal(true);
-      } else {
-        await Promise.all([fetchHistory(), fetchLeaderboards()]);
-      }
+      await firestoreSync.deleteTournament(tId);
     } catch (e) {
-      console.warn("Failed to delete tournament on backend, preserved local deletion:", e);
+      console.warn("Failed to delete tournament in Firestore, preserved local deletion:", e);
     } finally {
       setIsDeleting(false);
     }
@@ -296,95 +282,46 @@ export default function HistoryPage() {
 
     setDayToDelete(null);
 
-    // 4. Delete from backend database
+    // 4. Delete directly from Firebase Firestore
     try {
-      const headers = {
-        "Content-Type": "application/json",
-        "x-scorekeeper-pin": apiSync.getPin(),
-      };
-      await Promise.all([
-        fetch(`${backendUrl}/day-tables/${date}`, { method: "DELETE", headers }),
-        fetch(`${backendUrl}/day-results/${date}`, { method: "DELETE", headers }),
-      ]);
-      await Promise.all([fetchHistory(), fetchLeaderboards()]);
+      await firestoreSync.deleteDaySession(date);
     } catch (e) {
-      console.warn("Failed to delete day on backend, preserved local deletion:", e);
+      console.warn("Failed to delete day in Firestore, preserved local deletion:", e);
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // Fetch History data for Log tab
-  const fetchHistory = async () => {
+  // Primary data loader: Pulls tournaments and completed days directly from Firebase Firestore
+  const loadFromFirestore = useCallback(async () => {
+    if (!isFirebaseConfigured()) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (rangeFilter !== "all") params.append("range", rangeFilter);
-      if (playerFilter !== "all") params.append("playerId", playerFilter);
-      if (patternFilter !== "all") params.append("scorePattern", patternFilter);
-      if (historyFormatFilter !== "all") params.append("format", historyFormatFilter);
-
-      const res = await fetch(`${backendUrl}/history?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setHistoryData(data);
-      }
-    } catch (err) {
-      console.warn("Failed to fetch /history from backend, fallback to local store:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch Leaderboard data
-  const fetchLeaderboards = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (rangeFilter !== "all") params.append("range", rangeFilter);
-      if (historyFormatFilter !== "all") params.append("format", historyFormatFilter);
-      params.append("sortBy", sortBy === "placement" || sortBy === "bracket_points" ? "points" : sortBy);
-
-      const dayResultsParams = new URLSearchParams();
-      if (historyFormatFilter !== "all") dayResultsParams.append("format", historyFormatFilter);
-
-      const [resLb, resDays] = await Promise.all([
-        fetch(`${backendUrl}/leaderboard?${params.toString()}`),
-        fetch(`${backendUrl}/day-results${dayResultsParams.toString() ? `?${dayResultsParams.toString()}` : ""}`),
-      ]);
-
-      if (resLb.ok) {
-        const lb = await resLb.json();
-        setLeaderboardData(lb);
-      }
-      if (resDays.ok) {
-        const dh = await resDays.json();
-        setDayHonors(dh);
-      }
-    } catch (err) {
-      console.warn("Failed to fetch /leaderboard from backend:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Automatic data recovery if pastTournaments or completedDays was lost from state
-  useEffect(() => {
-    if (isFirebaseConfigured()) {
-      firestoreSync.loadAllFromFirestore().then((fbData) => {
-        if (fbData && fbData.tournaments.length > 0) {
-          const currentPast = useStore.getState().pastTournaments || [];
-          const existingIds = new Set(currentPast.map((t) => t.id));
-          const toAdd = fbData.tournaments.filter((t) => !existingIds.has(t.id));
-          if (toAdd.length > 0 || currentPast.length === 0) {
-            useStore.setState({
-              pastTournaments: [...currentPast, ...toAdd],
-              completedDays: fbData.completedDays.length > 0 ? fbData.completedDays : useStore.getState().completedDays,
-            });
-          }
+      const fbData = await firestoreSync.loadAllFromFirestore();
+      if (fbData) {
+        const currentPast = useStore.getState().pastTournaments || [];
+        const existingIds = new Set(currentPast.map((t) => t.id));
+        const toAdd = fbData.tournaments.filter((t) => !existingIds.has(t.id));
+        if (toAdd.length > 0 || currentPast.length === 0) {
+          useStore.setState({
+            pastTournaments: [...currentPast, ...toAdd],
+          });
         }
-      });
+        if (fbData.completedDays && fbData.completedDays.length > 0) {
+          useStore.setState({
+            completedDays: fbData.completedDays,
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to load history from Firestore:", err);
+    } finally {
+      setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    loadFromFirestore();
 
     if (pastTournaments.length === 0) {
       const recovered = recoverTournamentsFromSyncQueue();
@@ -398,12 +335,7 @@ export default function HistoryPage() {
         useStore.setState({ completedDays: recoveredDays });
       }
     }
-  }, [pastTournaments.length, completedDays?.length]);
-
-  useEffect(() => {
-    fetchHistory();
-    fetchLeaderboards();
-  }, [rangeFilter, playerFilter, patternFilter, sortBy, historyFormatFilter]);
+  }, [loadFromFirestore, pastTournaments.length, completedDays?.length]);
 
   // Local fallback synthesis if backend returned no records or offline
   const localHistoryFallback = useMemo<HistoryData>(() => {
@@ -420,6 +352,26 @@ export default function HistoryPage() {
       allTourneys = allTourneys.filter((t) => t.config?.format === "double-elimination" || t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
     } else if (historyFormatFilter === "round-robin") {
       allTourneys = allTourneys.filter((t) => t.config?.format !== "double-elimination" && !t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
+    }
+
+    if (rangeFilter !== "all") {
+      const now = new Date();
+      allTourneys = allTourneys.filter((t) => {
+        const dStr = t.date || (t.createdAt ? new Date(t.createdAt).toISOString().split("T")[0] : null);
+        if (!dStr) return true;
+        const d = new Date(dStr);
+        if (rangeFilter === "day") {
+          const todayStr = now.toISOString().split("T")[0];
+          return dStr === todayStr || dStr === dayTable.date;
+        } else if (rangeFilter === "week") {
+          const diffDays = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
+          return diffDays <= 7;
+        } else if (rangeFilter === "month") {
+          const diffDays = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
+          return diffDays <= 30;
+        }
+        return true;
+      });
     }
 
     if (allTourneys.length === 0) {
@@ -615,7 +567,7 @@ export default function HistoryPage() {
       days,
       miniLeaderboard,
     };
-  }, [currentTournament, pastTournaments, dayTable, players, playerFilter, patternFilter, historyFormatFilter]);
+  }, [currentTournament, pastTournaments, dayTable, players, playerFilter, patternFilter, historyFormatFilter, rangeFilter]);
 
   const localLeaderboardFallback = useMemo<LeaderboardEntry[]>(() => {
     let allTourneys = [...pastTournaments];
@@ -629,6 +581,26 @@ export default function HistoryPage() {
       allTourneys = allTourneys.filter((t) => t.config?.format === "double-elimination" || t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
     } else if (historyFormatFilter === "round-robin") {
       allTourneys = allTourneys.filter((t) => t.config?.format !== "double-elimination" && !t.matches?.some((m) => m.bracket || m.bracketRound || m.id.startsWith("de-")));
+    }
+
+    if (rangeFilter !== "all") {
+      const now = new Date();
+      allTourneys = allTourneys.filter((t) => {
+        const dStr = t.date || (t.createdAt ? new Date(t.createdAt).toISOString().split("T")[0] : null);
+        if (!dStr) return true;
+        const d = new Date(dStr);
+        if (rangeFilter === "day") {
+          const todayStr = now.toISOString().split("T")[0];
+          return dStr === todayStr || dStr === dayTable.date;
+        } else if (rangeFilter === "week") {
+          const diffDays = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
+          return diffDays <= 7;
+        } else if (rangeFilter === "month") {
+          const diffDays = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
+          return diffDays <= 30;
+        }
+        return true;
+      });
     }
 
     const entries: LeaderboardEntry[] = players.map((p) => {
@@ -823,9 +795,9 @@ export default function HistoryPage() {
     }).filter((p) => p.leagueMatchesPlayed > 0 || p.dayPointsTotal > 0 || p.finalsPlayed > 0);
 
     return entries;
-  }, [pastTournaments, currentTournament, dayTable, players, historyFormatFilter]);
+  }, [pastTournaments, currentTournament, dayTable, players, historyFormatFilter, rangeFilter]);
 
-  // Local fallback synthesis for Day Honors (Champion & Wooden Spoon)
+  // Local synthesis for Day Honors (Champion & Wooden Spoon) directly from Firestore completedDays
   const localDayHonorsFallback = useMemo<DayHonors>(() => {
     let allCompletedDays = completedDays && completedDays.length > 0 ? [...completedDays] : [];
     if (allCompletedDays.length === 0) {
@@ -926,14 +898,11 @@ export default function HistoryPage() {
     };
   }, [completedDays, dayTable.totals, dayTable.tournaments, dayTable.date, players]);
 
-  const displayedDayHonors =
-    dayHonors && (dayHonors.dayChampions?.length > 0 || dayHonors.dayLastPlaces?.length > 0)
-      ? dayHonors
-      : localDayHonorsFallback;
+  const displayedDayHonors = localDayHonorsFallback;
 
   const displayedHistory = useMemo(() => {
     const deletedIds = getDeletedTournamentIds();
-    const source = historyData && historyData.days.length > 0 ? historyData : localHistoryFallback;
+    const source = localHistoryFallback;
     if (!source || !source.days) return source;
 
     const filteredDays = source.days
@@ -972,7 +941,7 @@ export default function HistoryPage() {
       totalMatches: filteredMatches.length,
       totalPoints: filteredMatches.reduce((acc, m) => acc + m.pointsA + m.pointsB, 0),
     };
-  }, [historyData, localHistoryFallback, completedDays, historyFormatFilter]);
+  }, [localHistoryFallback, completedDays, historyFormatFilter]);
 
   // Compute Double Elimination Stage Stats & Tournament Placement directly from tournament matches
   const { stageStatsMap, placementMap } = useMemo(() => {
@@ -1178,8 +1147,7 @@ export default function HistoryPage() {
     return { stageStatsMap: sMap, placementMap: pMap };
   }, [displayedHistory, localHistoryFallback, currentTournament]);
 
-  const baseLeaderboard =
-    leaderboardData && leaderboardData.length > 0 ? leaderboardData : localLeaderboardFallback;
+  const baseLeaderboard = localLeaderboardFallback;
 
   const displayedLeaderboard = useMemo(() => {
     if (!baseLeaderboard) return [];
@@ -3882,11 +3850,11 @@ export default function HistoryPage() {
           </div>
 
           {/* Day by Day History */}
-          {dayHonors?.history && dayHonors.history.length > 0 && (
+          {displayedDayHonors?.history && displayedDayHonors.history.length > 0 && (
             <div className="bg-[#1E2128] border border-white/10 rounded-[26px] p-4 space-y-2 shadow-xs">
               <h4 className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">📅 Day Results Archive</h4>
               <div className="divide-y divide-white/5">
-                {dayHonors.history.map((h) => (
+                {displayedDayHonors.history.map((h) => (
                   <div key={h.id} className="py-2.5 flex items-center justify-between text-xs">
                     <span className="font-mono text-white/40 text-xs font-bold">{formatDateDDMMYY(h.date)}</span>
                     <div className="flex items-center gap-2">

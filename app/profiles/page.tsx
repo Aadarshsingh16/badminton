@@ -16,7 +16,8 @@ import { computeDayPoints } from "@/lib/ranking";
 import { AvatarSVG } from "@/components/avatars/AvatarSVG";
 import { AvatarType } from "@/lib/types";
 import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
-import { getBackendUrl } from "@/lib/backend";
+import { firestoreSync } from "@/lib/firestoreSync";
+import { isFirebaseConfigured } from "@/lib/firebase";
 import { formatDateDDMMYY } from "@/lib/dateUtils";
 
 interface PlayerLore {
@@ -280,38 +281,36 @@ export default function ProfilesPage() {
     setIsViewer(viewer);
     setViewerSlugState(getViewerSlug());
 
-    // Fetch cloud history, honors & leaderboard so spectators see real career stats across all players
-    const fetchCloudData = async () => {
+    // Primary data loader: Pulls tournaments and completed days directly from Firebase Firestore
+    const loadProfileDataFromFirestore = async () => {
       setCloudLoading(true);
       try {
-        const backendUrl = getBackendUrl();
-        const queryFormat = statsFormatFilter !== "all" ? `&format=${statsFormatFilter}` : "";
-        const lbFormat = statsFormatFilter !== "all" ? `?format=${statsFormatFilter}` : "";
-        const [resHist, resDays, resLb] = await Promise.all([
-          fetch(`${backendUrl}/history?range=all${queryFormat}`),
-          fetch(`${backendUrl}/day-results${statsFormatFilter !== "all" ? `?format=${statsFormatFilter}` : ""}`),
-          fetch(`${backendUrl}/leaderboard${lbFormat}`),
-        ]);
-        if (resHist.ok) {
-          const hData = await resHist.json();
-          setCloudHistory(hData);
-        }
-        if (resDays.ok) {
-          const dData = await resDays.json();
-          setCloudDayHonors(dData);
-        }
-        if (resLb.ok) {
-          const lbData = await resLb.json();
-          setCloudLeaderboard(lbData);
+        if (isFirebaseConfigured()) {
+          const fbData = await firestoreSync.loadAllFromFirestore();
+          if (fbData) {
+            const currentPast = useStore.getState().pastTournaments || [];
+            const existingIds = new Set(currentPast.map((t) => t.id));
+            const toAdd = fbData.tournaments.filter((t) => !existingIds.has(t.id));
+            if (toAdd.length > 0 || currentPast.length === 0) {
+              useStore.setState({
+                pastTournaments: [...currentPast, ...toAdd],
+              });
+            }
+            if (fbData.completedDays && fbData.completedDays.length > 0) {
+              useStore.setState({
+                completedDays: fbData.completedDays,
+              });
+            }
+          }
         }
       } catch (err) {
-        console.warn("Failed to fetch cloud profile stats:", err);
+        console.warn("Failed to load profile data from Firestore:", err);
       } finally {
         setCloudLoading(false);
       }
     };
 
-    fetchCloudData();
+    loadProfileDataFromFirestore();
   }, [currentTournament, statsFormatFilter]);
 
   // Auto-recovery if tournaments were wiped

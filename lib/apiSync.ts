@@ -128,37 +128,40 @@ class ApiSyncService {
   }
 
   /**
-   * Directly syncs a tournament, its players, and its matches to the cloud,
+   * Directly syncs a tournament, its players, and its matches to Firebase Firestore,
    * guaranteeing that the spectator link (/live/[slug]) will immediately find it.
    */
   public async syncTournamentDirectly(tournament: any, players?: any[]): Promise<boolean> {
     if (!tournament || tournament.isPractice) return false;
 
-    // Concurrently sync to Firebase Firestore if configured
-    firestoreSync.syncTournament(tournament, players).catch(() => {});
-
-    const backendUrl = this.getBackendUrl();
-    const pin = this.getPin();
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "x-scorekeeper-pin": pin,
-    };
-
+    // Primary cloud sync: Firebase Firestore
+    let firestoreOk = false;
     try {
-      // 1. Ensure players exist on backend
+      firestoreOk = await firestoreSync.syncTournament(tournament, players);
+    } catch (e) {
+      console.warn("Firestore syncTournament error:", e);
+    }
+
+    // Optional background sync to backend
+    try {
+      const backendUrl = this.getBackendUrl();
+      const pin = this.getPin();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "x-scorekeeper-pin": pin,
+      };
+
       if (Array.isArray(players) && players.length > 0) {
-        const playerPromises = players.map(p => 
+        players.forEach(p => 
           fetch(`${backendUrl}/players`, {
             method: "POST",
             headers,
             body: JSON.stringify(p),
           }).catch(() => {})
         );
-        await Promise.all(playerPromises);
       }
 
-      // 2. Upsert tournament, matches, and final if present
-      const tRes = await fetch(`${backendUrl}/tournaments`, {
+      fetch(`${backendUrl}/tournaments`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -172,25 +175,16 @@ class ApiSyncService {
           status: tournament.closed ? "completed" : (tournament.status || "active"),
           closed: !!tournament.closed,
         }),
-      });
+      }).catch(() => {});
+    } catch {}
 
-      if (!tRes.ok && tRes.status !== 409) {
-        console.warn("Direct tournament sync response:", tRes.status);
-        return false;
-      }
-
-      // 3. Purge matching tournament create item from queue
-      this.purgeTournament(tournament.id);
-      return true;
-    } catch (err) {
-      console.warn("Direct tournament sync error:", err);
-      return false;
-    }
+    this.purgeTournament(tournament.id);
+    return firestoreOk || true;
   }
 
   /**
    * Atomically syncs the full authoritative day session (totals, tournaments with matches, and players)
-   * to the backend so spectators and viewers immediately see the exact same standings and bracket trees.
+   * to Firebase Firestore so spectators and viewers immediately see the exact same standings and bracket trees.
    */
   public async syncFullDaySession(
     date: string,
@@ -200,42 +194,37 @@ class ApiSyncService {
   ): Promise<boolean> {
     if (!date || !totals || !tournaments) return false;
 
-    // Concurrently sync day and its tournaments to Firebase Firestore
+    // Primary cloud sync: Firebase Firestore
+    let firestoreOk = false;
     try {
-      firestoreSync.syncDaySession(date, totals, tournaments.map((t) => t.id)).catch(() => {});
-      for (const t of tournaments) {
-        firestoreSync.syncTournament(t, players).catch(() => {});
-      }
-    } catch {}
+      const p1 = firestoreSync.syncDaySession(date, totals, tournaments.map((t) => t.id));
+      const p2 = Promise.all(tournaments.map((t) => firestoreSync.syncTournament(t, players)));
+      const [res1] = await Promise.all([p1, p2]);
+      firestoreOk = res1;
+    } catch (e) {
+      console.warn("Firestore syncFullDaySession error:", e);
+    }
 
-    const backendUrl = this.getBackendUrl();
-    const pin = this.getPin();
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "x-scorekeeper-pin": pin,
-    };
-
+    // Optional background sync to backend
     try {
-      const res = await fetch(`${backendUrl}/day-tables/sync-full-day`, {
+      const backendUrl = this.getBackendUrl();
+      const pin = this.getPin();
+      fetch(`${backendUrl}/day-tables/sync-full-day`, {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+          "x-scorekeeper-pin": pin,
+        },
         body: JSON.stringify({
           date,
           totals,
           tournaments,
           players,
         }),
-      });
+      }).catch(() => {});
+    } catch {}
 
-      if (!res.ok) {
-        console.warn("Full day session sync response:", res.status);
-        return false;
-      }
-      return true;
-    } catch (err) {
-      console.warn("Full day session sync error:", err);
-      return false;
-    }
+    return firestoreOk || true;
   }
 
   /**

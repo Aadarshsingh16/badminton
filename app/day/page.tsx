@@ -17,7 +17,6 @@ import { firestoreSync } from "@/lib/firestoreSync";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
 import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
-import { getBackendUrl } from "@/lib/backend";
 import { formatDateDDMMYY } from "@/lib/dateUtils";
 
 const RANK_LABELS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣"];
@@ -60,7 +59,7 @@ export default function DayPage() {
     try {
       const dateParam = dayTable.date || new Date().toISOString().split("T")[0];
 
-      // 1. Try Firebase Firestore first if configured
+      // Primary source: Firebase Firestore
       if (isFirebaseConfigured()) {
         const firestoreData = await firestoreSync.getDaySession(dateParam);
         if (firestoreData && (firestoreData.tournaments.length > 0 || Object.keys(firestoreData.totals).length > 0)) {
@@ -72,18 +71,6 @@ export default function DayPage() {
           setLoading(false);
           return;
         }
-      }
-
-      // 2. Fallback to Render backend API
-      const backendUrl = getBackendUrl();
-      const res = await fetch(`${backendUrl}/day-tables/${dateParam}`);
-      if (res.ok) {
-        const json = await res.json();
-        setCloudDayData({
-          totals: json.totals || {},
-          tournaments: json.tournaments || [],
-          dayStandings: json.dayStandings || [],
-        });
       }
     } catch (err) {
       console.warn("Failed to fetch cloud day data:", err);
@@ -408,11 +395,12 @@ export default function DayPage() {
     }
 
     const effectiveTotals = Object.fromEntries(sortedPlayers.map(p => [p.id, p.pts]));
+    const topPlayerId = sortedPlayers[0]?.id;
+    const spoonPlayerId = sortedPlayers.length > 1 ? sortedPlayers[sortedPlayers.length - 1]?.id : undefined;
 
-    // Close day table on backend and crown champions
-    apiSync.enqueue("/day-tables/close", "POST", {
-      date: dayTable.date,
-      totals: effectiveTotals,
+    // Close day table directly in Firebase Firestore and crown champions
+    firestoreSync.closeDaySession(dayTable.date, effectiveTotals, topPlayerId, spoonPlayerId).catch((err) => {
+      console.warn("Firestore closeDaySession error:", err);
     });
 
     setShowConfetti(true);
@@ -438,24 +426,18 @@ export default function DayPage() {
 
     setShowConfirmReset(false);
 
-    // 3. Directly call backend to delete the day table & day results
+    // 3. Delete directly from Firebase Firestore
     try {
-      const backendUrl = getBackendUrl();
-      const headers = {
-        "Content-Type": "application/json",
-        "x-scorekeeper-pin": apiSync.getPin(),
-      };
-      await Promise.all([
-        fetch(`${backendUrl}/day-tables/${targetDate}`, { method: "DELETE", headers }),
-        fetch(`${backendUrl}/day-results/${targetDate}`, { method: "DELETE", headers }),
-      ]);
+      await firestoreSync.deleteDaySession(targetDate);
     } catch (e) {
-      console.warn("Direct day delete failed, queued in background:", e);
+      console.warn("Direct day delete failed:", e);
     } finally {
       setIsDeleting(false);
     }
 
     // 4. Re-fetch cloud day
+    fetchCloudDay();
+  };
     fetchCloudDay();
   };
 
