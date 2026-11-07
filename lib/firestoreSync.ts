@@ -7,10 +7,24 @@ import {
   getDocs,
   collection,
   onSnapshot,
+  deleteDoc,
   Unsubscribe,
 } from "firebase/firestore";
 import { Tournament, Player, CompletedDaySummary } from "./types";
 import { apiSync } from "./apiSync";
+
+function cleanForFirestore(obj: any): any {
+  if (obj === undefined) return null;
+  if (obj === null || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) return obj.map(cleanForFirestore);
+  const res: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) {
+      res[k] = cleanForFirestore(v);
+    }
+  }
+  return res;
+}
 
 export interface FirestoreDaySession {
   date: string;
@@ -79,7 +93,7 @@ class FirestoreSyncService {
       const dayRef = doc(db, "days", date);
       const payload: FirestoreDaySession = {
         date,
-        totals,
+        totals: cleanForFirestore(totals),
         tournamentIds,
         closed,
         updatedAt: Date.now(),
@@ -88,6 +102,67 @@ class FirestoreSyncService {
       return true;
     } catch (err) {
       console.warn("Firestore syncDaySession error:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Closes a day session directly in Firestore, crowning champions and wooden spoons
+   */
+  public async closeDaySession(
+    date: string,
+    totals: Record<string, number>,
+    topPlayerId?: string,
+    spoonPlayerId?: string
+  ): Promise<boolean> {
+    if (!isFirebaseConfigured() || !db || !date) return false;
+    try {
+      const dayRef = doc(db, "days", date);
+      const cleanTotals = cleanForFirestore(totals);
+      await setDoc(
+        dayRef,
+        {
+          date,
+          totals: cleanTotals,
+          closed: true,
+          topPlayerId: topPlayerId || null,
+          spoonPlayerId: spoonPlayerId || null,
+          closedAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+        { merge: true }
+      );
+      return true;
+    } catch (err) {
+      console.warn("Firestore closeDaySession error:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Deletes a day session from Firestore
+   */
+  public async deleteDaySession(date: string): Promise<boolean> {
+    if (!isFirebaseConfigured() || !db || !date) return false;
+    try {
+      await deleteDoc(doc(db, "days", date));
+      return true;
+    } catch (err) {
+      console.warn("Firestore deleteDaySession error:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Deletes a tournament from Firestore
+   */
+  public async deleteTournament(id: string): Promise<boolean> {
+    if (!isFirebaseConfigured() || !db || !id) return false;
+    try {
+      await deleteDoc(doc(db, "tournaments", id));
+      return true;
+    } catch (err) {
+      console.warn("Firestore deleteTournament error:", err);
       return false;
     }
   }
