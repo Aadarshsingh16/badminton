@@ -81,7 +81,22 @@ export default function DayPage() {
 
   useEffect(() => {
     fetchCloudDay();
-  }, [currentTournament, fetchCloudDay]);
+
+    const dateParam = dayTable.date || new Date().toISOString().split("T")[0];
+    const unsub = firestoreSync.subscribeToDay(dateParam, (data) => {
+      if (data) {
+        setCloudDayData((prev) => ({
+          totals: data.totals || {},
+          tournaments: data.tournaments || prev?.tournaments || [],
+          dayStandings: [],
+        }));
+      }
+    });
+
+    return () => {
+      unsub?.();
+    };
+  }, [currentTournament, fetchCloudDay, dayTable.date]);
 
   const getPlayer = (id: string): Player => {
     const targetId = normalizePlayerId(id);
@@ -176,7 +191,23 @@ export default function DayPage() {
       return sB.pointDiff - sA.pointDiff;
     };
 
-    // 1. Authoritative source for scorekeeper: if local effectiveTournaments exist,
+    const isClosed = dayTable.closed || (cloudDayData as any)?.closed;
+    const backendTotals = cloudDayData?.totals || {};
+
+    // 1. If day is finalized/closed and cloud totals exist (including manual edits in Firebase console),
+    // treat cloud totals as authoritative so admin edits in Firebase are immediately respected.
+    if (isClosed && Object.keys(backendTotals).length > 0) {
+      const merged: Record<string, number> = {};
+      for (const [id, pts] of Object.entries(backendTotals)) {
+        const targetId = normalizePlayerId(id);
+        merged[targetId] = (merged[targetId] || 0) + (pts as number);
+      }
+      return Object.entries(merged)
+        .sort(([idA, a], [idB, b]) => tiebreakCompare(idA, a as number, idB, b as number))
+        .map(([id, pts], idx) => ({ id, pts: pts as number, rank: idx + 1 }));
+    }
+
+    // 2. Authoritative source for scorekeeper during active play: if local effectiveTournaments exist,
     // compute totals directly from them so the Day Table strictly matches the Tournaments tab.
     if (effectiveTournaments.length > 0) {
       const computedTotals: { [playerId: string]: number } = {};
@@ -194,8 +225,7 @@ export default function DayPage() {
         .map(([id, pts], idx) => ({ id, pts, rank: idx + 1 }));
     }
 
-    // 2. Viewer / Remote fallback: If no local tournaments on this device (e.g. spectator view), use backend cloud totals
-    const backendTotals = cloudDayData?.totals || {};
+    // 3. Viewer / Remote fallback: If no local tournaments on this device (e.g. spectator view), use backend cloud totals
     if (Object.keys(backendTotals).length > 0) {
       const merged: Record<string, number> = {};
       for (const [id, pts] of Object.entries(backendTotals)) {

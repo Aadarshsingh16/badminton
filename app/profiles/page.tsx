@@ -311,6 +311,17 @@ export default function ProfilesPage() {
     };
 
     loadProfileDataFromFirestore();
+
+    // Real-time listener: immediately sync any manual edits or additions in Firestore days table
+    const unsub = firestoreSync.subscribeToAllDays((cloudDays) => {
+      if (cloudDays && cloudDays.length > 0) {
+        useStore.setState({ completedDays: cloudDays });
+      }
+    });
+
+    return () => {
+      unsub?.();
+    };
   }, [currentTournament, statsFormatFilter]);
 
   // Auto-recovery if tournaments were wiped

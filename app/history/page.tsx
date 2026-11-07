@@ -332,6 +332,13 @@ export default function HistoryPage() {
   useEffect(() => {
     loadFromFirestore();
 
+    // Real-time listener: immediately sync any manual edits or additions in Firestore days table
+    const unsub = firestoreSync.subscribeToAllDays((cloudDays) => {
+      if (cloudDays && cloudDays.length > 0) {
+        useStore.setState({ completedDays: cloudDays });
+      }
+    });
+
     if (pastTournaments.length === 0) {
       const recovered = recoverTournamentsFromSyncQueue();
       if (recovered.length > 0) {
@@ -344,7 +351,11 @@ export default function HistoryPage() {
         useStore.setState({ completedDays: recoveredDays });
       }
     }
-  }, [loadFromFirestore, pastTournaments.length, completedDays?.length]);
+
+    return () => {
+      unsub?.();
+    };
+  }, [loadFromFirestore]);
 
   // Local fallback synthesis if backend returned no records or offline
   const localHistoryFallback = useMemo<HistoryData>(() => {

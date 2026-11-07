@@ -209,6 +209,44 @@ class FirestoreSyncService {
   }
 
   /**
+   * Real-time listener for all day sessions in the days collection.
+   * Whenever points are edited in the Firebase console or a day is crowned/closed,
+   * all connected views update their completedDays standings immediately.
+   */
+  public subscribeToAllDays(onUpdate: (days: CompletedDaySummary[]) => void): Unsubscribe | null {
+    if (!isFirebaseConfigured() || !db) return null;
+
+    try {
+      return onSnapshot(collection(db, "days"), (snap) => {
+        const completedDays: CompletedDaySummary[] = [];
+        snap.forEach((d) => {
+          const data = d.data();
+          if (data.closed || (data.totals && Object.keys(data.totals).length > 0)) {
+            let topPlayerId = data.topPlayerId || undefined;
+            let spoonPlayerId = data.spoonPlayerId || undefined;
+            if ((!topPlayerId || !spoonPlayerId) && data.totals) {
+              const sorted = Object.entries(data.totals).sort(([, a]: any, [, b]: any) => (b as number) - (a as number));
+              if (!topPlayerId && sorted.length > 0) topPlayerId = sorted[0][0];
+              if (!spoonPlayerId && sorted.length > 1) spoonPlayerId = sorted[sorted.length - 1][0];
+            }
+            completedDays.push({
+              date: data.date || d.id,
+              totals: data.totals || {},
+              topPlayerId,
+              spoonPlayerId,
+              tournamentIds: data.tournamentIds || [],
+            });
+          }
+        });
+        onUpdate(completedDays);
+      });
+    } catch (err) {
+      console.warn("Firestore subscribeToAllDays error:", err);
+      return null;
+    }
+  }
+
+  /**
    * Fetch full day session and its tournaments from Firestore
    */
   public async getDaySession(date: string): Promise<{ totals: Record<string, number>; tournaments: any[]; dayStandings: any[] } | null> {
