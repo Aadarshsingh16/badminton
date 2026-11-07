@@ -20,7 +20,6 @@ import { Player, Match, AvatarType, TournamentConfig } from "@/lib/types";
 import { generateRoundRobin } from "@/lib/fixtures";
 import { apiSync } from "@/lib/apiSync";
 import { isViewerMode, getViewerSlug, clearViewerMode } from "@/lib/viewerMode";
-import { getBackendUrl } from "@/lib/backend";
 import { DoubleEliminationBracket } from "@/components/DoubleEliminationBracket";
 
 type FixtureTab = "fixtures" | "table";
@@ -104,17 +103,6 @@ export default function PlayPage() {
       setShowPinModal(true);
     }
   };
-
-  // Harmless frontend keep-alive backup ping while Play tab is mounted
-  React.useEffect(() => {
-    const backendUrl = getBackendUrl();
-    const ping = () => {
-      fetch(`${backendUrl}/health`).catch(() => {});
-    };
-    ping();
-    const interval = setInterval(ping, 4 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Proactively sync active tournament to cloud so spectator stream is guaranteed to exist
   React.useEffect(() => {

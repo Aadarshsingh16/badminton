@@ -438,8 +438,6 @@ export default function DayPage() {
     // 4. Re-fetch cloud day
     fetchCloudDay();
   };
-    fetchCloudDay();
-  };
 
   /** For a given player, get their position in each tournament */
   const getPlayerTournamentHistory = (playerId: string) => {

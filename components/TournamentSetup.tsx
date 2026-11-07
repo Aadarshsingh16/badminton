@@ -4,7 +4,6 @@ import { TournamentConfig, DEFAULT_CONFIG, TournamentFormat, Player } from "@/li
 import { useStore, normalizePlayerId } from "@/lib/store";
 import { AvatarSVG } from "./avatars/AvatarSVG";
 import { computePlayerByeCounts } from "@/lib/ranking";
-import { getBackendUrl } from "@/lib/backend";
 
 const HISTORICAL_TOTALS: { [date: string]: { [pid: string]: number } } = {
   "2026-10-10": { harsh: 11, sajal: 8, adarsh: 7, akshat: 11, gautam: 11, udbhaw: 2, anirudh: 6 },
@@ -80,55 +79,20 @@ export function TournamentSetup({
 
   const isEligibleForDE = playerCount === 7 || playerCount === 8;
 
-  const [cloudCareerPoints, setCloudCareerPoints] = useState<{ [pid: string]: number } | null>(null);
-
-  // Fetch true canonical career points from cloud leaderboard on mount
-  useEffect(() => {
-    let isMounted = true;
-    const fetchLeaderboard = async () => {
-      try {
-        const backendUrl = getBackendUrl();
-        const res = await fetch(`${backendUrl}/leaderboard`);
-        if (res.ok) {
-          const rows = await res.json();
-          if (Array.isArray(rows) && rows.length > 0) {
-            const map: { [pid: string]: number } = {};
-            for (const r of rows) {
-              const pid = normalizePlayerId(r.playerId || r.id);
-              map[pid] = r.dayPointsTotal ?? 0;
-            }
-            if (isMounted) setCloudCareerPoints(map);
-          }
-        }
-      } catch (err) {
-        // Fallback to local
-      }
-    };
-    fetchLeaderboard();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   // Compute overall points for finding wooden spoon / lowest on overall leaderboard
   const { totalPointsMap, lowestPlayerId } = useMemo(() => {
     const ptsMap: { [pid: string]: number } = {};
     for (const pid of selectedPlayerIds) ptsMap[pid] = 0;
 
-    if (cloudCareerPoints && Object.keys(cloudCareerPoints).length > 0) {
-      for (const pid of selectedPlayerIds) {
-        ptsMap[pid] = cloudCareerPoints[pid] ?? 0;
-      }
-    } else {
-      // Local synthesis across all completed days & historical records
-      const visitedDates = new Set<string>();
+    // Local synthesis across all completed days & historical records
+    const visitedDates = new Set<string>();
 
-      for (const [dt, totals] of Object.entries(HISTORICAL_TOTALS)) {
-        visitedDates.add(dt);
-        for (const [pid, pts] of Object.entries(totals)) {
-          if (ptsMap[pid] !== undefined) ptsMap[pid] += pts || 0;
-        }
+    for (const [dt, totals] of Object.entries(HISTORICAL_TOTALS)) {
+      visitedDates.add(dt);
+      for (const [pid, pts] of Object.entries(totals)) {
+        if (ptsMap[pid] !== undefined) ptsMap[pid] += pts || 0;
       }
+    }
 
       for (const cd of completedDays || []) {
         if (!visitedDates.has(cd.date) && cd.totals) {
@@ -144,7 +108,6 @@ export function TournamentSetup({
           if (ptsMap[pid] !== undefined) ptsMap[pid] += pts || 0;
         }
       }
-    }
 
     let lowestId = selectedPlayerIds[0];
     let minPts = ptsMap[lowestId] ?? 0;
@@ -155,7 +118,7 @@ export function TournamentSetup({
       }
     }
     return { totalPointsMap: ptsMap, lowestPlayerId: lowestId };
-  }, [selectedPlayerIds, completedDays, dayTable, cloudCareerPoints]);
+  }, [selectedPlayerIds, completedDays, dayTable]);
 
   // Compute how many upper byes each player has received across past tournaments
   const byeCounts = useMemo(() => {
