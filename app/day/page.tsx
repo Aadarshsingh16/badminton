@@ -365,9 +365,7 @@ export default function DayPage() {
       const cloudTourneysCount = cloudDayData?.tournaments?.length ?? 0;
       const isMismatch =
         !cloudDayData ||
-        cloudTourneysCount < effectiveTournaments.length ||
-        Object.keys(computedTotals).some((id) => (backendTotals[id] ?? 0) !== computedTotals[id]) ||
-        Object.keys(computedTotals).length !== Object.keys(backendTotals).length;
+        cloudTourneysCount < effectiveTournaments.length;
 
       if (isMismatch && Object.keys(computedTotals).length > 0) {
         const tourneyDate = effectiveTournaments[0]?.date ||

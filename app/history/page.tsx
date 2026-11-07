@@ -564,20 +564,65 @@ export default function HistoryPage() {
     const miniLeaderboard = players
       .map((p) => {
         let points = 0;
-        allTourneys.forEach((t) => {
-          const ptsMap =
-            t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
-              ? t.dayPointsAwarded
-              : computeDayPoints(t);
-          if (ptsMap) {
-            if (ptsMap[p.id] !== undefined) points += ptsMap[p.id];
-            if (p.id === "sajal") {
-              for (const alias of SAJAL_ALIASES) {
-                if (ptsMap[alias] !== undefined) points += ptsMap[alias];
+        if (historyFormatFilter === "all" && completedDays && completedDays.length > 0) {
+          const countedDates = new Set<string>();
+          const now = new Date();
+          completedDays.forEach((cd) => {
+            if (rangeFilter !== "all") {
+              const d = new Date(cd.date);
+              if (rangeFilter === "day") {
+                const todayStr = now.toISOString().split("T")[0];
+                if (cd.date !== todayStr && cd.date !== dayTable.date) return;
+              } else if (rangeFilter === "week") {
+                const diffDays = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
+                if (diffDays > 7) return;
+              } else if (rangeFilter === "month") {
+                const diffDays = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
+                if (diffDays > 30) return;
               }
             }
-          }
-        });
+            countedDates.add(cd.date);
+            let pts = cd.totals?.[p.id] ?? 0;
+            if (p.id === "sajal") {
+              for (const alias of SAJAL_ALIASES) {
+                if (cd.totals?.[alias] !== undefined) pts += cd.totals[alias];
+              }
+            }
+            points += pts;
+          });
+
+          allTourneys.forEach((t) => {
+            const tDate = t.date || (t.createdAt ? new Date(t.createdAt).toISOString().split("T")[0] : null);
+            if (tDate && countedDates.has(tDate)) return;
+            const ptsMap =
+              t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
+                ? t.dayPointsAwarded
+                : computeDayPoints(t);
+            if (ptsMap) {
+              if (ptsMap[p.id] !== undefined) points += ptsMap[p.id];
+              if (p.id === "sajal") {
+                for (const alias of SAJAL_ALIASES) {
+                  if (ptsMap[alias] !== undefined) points += ptsMap[alias];
+                }
+              }
+            }
+          });
+        } else {
+          allTourneys.forEach((t) => {
+            const ptsMap =
+              t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
+                ? t.dayPointsAwarded
+                : computeDayPoints(t);
+            if (ptsMap) {
+              if (ptsMap[p.id] !== undefined) points += ptsMap[p.id];
+              if (p.id === "sajal") {
+                for (const alias of SAJAL_ALIASES) {
+                  if (ptsMap[alias] !== undefined) points += ptsMap[alias];
+                }
+              }
+            }
+          });
+        }
 
         const pMatches = allMatches.filter((m) => m.playerA === p.id || m.playerB === p.id);
         const wins = pMatches.filter(
@@ -657,20 +702,68 @@ export default function HistoryPage() {
       let lrWins = 0, lrPlayed = 0;
       let qrrWins = 0, qrrPlayed = 0;
 
-      allTourneys.forEach((t) => {
-        // Day points logic: check t.dayPointsAwarded or compute fallback
-        const ptsMap = t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
-          ? t.dayPointsAwarded
-          : computeDayPoints(t);
-
-        if (ptsMap) {
-          if (ptsMap[p.id] !== undefined) {
-            dayPointsTotal += ptsMap[p.id];
+      if (historyFormatFilter === "all" && completedDays && completedDays.length > 0) {
+        const countedDates = new Set<string>();
+        const now = new Date();
+        completedDays.forEach((cd) => {
+          if (rangeFilter !== "all") {
+            const d = new Date(cd.date);
+            if (rangeFilter === "day") {
+              const todayStr = now.toISOString().split("T")[0];
+              if (cd.date !== todayStr && cd.date !== dayTable.date) return;
+            } else if (rangeFilter === "week") {
+              const diffDays = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
+              if (diffDays > 7) return;
+            } else if (rangeFilter === "month") {
+              const diffDays = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
+              if (diffDays > 30) return;
+            }
           }
+          countedDates.add(cd.date);
+          let pts = cd.totals?.[p.id] ?? 0;
           if (p.id === "sajal") {
             for (const alias of SAJAL_ALIASES) {
-              if (ptsMap[alias] !== undefined) {
-                dayPointsTotal += ptsMap[alias];
+              if (cd.totals?.[alias] !== undefined) pts += cd.totals[alias];
+            }
+          }
+          dayPointsTotal += pts;
+        });
+
+        // Add any tournaments for dates not in completedDays
+        allTourneys.forEach((t) => {
+          const tDate = t.date || (t.createdAt ? new Date(t.createdAt).toISOString().split("T")[0] : null);
+          if (tDate && countedDates.has(tDate)) return;
+
+          const ptsMap = t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
+            ? t.dayPointsAwarded
+            : computeDayPoints(t);
+          if (ptsMap) {
+            if (ptsMap[p.id] !== undefined) dayPointsTotal += ptsMap[p.id];
+            if (p.id === "sajal") {
+              for (const alias of SAJAL_ALIASES) {
+                if (ptsMap[alias] !== undefined) dayPointsTotal += ptsMap[alias];
+              }
+            }
+          }
+        });
+      }
+
+      allTourneys.forEach((t) => {
+        // Day points logic for format-filtered views:
+        if (historyFormatFilter !== "all") {
+          const ptsMap = t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
+            ? t.dayPointsAwarded
+            : computeDayPoints(t);
+
+          if (ptsMap) {
+            if (ptsMap[p.id] !== undefined) {
+              dayPointsTotal += ptsMap[p.id];
+            }
+            if (p.id === "sajal") {
+              for (const alias of SAJAL_ALIASES) {
+                if (ptsMap[alias] !== undefined) {
+                  dayPointsTotal += ptsMap[alias];
+                }
               }
             }
           }
@@ -941,7 +1034,7 @@ export default function HistoryPage() {
 
         let dayTotals: Record<string, number> | null = null;
         if (historyFormatFilter === "all") {
-          dayTotals = day.totals ?? cd?.totals ?? KNOWN_DAY_TOTALS[day.date] ?? null;
+          dayTotals = cd?.totals ?? day.totals ?? KNOWN_DAY_TOTALS[day.date] ?? null;
         } else {
           // Dynamically compute points only from the format-filtered tournaments
           const fTotals: Record<string, number> = {};

@@ -254,7 +254,7 @@ class FirestoreSyncService {
       const completedDays: CompletedDaySummary[] = [];
       daysSnap.forEach((d) => {
         const data = d.data();
-        if (data.closed) {
+        if (data.closed || (data.totals && Object.keys(data.totals).length > 0)) {
           let topPlayerId = data.topPlayerId || undefined;
           let spoonPlayerId = data.spoonPlayerId || undefined;
           if ((!topPlayerId || !spoonPlayerId) && data.totals) {

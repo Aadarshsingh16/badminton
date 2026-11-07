@@ -850,10 +850,51 @@ export default function ProfilesPage() {
       }
     });
 
-    // Assign totalPoints = dayPointsTotal (Official Placement Metric)
-    FIXED_PLAYERS.forEach((p) => {
-      stats[p.id].totalPoints = stats[p.id].dayPointsTotal;
-    });
+    // In Overall mode, reconcile dayPointsTotal with completedDays from Firestore days collection
+    if (statsFormatFilter === "all" && completedDays && completedDays.length > 0) {
+      FIXED_PLAYERS.forEach((p) => {
+        let officialPts = 0;
+        const countedDates = new Set<string>();
+        completedDays.forEach((cd) => {
+          countedDates.add(cd.date);
+          let pts = cd.totals?.[p.id] ?? 0;
+          if (p.id === "sajal") {
+            for (const alias of SAJAL_ALIASES) {
+              if (cd.totals?.[alias] !== undefined) pts += cd.totals[alias];
+            }
+          }
+          officialPts += pts;
+        });
+
+        // Add any tournament points for dates NOT present in completedDays
+        filteredTourneys.forEach((t) => {
+          const tDate = t.date || (t.createdAt ? new Date(t.createdAt).toISOString().split("T")[0] : null);
+          if (tDate && countedDates.has(tDate)) return;
+
+          const tPtsMap =
+            t.dayPointsAwarded && Object.keys(t.dayPointsAwarded).length > 0
+              ? t.dayPointsAwarded
+              : computeDayPoints(t);
+          if (tPtsMap) {
+            let pts = tPtsMap[p.id] ?? 0;
+            if (p.id === "sajal") {
+              for (const alias of SAJAL_ALIASES) {
+                if (tPtsMap[alias] !== undefined) pts += tPtsMap[alias];
+              }
+            }
+            officialPts += pts;
+          }
+        });
+
+        stats[p.id].dayPointsTotal = officialPts;
+        stats[p.id].totalPoints = officialPts;
+      });
+    } else {
+      // Assign totalPoints = dayPointsTotal (Official Placement Metric)
+      FIXED_PLAYERS.forEach((p) => {
+        stats[p.id].totalPoints = stats[p.id].dayPointsTotal;
+      });
+    }
 
     // Cloud Leaderboard Reconcile & Fallback (Applied in Overall mode)
     if (statsFormatFilter === "all" && cloudLeaderboard && cloudLeaderboard.length > 0) {
