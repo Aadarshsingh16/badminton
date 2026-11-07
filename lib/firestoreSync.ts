@@ -222,13 +222,16 @@ class FirestoreSyncService {
         snap.forEach((d) => {
           const data = d.data();
           if (data.closed || (data.totals && Object.keys(data.totals).length > 0)) {
-            let topPlayerId = data.topPlayerId || undefined;
-            let spoonPlayerId = data.spoonPlayerId || undefined;
-            if ((!topPlayerId || !spoonPlayerId) && data.totals) {
-              const sorted = Object.entries(data.totals).sort(([, a]: any, [, b]: any) => (b as number) - (a as number));
-              if (!topPlayerId && sorted.length > 0) topPlayerId = sorted[0][0];
-              if (!spoonPlayerId && sorted.length > 1) spoonPlayerId = sorted[sorted.length - 1][0];
+            let topPlayerId: string | undefined = undefined;
+            let spoonPlayerId: string | undefined = undefined;
+            if (data.totals && Object.keys(data.totals).length > 0) {
+              const sorted = Object.entries(data.totals).sort(([, a]: any, [, b]: any) => (Number(b) || 0) - (Number(a) || 0));
+              if (sorted.length > 0 && Number(sorted[0][1]) > 0) topPlayerId = sorted[0][0];
+              if (sorted.length > 1) spoonPlayerId = sorted[sorted.length - 1][0];
             }
+            if (!topPlayerId && data.topPlayerId) topPlayerId = data.topPlayerId;
+            if (!spoonPlayerId && data.spoonPlayerId) spoonPlayerId = data.spoonPlayerId;
+
             completedDays.push({
               date: data.date || d.id,
               totals: data.totals || {},
@@ -293,13 +296,16 @@ class FirestoreSyncService {
       daysSnap.forEach((d) => {
         const data = d.data();
         if (data.closed || (data.totals && Object.keys(data.totals).length > 0)) {
-          let topPlayerId = data.topPlayerId || undefined;
-          let spoonPlayerId = data.spoonPlayerId || undefined;
-          if ((!topPlayerId || !spoonPlayerId) && data.totals) {
-            const sorted = Object.entries(data.totals).sort(([, a]: any, [, b]: any) => (b as number) - (a as number));
-            if (!topPlayerId && sorted.length > 0) topPlayerId = sorted[0][0];
-            if (!spoonPlayerId && sorted.length > 1) spoonPlayerId = sorted[sorted.length - 1][0];
+          let topPlayerId: string | undefined = undefined;
+          let spoonPlayerId: string | undefined = undefined;
+          if (data.totals && Object.keys(data.totals).length > 0) {
+            const sorted = Object.entries(data.totals).sort(([, a]: any, [, b]: any) => (Number(b) || 0) - (Number(a) || 0));
+            if (sorted.length > 0 && Number(sorted[0][1]) > 0) topPlayerId = sorted[0][0];
+            if (sorted.length > 1) spoonPlayerId = sorted[sorted.length - 1][0];
           }
+          if (!topPlayerId && data.topPlayerId) topPlayerId = data.topPlayerId;
+          if (!spoonPlayerId && data.spoonPlayerId) spoonPlayerId = data.spoonPlayerId;
+
           completedDays.push({
             date: data.date || d.id,
             totals: data.totals || {},

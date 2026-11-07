@@ -936,8 +936,16 @@ export default function HistoryPage() {
     }
 
     allCompletedDays.forEach((cd, idx) => {
-      let topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
-      let spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
+      let topId: string | undefined = undefined;
+      let spoonId: string | undefined = undefined;
+
+      if (cd.totals && Object.keys(cd.totals).length > 0) {
+        const sorted = Object.entries(cd.totals).sort(([, a], [, b]) => Number(b) - Number(a));
+        if (sorted.length > 0 && Number(sorted[0][1]) > 0) topId = normalizePlayerId(sorted[0][0]);
+        if (sorted.length > 1) spoonId = normalizePlayerId(sorted[sorted.length - 1][0]);
+      }
+      if (!topId && cd.topPlayerId) topId = normalizePlayerId(cd.topPlayerId);
+      if (!spoonId && cd.spoonPlayerId) spoonId = normalizePlayerId(cd.spoonPlayerId);
 
       // Ensure historical known day champions match official database records
       if (cd.date === "2026-10-10") {
@@ -946,10 +954,6 @@ export default function HistoryPage() {
       } else if (cd.date === "2026-10-11") {
         topId = "akshat";
         spoonId = "sajal";
-      } else if ((!topId || !spoonId) && cd.totals) {
-        const sorted = Object.entries(cd.totals).sort(([, a], [, b]) => b - a);
-        if (!topId && sorted.length > 0 && sorted[0][1] > 0) topId = normalizePlayerId(sorted[0][0]);
-        if (!spoonId && sorted.length > 1) spoonId = normalizePlayerId(sorted[sorted.length - 1][0]);
       }
 
       const topP = players.find((p) => p.id === topId) || FIXED_PLAYERS.find((p) => p.id === topId);
@@ -2051,30 +2055,28 @@ export default function HistoryPage() {
         }
       }
     } else {
-      if (dayGroup.totals && Object.keys(dayGroup.totals).length > 0) {
+      const cd = (completedDays || []).find((d) => d.date === dayGroup.date);
+      if (cd?.totals && Object.keys(cd.totals).length > 0) {
+        rawTotals = { ...cd.totals };
+      } else if (dayGroup.totals && Object.keys(dayGroup.totals).length > 0) {
         rawTotals = { ...dayGroup.totals };
+      } else if (KNOWN_DAY_TOTALS[dayGroup.date]) {
+        rawTotals = { ...KNOWN_DAY_TOTALS[dayGroup.date] };
       } else {
-        const cd = (completedDays || []).find((d) => d.date === dayGroup.date);
-        if (cd?.totals && Object.keys(cd.totals).length > 0) {
-          rawTotals = { ...cd.totals };
-        } else if (KNOWN_DAY_TOTALS[dayGroup.date]) {
-          rawTotals = { ...KNOWN_DAY_TOTALS[dayGroup.date] };
-        } else {
-          dayGroup.tournaments.forEach((gt) => {
-            const tObj = allTourneys.find((t) => t.id === gt.tournamentId);
-            if (tObj) {
-              const ptsMap =
-                tObj.dayPointsAwarded && Object.keys(tObj.dayPointsAwarded).length > 0
-                  ? tObj.dayPointsAwarded
-                  : computeDayPoints(tObj);
-              if (ptsMap) {
-                for (const [pid, pts] of Object.entries(ptsMap)) {
-                  rawTotals[pid] = (rawTotals[pid] || 0) + (pts as number);
-                }
+        dayGroup.tournaments.forEach((gt) => {
+          const tObj = allTourneys.find((t) => t.id === gt.tournamentId);
+          if (tObj) {
+            const ptsMap =
+              tObj.dayPointsAwarded && Object.keys(tObj.dayPointsAwarded).length > 0
+                ? tObj.dayPointsAwarded
+                : computeDayPoints(tObj);
+            if (ptsMap) {
+              for (const [pid, pts] of Object.entries(ptsMap)) {
+                rawTotals[pid] = (rawTotals[pid] || 0) + (pts as number);
               }
             }
-          });
-        }
+          }
+        });
       }
     }
 
@@ -2089,18 +2091,21 @@ export default function HistoryPage() {
     let topId: string | undefined;
     let spoonId: string | undefined;
     if (historyFormatFilter === "all") {
+      const cd = (completedDays || []).find((d) => d.date === dayGroup.date);
+      if (cd?.totals && Object.keys(cd.totals).length > 0) {
+        const sorted = Object.entries(cd.totals).sort(([, a], [, b]) => Number(b) - Number(a));
+        if (sorted.length > 0 && Number(sorted[0][1]) > 0) topId = normalizePlayerId(sorted[0][0]);
+        if (sorted.length > 1) spoonId = normalizePlayerId(sorted[sorted.length - 1][0]);
+      } else if (cd) {
+        topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
+        spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
+      }
       if (dayGroup.date === "2026-10-10") {
         topId = "akshat";
         spoonId = "udbhaw";
       } else if (dayGroup.date === "2026-10-11") {
         topId = "akshat";
         spoonId = "sajal";
-      } else {
-        const cd = (completedDays || []).find((d) => d.date === dayGroup.date);
-        if (cd) {
-          topId = cd.topPlayerId ? normalizePlayerId(cd.topPlayerId) : undefined;
-          spoonId = cd.spoonPlayerId ? normalizePlayerId(cd.spoonPlayerId) : undefined;
-        }
       }
     }
 
