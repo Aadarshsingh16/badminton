@@ -44,6 +44,7 @@ export default function DayPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const [cloudDayData, setCloudDayData] = useState<{
     totals: Record<string, number>;
@@ -510,90 +511,6 @@ export default function DayPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {!isViewer && (
-              <>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept=".json,application/json"
-                  className="hidden"
-                />
-                <button
-                  onClick={handleExportBackup}
-                  title="Download JSON backup of all tournaments & days from device"
-                  className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#252932] text-[#8E95A5] hover:text-[#F3F4EE] border border-white/10 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-xs"
-                >
-                  <span>💾</span>
-                  <span>Backup</span>
-                </button>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  title="Import and upload JSON backup to Firebase"
-                  className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#252932] text-[#8E95A5] hover:text-[#9EC9A8] border border-white/10 hover:border-[#9EC9A8]/30 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-xs"
-                >
-                  <span>📥</span>
-                  <span>Import JSON</span>
-                </button>
-              </>
-            )}
-            {!isViewer && isFirebaseConfigured() && (
-              <button
-                onClick={handleUploadAllToFirebase}
-                title="Upload all tournaments & days to Firebase Firestore"
-                className="px-2.5 py-1.5 rounded-full bg-[#FF5E48]/20 hover:bg-[#FF5E48]/30 text-[#FF5E48] border border-[#FF5E48]/30 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-xs"
-              >
-                <span>🔥</span>
-                <span>Push to Firebase</span>
-              </button>
-            )}
-            {!isViewer && hasTournaments && (
-              <button
-                onClick={handleManualSyncToCloud}
-                disabled={syncState === "syncing"}
-                title="Sync all tournaments, matches and standings to Spectators"
-                className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-xs ${
-                  syncState === "success"
-                    ? "bg-[#9EC9A8]/20 text-[#9EC9A8] border-[#9EC9A8]/40"
-                    : syncState === "syncing"
-                    ? "bg-[#F5BA38]/20 text-[#F5BA38] border-[#F5BA38]/40 animate-pulse"
-                    : syncState === "error"
-                    ? "bg-[#FF5E48]/20 text-[#FF5E48] border-[#FF5E48]/40"
-                    : "bg-[#1E2128] hover:bg-[#252932] text-[#9EC9A8] border-[#9EC9A8]/30"
-                }`}
-              >
-                <span>{syncState === "syncing" ? "⏳" : syncState === "success" ? "✅" : syncState === "error" ? "⚠️" : "☁️"}</span>
-                <span>
-                  {syncState === "syncing"
-                    ? "Syncing..."
-                    : syncState === "success"
-                    ? "Synced ✓"
-                    : syncState === "error"
-                    ? "Retry Sync"
-                    : "Sync Cloud"}
-                </span>
-              </button>
-            )}
-            {appRole === "admin" && (
-              <button
-                onClick={() => {
-                  clearAppSession();
-                  clearViewerMode();
-                }}
-                title="Logout from Admin"
-                className="px-2.5 py-1.5 rounded-full bg-[#1E2128] hover:bg-[#FF5E48]/20 text-[#8E95A5] hover:text-[#FF5E48] border border-white/10 hover:border-[#FF5E48]/30 transition-all active:scale-95 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider cursor-pointer"
-              >
-                <span>👑</span>
-                <span>Logout</span>
-              </button>
-            )}
-            <button
-              onClick={() => setShowShareModal(true)}
-              title="Share day live stream"
-              className="w-8 h-8 rounded-full bg-[#1E2128] hover:bg-[#252932] text-[#F3F4EE] border border-white/10 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
-            >
-              <span className="text-xs">📡</span>
-            </button>
             {!isViewer && hasData && (
               <button
                 onClick={() => setShowFinishDayModal(true)}
@@ -603,17 +520,44 @@ export default function DayPage() {
                 <span>Finish Day</span>
               </button>
             )}
+
+            <button
+              onClick={() => setShowShareModal(true)}
+              title="Share day live stream"
+              className="w-8 h-8 rounded-full bg-[#1E2128] hover:bg-[#252932] text-[#F3F4EE] border border-white/10 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
+            >
+              <span className="text-xs">📡</span>
+            </button>
+
+            {/* Floating Menu Toggle Button */}
             {!isViewer && (
               <button
-                onClick={() => setShowConfirmReset(true)}
-                title="Reset Day"
-                className="w-8 h-8 rounded-full bg-[#1E2128] hover:bg-[#FF5E48]/20 text-[#8E95A5] hover:text-[#FF5E48] border border-white/10 hover:border-[#FF5E48]/30 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+                onClick={() => setShowMenu((prev) => !prev)}
+                title="Cloud & Day Actions"
+                className={`h-8 px-3 rounded-full border transition-all flex items-center gap-1.5 text-xs font-black uppercase tracking-wider cursor-pointer active:scale-95 shadow-xs relative ${
+                  showMenu
+                    ? "bg-[#FF5E48] text-white border-[#FF5E48]"
+                    : "bg-[#1E2128] hover:bg-[#252932] text-[#F3F4EE] border-white/10"
+                }`}
               >
-                <span className="text-xs">🗑️</span>
+                <span>⚙️</span>
+                <span className="text-[11px]">Actions</span>
+                {syncState === "syncing" && (
+                  <span className="w-2 h-2 rounded-full bg-[#F5BA38] animate-ping" />
+                )}
               </button>
             )}
           </div>
         </div>
+
+        {/* Hidden File Input for Backup Import */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept=".json,application/json"
+          className="hidden"
+        />
 
         {syncMessage && (
           <div
@@ -629,6 +573,172 @@ export default function DayPage() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Menu Modal/Popover */}
+      <AnimatePresence>
+        {showMenu && (
+          <>
+            {/* Tap-outside backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMenu(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40"
+            />
+
+            {/* Floating Menu Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: -10 }}
+              transition={{ type: "spring", stiffness: 420, damping: 28 }}
+              className="fixed right-4 top-20 w-80 max-w-[calc(100vw-2rem)] bg-[#1E2128]/95 border border-white/15 rounded-3xl p-3.5 shadow-[0_25px_60px_rgba(0,0,0,0.85)] z-50 flex flex-col gap-2 backdrop-blur-xl"
+            >
+              {/* Menu Header */}
+              <div className="flex items-center justify-between px-1 pb-2 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">⚙️</span>
+                  <span className="text-xs font-black uppercase tracking-wider text-[#F3F4EE]">
+                    Actions & Cloud
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowMenu(false)}
+                  className="w-6 h-6 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs text-[#8E95A5] hover:text-white transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Section: Cloud & Real-time */}
+              <div className="flex flex-col gap-1.5">
+                {hasTournaments && (
+                  <button
+                    onClick={() => {
+                      handleManualSyncToCloud();
+                      setShowMenu(false);
+                    }}
+                    disabled={syncState === "syncing"}
+                    className="w-full px-3 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all flex items-center justify-between text-left cursor-pointer group active:scale-98"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-base">
+                        {syncState === "syncing"
+                          ? "⏳"
+                          : syncState === "success"
+                          ? "✅"
+                          : syncState === "error"
+                          ? "⚠️"
+                          : "☁️"}
+                      </span>
+                      <div>
+                        <div className="text-xs font-bold text-[#F3F4EE]">
+                          Sync Spectator Cloud
+                        </div>
+                        <div className="text-[10px] text-[#8E95A5]">
+                          {syncState === "syncing"
+                            ? "Syncing in progress..."
+                            : syncState === "success"
+                            ? "Live stream updated ✓"
+                            : "Push active standings"}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs text-[#8E95A5] group-hover:text-white group-hover:translate-x-0.5 transition-all">
+                      →
+                    </span>
+                  </button>
+                )}
+
+                {isFirebaseConfigured() && (
+                  <button
+                    onClick={() => {
+                      handleUploadAllToFirebase();
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-3 py-2.5 rounded-2xl bg-[#FF5E48]/10 hover:bg-[#FF5E48]/20 border border-[#FF5E48]/25 transition-all flex items-center justify-between text-left cursor-pointer group active:scale-98"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-base">🔥</span>
+                      <div>
+                        <div className="text-xs font-bold text-[#FF5E48]">
+                          Push All to Firebase
+                        </div>
+                        <div className="text-[10px] text-[#8E95A5]">
+                          Upload all tournaments & days
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs text-[#FF5E48] group-hover:translate-x-0.5 transition-transform">
+                      →
+                    </span>
+                  </button>
+                )}
+
+                {/* 2-col Backup & Import buttons */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    onClick={() => {
+                      handleExportBackup();
+                      setShowMenu(false);
+                    }}
+                    className="px-3 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center gap-2 text-left cursor-pointer transition-all active:scale-95 group"
+                  >
+                    <span className="text-base">💾</span>
+                    <div>
+                      <div className="text-[11px] font-bold text-[#F3F4EE]">Backup</div>
+                      <div className="text-[9px] text-[#8E95A5]">Download JSON</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      fileInputRef.current?.click();
+                      setShowMenu(false);
+                    }}
+                    className="px-3 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center gap-2 text-left cursor-pointer transition-all active:scale-95 group"
+                  >
+                    <span className="text-base">📥</span>
+                    <div>
+                      <div className="text-[11px] font-bold text-[#9EC9A8]">Import</div>
+                      <div className="text-[9px] text-[#8E95A5]">Restore JSON</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Section: Session / Danger Actions */}
+              <div className="border-t border-white/10 pt-2 mt-1 flex flex-col gap-1">
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowConfirmReset(true);
+                  }}
+                  className="w-full px-3 py-2 rounded-2xl hover:bg-[#FF5E48]/10 text-[#8E95A5] hover:text-[#FF5E48] transition-all flex items-center gap-2.5 text-left text-xs font-bold cursor-pointer"
+                >
+                  <span>🗑️</span>
+                  <span>Reset Day Table</span>
+                </button>
+
+                {appRole === "admin" && (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      clearAppSession();
+                      clearViewerMode();
+                    }}
+                    className="w-full px-3 py-2 rounded-2xl hover:bg-white/10 text-[#8E95A5] hover:text-[#F3F4EE] transition-all flex items-center gap-2.5 text-left text-xs font-bold cursor-pointer"
+                  >
+                    <span>👑</span>
+                    <span>Logout from Admin</span>
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Finish Day Celebration Modal */}
       <AnimatePresence>
